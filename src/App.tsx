@@ -59,7 +59,7 @@ const navItems = [
   { label: 'Contact', href: '#contact' },
   { label: 'Practice', href: '#practice' },
   { label: 'Resources', href: '#resources' },
-  { label: 'Study Hub', href: '#study-hub' },
+  { label: 'Study Hub', href: '#studyhub' },
   { label: 'Media', href: '#media' },
 ];
 
