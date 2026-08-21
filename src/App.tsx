@@ -39,6 +39,14 @@ import MediaGallery from '@/components/MediaGallery';
 import Mentors from '@/components/Mentors';
 import Gallery from '@/components/Gallery';
 import AuthModal from '@/components/AuthModal';
+import MediaGalleryPro from '@/components/MediaGalleryPro';
+import TeacherHub from '@/components/TeacherHub';
+import HallOfFame from '@/components/HallOfFame';
+import SimulationLab from '@/components/SimulationLab';
+import NoticeBoard from '@/components/NoticeBoard';
+import LocationMap from '@/components/LocationMap';
+import StudyHub from '@/components/StudyHub';
+import AIChatBot from '@/components/AIChatBot';
 const logoImage = '/images/WhatsApp_Image_2026-08-17_at_21.04.26.jpeg';
 const admissionImage = '/images/WhatsApp_Image_2026-08-19_at_05.30.17.jpeg';
 const founderImage = '/images/WhatsApp_Image_2026-08-19_at_05.30.16.jpeg';
@@ -51,6 +59,8 @@ const navItems = [
   { label: 'Contact', href: '#contact' },
   { label: 'Practice', href: '#practice' },
   { label: 'Resources', href: '#resources' },
+  { label: 'Study Hub', href: '#studyhub' },
+  { label: 'Media', href: '#media' },
 ];
 
 const programs = [
@@ -202,12 +212,28 @@ function App() {
 
         <PracticeLab />
 
+        <MediaGalleryPro />
+
+        <TeacherHub />
+
+        <HallOfFame />
+
+        <SimulationLab />
+
+        <StudyHub />
+
+        <NoticeBoard />
+
+        <LocationMap />
+
         <MediaGallery />
 
         <FAQ />
 
         <section id="contact" className="bg-[#f6f7f9] px-5 py-24 text-ink lg:px-8 lg:py-32"><div className="mx-auto grid max-w-[1240px] gap-14 lg:grid-cols-[.85fr_1.15fr] lg:items-start"><div><div className="section-kicker text-coral">04 / Your next move</div><h2 className="mt-4 text-4xl font-black tracking-[-.05em] sm:text-6xl">Start your<br /><span className="text-slate-400">rise today.</span></h2><p className="mt-6 max-w-[400px] text-sm leading-6 text-slate-500">Tell us a little about your goals. Our team will call you back to find the right fit.</p><div className="mt-10 space-y-5"><a href="tel:+918794130855" className="flex items-center gap-4 text-sm font-bold hover:text-coral"><span className="rounded-xl bg-white p-3 text-coral shadow-sm"><Phone size={18} /></span>+91 87941 30855</a><a href="https://instagram.com/peerlessacademyofficial" target="_blank" rel="noreferrer" className="flex items-center gap-4 text-sm font-bold hover:text-coral"><span className="rounded-xl bg-white p-3 text-coral shadow-sm"><Instagram size={18} /></span>@peerlessacademyofficial</a><div className="flex items-center gap-4 text-sm font-bold"><span className="rounded-xl bg-white p-3 text-coral shadow-sm"><BookOpen size={18} /></span>Indranagar, Agartala, Tripura</div></div></div><div className="rounded-[2rem] bg-white p-6 shadow-[0_20px_70px_rgba(15,23,42,.08)] sm:p-10">{submitted ? <div className="flex min-h-[410px] flex-col items-center justify-center text-center"><div className="rounded-full bg-emerald-50 p-5 text-emerald-600"><Check size={34} /></div><h3 className="mt-6 text-3xl font-black">You're on your way.</h3><p className="mt-3 max-w-[340px] text-sm leading-6 text-slate-500">Thanks for reaching out. A Peerless Academy mentor will call you shortly to arrange your free demo.</p><button onClick={() => setSubmitted(false)} className="mt-8 text-xs font-black uppercase tracking-wider text-coral">Send another enquiry</button></div> : <form onSubmit={handleSubmit}><div className="mb-8 flex items-center justify-between"><div><div className="text-xs font-black uppercase tracking-[.2em] text-coral">Free counselling</div><h3 className="mt-2 text-2xl font-black">Make an enquiry</h3></div><MessageCircle className="text-slate-200" size={30} /></div><div className="grid gap-5 sm:grid-cols-2"><label className="field-label">Student name<input required name="studentName" type="text" placeholder="Your child's name" /></label><label className="field-label">Guardian name<input required name="guardianName" type="text" placeholder="Parent / guardian name" /></label><label className="field-label">Phone number<input required name="phone" type="tel" placeholder="+91" /></label><label className="field-label">Class<select required name="class"><option value="">Select class</option>{[5, 6, 7, 8, 9, 10, 11, 12].map((grade) => <option key={grade} value={grade}>Class {grade}</option>)}</select></label><label className="field-label sm:col-span-2">Message<textarea name="message" rows={3} placeholder="What would you like to know?" /></label></div><button type="submit" className="mt-6 flex w-full items-center justify-center gap-3 rounded-xl bg-coral px-5 py-4 text-sm font-black text-white transition hover:bg-[#ff7b20]">Submit Enquiry <ArrowRight size={17} /></button><p className="mt-4 text-center text-[11px] text-slate-400">No pressure. Just a conversation about your child's next step.</p></form>}</div></div></section>
       </main>
+
+      <AIChatBot />
 
       <WhatsAppWidget />
 

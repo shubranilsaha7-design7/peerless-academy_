@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import MockExam from '@/components/MockExam';
 import { classes, pickQuestions, subjects, type Question, type Subject } from '@/data/questions';
+import { addProfileXp, saveTestSubmission } from '@/lib/backend';
 
 /* ---------- local persistence (works offline) ---------- */
 function useLocal<T>(key: string, initial: T) {
@@ -508,6 +509,17 @@ export default function StudyHub() {
               setResults((prev) => [{ score: r.score, correct: r.correct, wrong: r.wrong, skipped: r.skipped, perQuestionSeconds: r.perQuestionSeconds, at: new Date().toISOString() }, ...prev].slice(0, 10));
               r.mistakes.forEach(addMistake);
               setXp((x) => x + 50);
+              const spent = r.perQuestionSeconds.reduce((a, b) => a + b, 0);
+              void saveTestSubmission({
+                score: r.score,
+                total: r.correct + r.wrong + r.skipped,
+                correct: r.correct,
+                wrong: r.wrong,
+                skipped: r.skipped,
+                timeSpentSeconds: spent,
+                details: { perQuestionSeconds: r.perQuestionSeconds },
+              });
+              void addProfileXp(50);
               setExamOpen(false);
               setTab('analytics');
             }}
