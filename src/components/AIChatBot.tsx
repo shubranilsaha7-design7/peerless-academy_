@@ -18,13 +18,32 @@ const KB: { match: RegExp; reply: string }[] = [
   { match: /(timing|schedule|batch|time)/i, reply: 'Batches run morning (6:30–8:30 AM) and evening (4:00–8:30 PM), six days a week. Tell me your class and we will suggest the best slot.' },
 ];
 
-function mockReply(input: string): Promise<string> {
+function kbReply(input: string): string {
   const hit = KB.find((k) => k.match.test(input));
-  const reply =
+  return (
     hit?.reply ??
-    "I can help with courses, batches, fees, DPPs, mock exams, faculty doubt windows and admissions. Ask me any of those — or tap the WhatsApp button and a mentor will reply personally.";
-  return new Promise((resolve) => setTimeout(() => resolve(reply), 2000));
+    "I can help with courses, batches, fees, DPPs, mock exams, faculty doubt windows and admissions. Ask me any of those — or tap the WhatsApp button and a mentor will reply personally."
+  );
 }
+
+/** Academy FAQs answer instantly offline; anything academic goes to the AI doubt solver. */
+async function getReply(input: string): Promise<string> {
+  const hit = KB.find((k) => k.match.test(input));
+  if (hit) return hit.reply;
+  try {
+    return await askDoubtSolver(input);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : '';
+    if (/402|credit/i.test(message)) {
+      return 'The AI tutor is out of credits right now. Ping us on WhatsApp and a mentor will solve your doubt personally.';
+    }
+    if (/429|rate/i.test(message)) {
+      return 'A lot of students are asking right now — please try again in a few seconds.';
+    }
+    return kbReply(input);
+  }
+}
+
 
 export default function AIChatBot() {
   const [open, setOpen] = useState(false);
