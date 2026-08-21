@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Bot, MessageCircle, Send, Sparkles, X } from 'lucide-react';
+import { askDoubtSolver } from '@/lib/backend';
 
 type Msg = { id: number; role: 'user' | 'assistant'; text: string };
 
@@ -63,7 +64,7 @@ export default function AIChatBot() {
     setInput('');
     setMessages((m) => [...m, { id: Date.now(), role: 'user', text }]);
     setTyping(true);
-    const reply = await mockReply(text);
+    const reply = await getReply(text);
     setTyping(false);
 
     // simulate token streaming
