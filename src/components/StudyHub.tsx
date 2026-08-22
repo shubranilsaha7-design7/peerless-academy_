@@ -122,6 +122,21 @@ function DppGenerator({ onWrong, onXp }: { onWrong: (q: Question) => void; onXp:
     setCached((c) => (c.includes(tag) ? c : [tag, ...c].slice(0, 6)));
   };
 
+  const shareOnWhatsApp = () => {
+    const header = `*Peerless Academy · Daily Practice Problems*\nClass ${klass} · ${subject} · ${new Date().toLocaleDateString()}\n`;
+    const body = set
+      .map((q, i) => {
+        const opts = q.options.map((o, j) => `${String.fromCharCode(65 + j)}) ${o}`).join('\n');
+        return `\nQ${i + 1}. ${q.question}\n${opts}`;
+      })
+      .join('\n');
+    const answers = `\n\n*Answer key:* ${set
+      .map((q, i) => `${i + 1}-${String.fromCharCode(65 + q.answer)}`)
+      .join(', ')}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(header + body + answers)}`, '_blank');
+  };
+
+
   return (
     <div>
       <div className="flex flex-wrap items-end gap-3">
@@ -146,6 +161,9 @@ function DppGenerator({ onWrong, onXp }: { onWrong: (q: Question) => void; onXp:
         </button>
         <button onClick={cacheSheet} className="rounded-xl border border-slate-700 px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-slate-300 hover:text-white">
           Save offline
+        </button>
+        <button onClick={shareOnWhatsApp} className="rounded-xl border border-emerald-600/60 bg-emerald-500/10 px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-emerald-300 transition hover:bg-emerald-500/20">
+          Send on WhatsApp
         </button>
       </div>
 
