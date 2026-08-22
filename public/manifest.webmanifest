@@ -1,0 +1,19 @@
+{
+  "name": "Peerless Academy — Learn. Solve. Lead.",
+  "short_name": "Peerless",
+  "description": "Science & Math coaching for Classes 5-12, NEET & JEE. DPPs, mock tests and analytics that work offline.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0b1729",
+  "theme_color": "#ff6b00",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/images/WhatsApp_Image_2026-08-17_at_21.04.26.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    }
+  ]
+}
