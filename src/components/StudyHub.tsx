@@ -147,6 +147,9 @@ function DppGenerator({ onWrong, onXp }: { onWrong: (q: Question) => void; onXp:
         <button onClick={cacheSheet} className="rounded-xl border border-slate-700 px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-slate-300 hover:text-white">
           Save offline
         </button>
+        <button onClick={shareOnWhatsApp} className="rounded-xl border border-emerald-600/60 bg-emerald-500/10 px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-emerald-300 transition hover:bg-emerald-500/20">
+          Send on WhatsApp
+        </button>
       </div>
 
       {cached.length > 0 && (
