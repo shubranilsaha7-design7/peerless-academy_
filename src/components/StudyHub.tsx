@@ -122,6 +122,21 @@ function DppGenerator({ onWrong, onXp }: { onWrong: (q: Question) => void; onXp:
     setCached((c) => (c.includes(tag) ? c : [tag, ...c].slice(0, 6)));
   };
 
+  const shareOnWhatsApp = () => {
+    const header = `*Peerless Academy · Daily Practice Problems*\nClass ${klass} · ${subject} · ${new Date().toLocaleDateString()}\n`;
+    const body = set
+      .map((q, i) => {
+        const opts = q.options.map((o, j) => `${String.fromCharCode(65 + j)}) ${o}`).join('\n');
+        return `\nQ${i + 1}. ${q.question}\n${opts}`;
+      })
+      .join('\n');
+    const answers = `\n\n*Answer key:* ${set
+      .map((q, i) => `${i + 1}-${String.fromCharCode(65 + q.answer)}`)
+      .join(', ')}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(header + body + answers)}`, '_blank');
+  };
+
+
   return (
     <div>
       <div className="flex flex-wrap items-end gap-3">
