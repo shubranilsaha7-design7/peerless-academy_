@@ -52,6 +52,7 @@ import AdminVideoUpload from '@/components/admin/AdminVideoUpload';
 import VideoLectures    from '@/components/VideoLectures';
 import MonkMode         from '@/components/MonkMode';
 import CbtSimulator     from '@/components/dashboard/CbtSimulator';
+import SimulationLab    from '@/components/SimulationLab';
 
 // ── Static assets ────────────────────────────────────────────────
 const logoImage = '/images/WhatsApp_Image_2026-08-17_at_21.04.26.jpeg';
@@ -195,9 +196,22 @@ function AppInner() {
         console.warn('Email dispatch failed, but inquiry was saved.', emailErr);
       }
       
-      // 3. Open WhatsApp with pre-filled message
-      const text = `Hi Peerless Academy!%0A%0A*New Admission Inquiry*%0AStudent: ${inquiryData.student_name}%0AGuardian: ${inquiryData.guardian_name}%0APhone: ${inquiryData.phone}%0AClass: ${inquiryData.class_level}%0AMessage: ${inquiryData.message || 'N/A'}`;
-      window.open(`https://wa.me/917005639061?text=${text}`, '_blank');
+      // 3. Dispatch to Official Meta WhatsApp Cloud API backend
+      const text = `Student: ${inquiryData.student_name}\nGuardian: ${inquiryData.guardian_name}\nClass: ${inquiryData.class_level}\nMessage: ${inquiryData.message || 'N/A'}`;
+      
+      try {
+        await fetch('http://localhost:3001/api/send-whatsapp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phoneNumber: '917005639061', // Admin routing number
+            title: 'New Admission Inquiry',
+            payload: text
+          })
+        });
+      } catch (waErr) {
+        console.warn('WhatsApp API server not running locally. Inquiry saved to DB.', waErr);
+      }
       
     } catch (err) {
       console.error('Failed to submit inquiry', err);
@@ -255,6 +269,15 @@ function AppInner() {
       return null;
     }
     return <MonkMode onBack={() => setActiveRoute('home')} />;
+  }
+
+  if (activeRoute === 'lab') {
+    if (!user) {
+      setIsAuthOpen(true);
+      setActiveRoute('home');
+      return null;
+    }
+    return <SimulationLab />;
   }
 
   return (
