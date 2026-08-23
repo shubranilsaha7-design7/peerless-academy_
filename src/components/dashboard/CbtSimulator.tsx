@@ -27,8 +27,57 @@ export default function CbtSimulator() {
   const [seed, setSeed] = useState(0);
   const cfg = PAPER_CONFIG[paper];
 
-  const questions = useMemo(() => buildPaper(paper), [paper, seed]);
+  const [questions, setQuestions] = useState<ExamQuestion[]>([]);
+  const [loading, setLoading] = useState(true);
   const [subject, setSubject] = useState<ExamSubject>(cfg.subjects[0]);
+
+  useEffect(() => {
+    async function loadQuestions() {
+      setLoading(true);
+      try {
+        const { supabase } = await import('@/integrations/supabase/client');
+        let fetchedQuestions: ExamQuestion[] = [];
+        
+        for (const subj of cfg.subjects) {
+          const { data } = await (supabase as any)
+            .from('cbt_questions')
+            .select('*')
+            .eq('subject', subj)
+            .limit(cfg.perSubject);
+            
+          if (data && data.length > 0) {
+            fetchedQuestions.push(...data);
+          }
+        }
+        
+        if (fetchedQuestions.length >= cfg.subjects.length * cfg.perSubject) {
+          setQuestions(fetchedQuestions);
+          setLoading(false);
+          return;
+        }
+      } catch (e) {
+        console.warn('Supabase fetch failed, falling back to local JSON.', e);
+      }
+
+      try {
+        // Dynamic import of the massive 10k dataset so it doesn't bloat the main bundle
+        const localData = (await import('@/data/cbt_questions_10k.json')).default as ExamQuestion[];
+        let localQuestions: ExamQuestion[] = [];
+        
+        for (const subj of cfg.subjects) {
+          const pool = localData.filter(q => q.subject === subj);
+          const shuffled = pool.sort(() => 0.5 - Math.random());
+          localQuestions.push(...shuffled.slice(0, cfg.perSubject));
+        }
+        setQuestions(localQuestions);
+      } catch (e) {
+        // Ultimate fallback to hardcoded examBank if JSON is missing
+        setQuestions(buildPaper(paper));
+      }
+      setLoading(false);
+    }
+    loadQuestions();
+  }, [paper, seed, cfg]);
 
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
@@ -161,6 +210,15 @@ export default function CbtSimulator() {
   };
 
   const attemptedInSection = sectionQuestions.filter((item) => answers[item.id] !== undefined).length;
+
+  if (loading || questions.length === 0) {
+    return (
+      <div className="flex min-h-[400px] flex-col items-center justify-center rounded-3xl border border-zinc-800 bg-black p-5">
+        <Target className="h-12 w-12 animate-pulse text-amber-500 mb-4" />
+        <div className="text-sm font-bold uppercase tracking-widest text-zinc-400">Loading Exam Database...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-3xl border border-zinc-800 bg-black p-5 sm:p-7">

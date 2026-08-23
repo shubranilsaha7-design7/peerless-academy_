@@ -18,6 +18,7 @@
     "@types/canvas-confetti": "^1.9.0",
     "@types/three": "^0.185.4",
     "canvas-confetti": "^1.9.4",
+    "dotenv": "^17.4.2",
     "framer-motion": "^13.1.1",
     "katex": "^0.18.4",
     "lucide-react": "^0.446.0",

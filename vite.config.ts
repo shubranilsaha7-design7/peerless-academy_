@@ -65,6 +65,9 @@ export default defineConfig({
       workbox: {
         // Pre-cache all build output assets
         globPatterns: ['**/*.{js,css,html,ico,png,svg,jpeg,jpg,webp,woff2,woff}'],
+        
+        // Allow caching the massive 10k questions JSON file (up to 5MB)
+        maximumFileSizeToCacheInBytes: 5000000,
 
         // Runtime caching rules
         runtimeCaching: [
