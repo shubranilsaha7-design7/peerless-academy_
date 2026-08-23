@@ -50,6 +50,8 @@ import AIDoubtSolver    from '@/components/AIDoubtSolver';
 import AdminVideoUpload from '@/components/admin/AdminVideoUpload';
 // @ts-ignore
 import VideoLectures    from '@/components/VideoLectures';
+import MonkMode         from '@/components/MonkMode';
+import CbtSimulator     from '@/components/dashboard/CbtSimulator';
 
 // ── Static assets ────────────────────────────────────────────────
 const logoImage = '/images/WhatsApp_Image_2026-08-17_at_21.04.26.jpeg';
@@ -165,20 +167,34 @@ function AppInner() {
   const handleLockedFeatureClick = (featureId: string) => {
     if (!user) { setIsAuthOpen(true); return; }
     if (featureId === 'ai-doubt') setIsDoubtOpen(true);
+    if (featureId === 'cbt') setActiveRoute('cbt');
+    if (featureId === 'monk') setActiveRoute('monk-mode');
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    const inquiryData = {
+      student_name: formData.get('studentName'),
+      guardian_name: formData.get('guardianName'),
+      phone: formData.get('phone'),
+      class_level: formData.get('class'),
+      message: formData.get('message') || null
+    };
     
     try {
-      await (supabase as any).from('contact_inquiries').insert([{
-        student_name: formData.get('studentName'),
-        guardian_name: formData.get('guardianName'),
-        phone: formData.get('phone'),
-        class_level: formData.get('class'),
-        message: formData.get('message') || null
-      }]);
+      // 1. Write directly to Supabase contact_inquiries table
+      await (supabase as any).from('contact_inquiries').insert([inquiryData]);
+      
+      // 2. Dispatch Email Notification (via Edge Function / Webhook)
+      try {
+        await (supabase as any).functions.invoke('send-email', {
+          body: inquiryData
+        });
+      } catch (emailErr) {
+        console.warn('Email dispatch failed (Edge function may not be deployed), but inquiry was saved.', emailErr);
+      }
+      
     } catch (err) {
       console.error('Failed to submit inquiry', err);
     }
@@ -208,6 +224,33 @@ function AppInner() {
       return null;
     }
     return <AdminVideoUpload user={user} onBack={() => setActiveRoute('home')} />;
+  }
+
+  if (activeRoute === 'cbt') {
+    if (!user) {
+      setIsAuthOpen(true);
+      setActiveRoute('home');
+      return null;
+    }
+    return (
+      <div className="min-h-screen bg-black flex flex-col">
+        <header className="p-4 border-b border-zinc-800 flex items-center">
+          <button onClick={() => setActiveRoute('home')} className="text-zinc-400 hover:text-white transition">Back to Dashboard</button>
+        </header>
+        <div className="flex-1 overflow-auto p-4 md:p-8">
+          <CbtSimulator />
+        </div>
+      </div>
+    );
+  }
+
+  if (activeRoute === 'monk-mode') {
+    if (!user) {
+      setIsAuthOpen(true);
+      setActiveRoute('home');
+      return null;
+    }
+    return <MonkMode onBack={() => setActiveRoute('home')} />;
   }
 
   return (

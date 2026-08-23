@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Atom, Beaker, Dna, Mail, MessageCircle, Sigma } from 'lucide-react';
+import { getFacultyWhatsAppLink } from '@/utils/faculty';
 
 const mentors = [
   {
@@ -66,9 +67,10 @@ export default function TeacherHub() {
         <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {mentors.map((m, i) => {
             const Icon = m.icon;
-            const waLink = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(
-              `Hi Peerless Academy, I have a doubt for ${m.name} (${m.role}). Topic: `,
-            )}`;
+            // Extract the base subject for dynamic routing (e.g., 'Physics', 'Biology')
+            const subject = m.role.split(' ')[0];
+            const waLink = getFacultyWhatsAppLink(subject, `Hi ${m.name}, I have a doubt regarding ${m.role}. Topic: `);
+            
             return (
               <motion.article
                 key={m.name}
