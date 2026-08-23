@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from 'react';
+import React, { FormEvent, useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import {
   ArrowRight, Atom, Award, BarChart3, Beaker, BookOpen,
@@ -34,7 +34,6 @@ import AuthModal from '@/components/AuthModal';
 import MediaGalleryPro from '@/components/MediaGalleryPro';
 import TeacherHub from '@/components/TeacherHub';
 import HallOfFame from '@/components/HallOfFame';
-import SimulationLab from '@/components/SimulationLab';
 import NoticeBoard from '@/components/NoticeBoard';
 import LocationMap from '@/components/LocationMap';
 import StudyHub from '@/components/StudyHub';
@@ -52,7 +51,10 @@ import AdminVideoUpload from '@/components/admin/AdminVideoUpload';
 import VideoLectures    from '@/components/VideoLectures';
 import MonkMode         from '@/components/MonkMode';
 import CbtSimulator     from '@/components/dashboard/CbtSimulator';
-import ChemistryLab     from '@/components/ChemistryLab';
+
+// Three.js labs: lazy-loaded so WebGL/GLSL shader eval never crashes the main bundle
+const SimulationLab = React.lazy(() => import('@/components/SimulationLab'));
+const ChemistryLab  = React.lazy(() => import('@/components/ChemistryLab'));
 
 // ── Static assets ────────────────────────────────────────────────
 const logoImage = '/images/WhatsApp_Image_2026-08-17_at_21.04.26.jpeg';
@@ -277,7 +279,18 @@ function AppInner() {
       setActiveRoute('home');
       return null;
     }
-    return <SimulationLab />;
+    return (
+      <React.Suspense fallback={
+        <div className="flex min-h-screen items-center justify-center bg-slate-950">
+          <div className="text-center">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-amber-500/30 border-t-amber-500 mx-auto mb-4" />
+            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Loading Physics Lab…</p>
+          </div>
+        </div>
+      }>
+        <SimulationLab />
+      </React.Suspense>
+    );
   }
 
   if (activeRoute === 'chem-lab') {
@@ -286,7 +299,18 @@ function AppInner() {
       setActiveRoute('home');
       return null;
     }
-    return <ChemistryLab />;
+    return (
+      <React.Suspense fallback={
+        <div className="flex min-h-screen items-center justify-center bg-slate-950">
+          <div className="text-center">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-rose-500/30 border-t-rose-500 mx-auto mb-4" />
+            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Loading Chemistry Lab…</p>
+          </div>
+        </div>
+      }>
+        <ChemistryLab />
+      </React.Suspense>
+    );
   }
 
   return (
