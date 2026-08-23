@@ -1,9 +1,10 @@
 import { MessageCircle } from 'lucide-react';
+import { getFacultyWhatsAppLink } from '../utils/faculty';
 
 export default function WhatsAppWidget() {
   return (
     <a
-      href="https://wa.me/918794130855"
+      href={getFacultyWhatsAppLink()}
       target="_blank"
       rel="noreferrer"
       aria-label="Chat with Peerless Academy on WhatsApp"

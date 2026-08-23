@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Award, BookOpen, Sparkles } from 'lucide-react';
+import { getFacultyWhatsAppLink } from '../utils/faculty';
 
 const mentors = [
   {
@@ -84,9 +85,22 @@ export default function Mentors() {
                   <p className="text-slate-400 text-sm mt-3 leading-relaxed">{mentor.desc}</p>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between text-xs text-slate-500">
-                  <span className="flex items-center gap-1"><Award size={14} className="text-orange-500" /> Expert Faculty</span>
-                  <span className="flex items-center gap-1"><Sparkles size={14} className="text-orange-500" /> Personalized</span>
+                <div className="mt-6 space-y-4">
+                  <div className="pt-4 border-t border-slate-800 flex items-center justify-between text-xs text-slate-500">
+                    <span className="flex items-center gap-1"><Award size={14} className="text-orange-500" /> Expert Faculty</span>
+                    <span className="flex items-center gap-1"><Sparkles size={14} className="text-orange-500" /> Personalized</span>
+                  </div>
+                  
+                  <button 
+                    onClick={() => {
+                      const subject = mentor.role.split(' ')[0]; // E.g., "Physics", "Biology", "Mathematics", "Chemistry"
+                      const link = getFacultyWhatsAppLink(subject, `Hello ${mentor.name}, I would like to inquire about your mentorship program.`);
+                      window.open(link, '_blank');
+                    }}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-800/50 border border-slate-700 py-3 text-sm font-bold text-white hover:bg-[#25D366] hover:border-[#25D366] transition group-hover:shadow-[0_0_20px_rgba(37,211,102,.2)]"
+                  >
+                    Contact {mentor.name.split(' ')[0]}
+                  </button>
                 </div>
               </div>
             </motion.div>
