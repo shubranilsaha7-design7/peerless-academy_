@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      arena_matches: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          is_ai_match: boolean | null
+          player1_id: string | null
+          player1_score: number | null
+          player2_id: string | null
+          player2_score: number | null
+          question_ids: Json | null
+          round_results: Json | null
+          status: string | null
+          winner_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_ai_match?: boolean | null
+          player1_id?: string | null
+          player1_score?: number | null
+          player2_id?: string | null
+          player2_score?: number | null
+          question_ids?: Json | null
+          round_results?: Json | null
+          status?: string | null
+          winner_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_ai_match?: boolean | null
+          player1_id?: string | null
+          player1_score?: number | null
+          player2_id?: string | null
+          player2_score?: number | null
+          question_ids?: Json | null
+          round_results?: Json | null
+          status?: string | null
+          winner_id?: string | null
+        }
+        Relationships: []
+      }
       attendance: {
         Row: {
           batch: string | null
@@ -41,6 +86,36 @@ export type Database = {
           session_date?: string
           status?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      contact_inquiries: {
+        Row: {
+          class_level: string
+          created_at: string | null
+          guardian_name: string
+          id: string
+          message: string | null
+          phone: string
+          student_name: string
+        }
+        Insert: {
+          class_level: string
+          created_at?: string | null
+          guardian_name: string
+          id?: string
+          message?: string | null
+          phone: string
+          student_name: string
+        }
+        Update: {
+          class_level?: string
+          created_at?: string | null
+          guardian_name?: string
+          id?: string
+          message?: string | null
+          phone?: string
+          student_name?: string
         }
         Relationships: []
       }
@@ -173,6 +248,36 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      video_lectures: {
+        Row: {
+          chapter: string
+          created_at: string | null
+          duration: number | null
+          id: string
+          subject: string
+          title: string
+          video_url: string
+        }
+        Insert: {
+          chapter: string
+          created_at?: string | null
+          duration?: number | null
+          id?: string
+          subject: string
+          title: string
+          video_url: string
+        }
+        Update: {
+          chapter?: string
+          created_at?: string | null
+          duration?: number | null
+          id?: string
+          subject?: string
+          title?: string
+          video_url?: string
         }
         Relationships: []
       }

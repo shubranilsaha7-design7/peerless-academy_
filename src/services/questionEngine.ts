@@ -1,4 +1,4 @@
-import { supabase } from '../supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
 
 // ── Types ────────────────────────────────────────────────────────
 export type Subject    = 'Physics' | 'Chemistry' | 'Maths' | 'Biology';
