@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-import { supabase } from './supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
 import type { Subject, ExamType } from './services/questionEngine';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 
@@ -22,15 +22,24 @@ import ResourceCenter from '@/components/ResourceCenter';
 import FAQ            from '@/components/FAQ';
 import WhatsAppWidget from '@/components/WhatsAppWidget';
 import ProgressionHub from '@/components/ProgressionHub';
-import DailyBites     from '@/components/DailyBites';
-import ChallengeHub   from '@/components/ChallengeHub';
-import LearningPath   from '@/components/LearningPath';
-import PracticeLab    from '@/components/PracticeLab';
-import MediaGallery   from '@/components/MediaGallery';
-import Mentors        from '@/components/Mentors';
-import Gallery        from '@/components/Gallery';
+import DailyBites from '@/components/DailyBites';
+import ChallengeHub from '@/components/ChallengeHub';
+import LearningPath from '@/components/LearningPath';
+import PracticeLab from '@/components/PracticeLab';
+import MediaGallery from '@/components/MediaGallery';
+import Mentors from '@/components/Mentors';
+import Gallery from '@/components/Gallery';
 // @ts-ignore
-import AuthModal        from '@/components/AuthModal';
+import AuthModal from '@/components/AuthModal';
+import MediaGalleryPro from '@/components/MediaGalleryPro';
+import TeacherHub from '@/components/TeacherHub';
+import HallOfFame from '@/components/HallOfFame';
+import SimulationLab from '@/components/SimulationLab';
+import NoticeBoard from '@/components/NoticeBoard';
+import LocationMap from '@/components/LocationMap';
+import StudyHub from '@/components/StudyHub';
+import AIChatBot from '@/components/AIChatBot';
+
 // @ts-ignore
 import PWAInstallPrompt from '@/components/PWAInstallPrompt';
 // @ts-ignore
@@ -43,8 +52,21 @@ import AdminVideoUpload from '@/components/admin/AdminVideoUpload';
 import VideoLectures    from '@/components/VideoLectures';
 
 // ── Static assets ────────────────────────────────────────────────
-const logoImage      = '/images/WhatsApp_Image_2026-08-17_at_21.04.26.jpeg';
+const logoImage = '/images/WhatsApp_Image_2026-08-17_at_21.04.26.jpeg';
 const admissionImage = '/images/WhatsApp_Image_2026-08-19_at_05.30.17.jpeg';
+const founderImage = '/images/WhatsApp_Image_2026-08-19_at_05.30.16.jpeg';
+
+const navItems = [
+  { label: 'Home', href: '#home' },
+  { label: 'Programs', href: '#programs' },
+  { label: 'The Arena', href: '#arena' },
+  { label: 'Faculty', href: '#faculty' },
+  { label: 'Contact', href: '#contact' },
+  { label: 'Practice', href: '#practice' },
+  { label: 'Resources', href: '#resources' },
+  { label: 'Study Hub', href: '#studyhub' },
+  { label: 'Media', href: '#media' },
+];
 
 // ── Data ────────────────────────────────────────────────────────
 const programs = [
@@ -487,6 +509,13 @@ function AppInner() {
 
         <ResourceCenter />
         <PracticeLab />
+        <MediaGalleryPro />
+        <TeacherHub />
+        <HallOfFame />
+        <SimulationLab />
+        <StudyHub />
+        <NoticeBoard />
+        <LocationMap />
         <MediaGallery />
         <FAQ />
 
@@ -543,6 +572,8 @@ function AppInner() {
           </div>
         </section>
       </main>
+
+      <AIChatBot />
 
       <WhatsAppWidget />
 

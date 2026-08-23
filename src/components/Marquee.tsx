@@ -7,8 +7,9 @@ export default function Marquee() {
   return (
     <div className="marquee relative z-[60] flex items-center gap-2 overflow-hidden bg-coral py-2 text-ink">
       <div className="marquee-track">
-        {items.concat(items).map((i) => (
-          <span key={i} className="mx-6 flex items-center gap-3 text-[11px] font-black uppercase tracking-[.12em] text-[#0a192f] sm:text-xs">
+        {items.concat(items).map((i, index) => (
+          <span key={`${i}-${index}`} className="mx-6 flex items-center gap-3 text-[11px] font-black uppercase tracking-[.12em] text-[#0a192f] sm:text-xs">
+
             <AlertCircle size={13} className="shrink-0 text-[#0a192f]" strokeWidth={2.5} />
             {tickerText}
           </span>

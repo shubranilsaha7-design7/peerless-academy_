@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { supabase } from '../supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
 import { PlayCircle, CheckCircle, Clock, ChevronLeft, BookOpen, AlertCircle } from 'lucide-react';
 
 const MASTERY_TARGET_HRS = 65;

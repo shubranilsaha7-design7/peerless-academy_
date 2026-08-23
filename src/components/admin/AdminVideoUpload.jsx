@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../../supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
 import { Video, Upload, ShieldAlert, CheckCircle2, ChevronLeft } from 'lucide-react';
 
 const ADMIN_EMAILS = ['shubranilsaha7@gmail.com', 'xprasenjit1992@gmail.com'];
