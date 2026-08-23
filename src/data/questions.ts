@@ -2,7 +2,7 @@ export type Subject = 'Physics' | 'Chemistry' | 'Mathematics' | 'Biology';
 
 export type Question = {
   id: string;
-  klass: number; // 5..12
+  klass: string | number;
   subject: Subject;
   topic: string;
   question: string;
@@ -11,6 +11,7 @@ export type Question = {
   solution: string;
 };
 
+// ... questionBank definitions kept below as is ...
 export const questionBank: Question[] = [
   { id: 'p1', klass: 11, subject: 'Physics', topic: 'Kinematics', question: 'A body is thrown up with 20 m/s. Time to reach the highest point (g = 10 m/s²)?', options: ['1 s', '2 s', '4 s', '0.5 s'], answer: 1, solution: 't = u/g = 20/10 = 2 s.' },
   { id: 'p2', klass: 11, subject: 'Physics', topic: 'Projectile', question: 'Range of a projectile is maximum at a launch angle of', options: ['30°', '45°', '60°', '90°'], answer: 1, solution: 'R = u²sin2θ/g is maximum when sin2θ = 1, i.e. θ = 45°.' },
@@ -43,12 +44,15 @@ export const questionBank: Question[] = [
 ];
 
 export const subjects: Subject[] = ['Physics', 'Chemistry', 'Mathematics', 'Biology'];
-export const classes = [5, 6, 7, 8, 9, 10, 11, 12];
+export const classes: (string | number)[] = ['9', '10', '11', '12', 'JEE', 'NEET'];
 
-export function pickQuestions(klass: number, subject: Subject, count = 5): Question[] {
+export function pickQuestions(klass: string | number, subject: Subject, count = 5): Question[] {
   const exact = questionBank.filter((q) => q.subject === subject && q.klass === klass);
   const near = questionBank
     .filter((q) => q.subject === subject && q.klass !== klass)
-    .sort((a, b) => Math.abs(a.klass - klass) - Math.abs(b.klass - klass));
+    .sort((a, b) => {
+      const getVal = (k: string | number) => (typeof k === 'number' ? k : k === 'JEE' ? 13 : k === 'NEET' ? 13 : Number(k) || 0);
+      return Math.abs(getVal(a.klass) - getVal(klass)) - Math.abs(getVal(b.klass) - getVal(klass));
+    });
   return [...exact, ...near].slice(0, count);
 }

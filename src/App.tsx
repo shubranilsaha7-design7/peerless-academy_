@@ -52,7 +52,7 @@ import AdminVideoUpload from '@/components/admin/AdminVideoUpload';
 import VideoLectures    from '@/components/VideoLectures';
 import MonkMode         from '@/components/MonkMode';
 import CbtSimulator     from '@/components/dashboard/CbtSimulator';
-import SimulationLab    from '@/components/SimulationLab';
+import ChemistryLab     from '@/components/ChemistryLab';
 
 // ── Static assets ────────────────────────────────────────────────
 const logoImage = '/images/WhatsApp_Image_2026-08-17_at_21.04.26.jpeg';
@@ -278,6 +278,15 @@ function AppInner() {
       return null;
     }
     return <SimulationLab />;
+  }
+
+  if (activeRoute === 'chem-lab') {
+    if (!user) {
+      setIsAuthOpen(true);
+      setActiveRoute('home');
+      return null;
+    }
+    return <ChemistryLab />;
   }
 
   return (

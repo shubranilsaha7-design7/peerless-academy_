@@ -46,7 +46,7 @@ function Pendulum({ length = 5, gravity = 9.8, mass = 1 }) {
       </mesh>
       
       {/* Rod */}
-      <line ref={rodRef}>
+      <line ref={rodRef as any}>
         <bufferGeometry />
         <lineBasicMaterial color="#94a3b8" linewidth={2} />
       </line>

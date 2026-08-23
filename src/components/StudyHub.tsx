@@ -97,9 +97,9 @@ function Countdown() {
 
 /* ---------- DPP generator ---------- */
 function DppGenerator({ onWrong, onXp }: { onWrong: (q: Question) => void; onXp: (n: number) => void }) {
-  const [klass, setKlass] = useState(11);
+  const [klass, setKlass] = useState<string | number>('11');
   const [subject, setSubject] = useState<Subject>('Physics');
-  const [set, setSet] = useState<Question[]>(() => pickQuestions(11, 'Physics'));
+  const [set, setSet] = useState<Question[]>(() => pickQuestions('11', 'Physics'));
   const [picked, setPicked] = useState<Record<string, number>>({});
   const [reveal, setReveal] = useState<Question | null>(null);
   const [cached, setCached] = useLocal<string[]>('pa-cached-dpp', []);
@@ -142,9 +142,9 @@ function DppGenerator({ onWrong, onXp }: { onWrong: (q: Question) => void; onXp:
       <div className="flex flex-wrap items-end gap-3">
         <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">
           Class
-          <select value={klass} onChange={(e) => setKlass(Number(e.target.value))} className="mt-2 block rounded-xl border border-slate-800 bg-slate-900/80 px-4 py-3 text-sm font-bold text-white outline-none focus:border-coral">
+          <select value={klass} onChange={(e) => setKlass(e.target.value)} className="mt-2 block rounded-xl border border-slate-800 bg-slate-900/80 px-4 py-3 text-sm font-bold text-white outline-none focus:border-coral">
             {classes.map((c) => (
-              <option key={c} value={c}>Class {c}</option>
+              <option key={c} value={c}>{String(c).match(/^[0-9]+$/) ? `Class ${c}` : c}</option>
             ))}
           </select>
         </label>
