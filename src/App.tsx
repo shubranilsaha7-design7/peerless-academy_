@@ -175,11 +175,11 @@ function AppInner() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const inquiryData = {
-      student_name: formData.get('studentName'),
-      guardian_name: formData.get('guardianName'),
-      phone: formData.get('phone'),
-      class_level: formData.get('class'),
-      message: formData.get('message') || null
+      student_name: formData.get('studentName') as string,
+      guardian_name: formData.get('guardianName') as string,
+      phone: formData.get('phone') as string,
+      class_level: formData.get('class') as string,
+      message: (formData.get('message') as string) || null
     };
     
     try {
@@ -192,8 +192,12 @@ function AppInner() {
           body: inquiryData
         });
       } catch (emailErr) {
-        console.warn('Email dispatch failed (Edge function may not be deployed), but inquiry was saved.', emailErr);
+        console.warn('Email dispatch failed, but inquiry was saved.', emailErr);
       }
+      
+      // 3. Open WhatsApp with pre-filled message
+      const text = `Hi Peerless Academy!%0A%0A*New Admission Inquiry*%0AStudent: ${inquiryData.student_name}%0AGuardian: ${inquiryData.guardian_name}%0APhone: ${inquiryData.phone}%0AClass: ${inquiryData.class_level}%0AMessage: ${inquiryData.message || 'N/A'}`;
+      window.open(`https://wa.me/917005639061?text=${text}`, '_blank');
       
     } catch (err) {
       console.error('Failed to submit inquiry', err);
