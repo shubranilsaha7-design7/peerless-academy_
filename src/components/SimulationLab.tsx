@@ -6,31 +6,25 @@ import * as THREE from 'three';
 function Pendulum({ length = 5, gravity = 9.8, mass = 1 }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const rodRef = useRef<THREE.Line>(null);
-  
-  // Starting angle in radians (e.g. pi/4)
-  const [angle, setAngle] = useState(Math.PI / 4);
-  const [velocity, setVelocity] = useState(0);
-  
-  useFrame((state, delta) => {
-    // Basic Euler integration for pendulum motion:
+
+  // Simulation state kept in refs so the physics loop never re-renders React.
+  const angle = useRef(Math.PI / 4);
+  const velocity = useRef(0);
+
+  useFrame((_state, delta) => {
+    const dt = Math.min(delta, 0.033);
     // Angular acceleration: alpha = -(g/L) * sin(theta)
-    const acceleration = -(gravity / length) * Math.sin(angle);
-    
-    // Update velocity and angle
-    const newVelocity = velocity + acceleration * delta;
-    const newAngle = angle + newVelocity * delta;
-    
-    setVelocity(newVelocity);
-    setAngle(newAngle);
-    
-    // Calculate Cartesian coordinates
-    const x = length * Math.sin(newAngle);
-    const y = -length * Math.cos(newAngle);
-    
+    const acceleration = -(gravity / length) * Math.sin(angle.current);
+    velocity.current += acceleration * dt;
+    angle.current += velocity.current * dt;
+
+    const x = length * Math.sin(angle.current);
+    const y = -length * Math.cos(angle.current);
+
     if (meshRef.current) {
       meshRef.current.position.set(x, y, 0);
     }
-    
+
     if (rodRef.current) {
       const positions = new Float32Array([0, 0, 0, x, y, 0]);
       rodRef.current.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
