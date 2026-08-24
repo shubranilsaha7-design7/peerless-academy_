@@ -50,6 +50,7 @@ import Arena            from '@/components/Arena';
 import AIDoubtSolver    from '@/components/AIDoubtSolver';
 // @ts-ignore
 import AdminVideoUpload from '@/components/admin/AdminVideoUpload';
+import AdminDashboard   from '@/components/admin/AdminDashboard';
 // @ts-ignore
 import VideoLectures    from '@/components/VideoLectures';
 import MonkMode         from '@/components/MonkMode';
@@ -128,6 +129,15 @@ function AppInner() {
   const [introPlayed,  setIntroPlayed]  = useState(false);
   const handleIntroDone = useCallback(() => setIntroPlayed(true), []);
 
+  const [toasts, setToasts] = useState<{ id: number; message: string; type: 'success' | 'error' }[]>([]);
+  const addToast = (message: string, type: 'success' | 'error') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 4000);
+  };
+
   // ── Arena filters ─────────────────────────────────────────
   const [arenaSubject,    setArenaSubject]    = useState<Subject | undefined>(undefined);
   const [arenaClass,      setArenaClass]      = useState<number | undefined>(undefined);
@@ -190,6 +200,7 @@ function AppInner() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    console.log('Initiating enquiry submission...');
     const formData = new FormData(e.currentTarget);
     const inquiryData = {
       student_name: formData.get('studentName') as string,
@@ -199,15 +210,21 @@ function AppInner() {
       message: (formData.get('message') as string) || null
     };
     
+    console.log('Enquiry Payload:', inquiryData);
+    
     try {
       // 1. Write directly to Supabase contact_inquiries table
-      await (supabase as any).from('contact_inquiries').insert([inquiryData]);
+      const { error } = await (supabase as any).from('contact_inquiries').insert([inquiryData]);
+      if (error) throw error;
+      
+      console.log('Successfully saved to contact_inquiries table.');
       
       // 2. Dispatch Email Notification (via Edge Function / Webhook)
       try {
         await (supabase as any).functions.invoke('send-email', {
           body: inquiryData
         });
+        console.log('Email dispatched.');
       } catch (emailErr) {
         console.warn('Email dispatch failed, but inquiry was saved.', emailErr);
       }
@@ -225,15 +242,17 @@ function AppInner() {
             payload: text
           })
         });
+        console.log('WhatsApp notification dispatched.');
       } catch (waErr) {
         console.warn('WhatsApp API server not running locally. Inquiry saved to DB.', waErr);
       }
       
+      setSubmitted(true);
+      addToast('Enquiry submitted successfully! We will contact you soon.', 'success');
     } catch (err) {
-      console.error('Failed to submit inquiry', err);
+      console.error('Failed to submit inquiry:', err);
+      addToast('Failed to submit enquiry. Please try again.', 'error');
     }
-    
-    setSubmitted(true);
   };
 
   // Apply dark bg to body
@@ -272,6 +291,15 @@ function AppInner() {
       return null;
     }
     return <AdminVideoUpload user={user} onBack={() => setActiveRoute('home')} />;
+  }
+
+  if (activeRoute === 'admin') {
+    if (!user) {
+      setIsAuthOpen(true);
+      setActiveRoute('home');
+      return null;
+    }
+    return <AdminDashboard user={user} onBack={() => setActiveRoute('home')} />;
   }
 
   if (activeRoute === 'cbt') {
@@ -641,7 +669,7 @@ function AppInner() {
           </div>
         </section>
 
-        <ResourceCenter />
+        <ResourceCenter user={user} addToast={addToast} onDownloadSuccess={() => { if(user) fetchUserStats(user.id); }} />
         <PracticeLab />
         <MediaGalleryPro />
         <TeacherHub />
@@ -746,6 +774,7 @@ function AppInner() {
               window.history.pushState({}, '', '/terms');
               setActiveRoute('terms');
             }} className="hover:text-white transition">Terms</button>
+            <button onClick={() => setActiveRoute('admin')} className="text-coral font-bold hover:text-white transition">Enquiries</button>
             <button onClick={() => setActiveRoute('admin_upload')} className="hover:text-white transition">Admin Upload</button>
           </div>
         </div>
@@ -771,6 +800,16 @@ function AppInner() {
       />
 
       <PWAInstallPrompt />
+
+      {/* ── TOAST NOTIFICATIONS ── */}
+      <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3">
+        {toasts.map(toast => (
+          <div key={toast.id} className={`flex items-center gap-3 rounded-xl px-5 py-3.5 text-sm font-bold shadow-lg backdrop-blur-md transition-all animate-in slide-in-from-right-8 ${toast.type === 'success' ? 'bg-emerald-500/90 text-white' : 'bg-rose-500/90 text-white'}`}>
+            {toast.type === 'success' ? <Check size={18} /> : <X size={18} />}
+            {toast.message}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

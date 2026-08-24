@@ -1,21 +1,58 @@
 import { FormEvent, useState } from 'react';
 import { Check, Download, FileText, Lock, X } from 'lucide-react';
 
+import type { User } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+
 const resources = [
-  { title: 'CBSE Class 10 PYQs', subtitle: 'Last 5 years, solved', tag: 'PYQ', icon: FileText },
-  { title: 'ICSE Class 12 Formula Sheets', subtitle: 'Physics · Chem · Math', tag: 'Formula', icon: FileText },
-  { title: 'NEET Physics Quick Notes', subtitle: 'Rapid revision pack', tag: 'Notes', icon: FileText },
-  { title: 'Class 12 Math DPP Set', subtitle: 'Daily practice problems', tag: 'DPP', icon: FileText },
+  { title: 'CBSE Class 10 PYQs', subtitle: 'Last 5 years, solved', tag: 'PYQ', icon: FileText, link: 'https://example.com/pyq10.pdf' },
+  { title: 'ICSE Class 12 Formula Sheets', subtitle: 'Physics • Chem • Math', tag: 'Formula', icon: FileText, link: 'https://example.com/formula12.pdf' },
+  { title: 'NEET Physics Quick Notes', subtitle: 'Rapid revision pack', tag: 'Notes', icon: FileText, link: 'https://example.com/neet-physics.pdf' },
+  { title: 'Class 12 Math DPP Set', subtitle: 'Daily practice problems', tag: 'DPP', icon: FileText, link: 'https://example.com/dpp12.pdf' },
 ];
 
-export default function ResourceCenter() {
+export default function ResourceCenter({ 
+  user, 
+  addToast,
+  onDownloadSuccess
+}: { 
+  user: User | null; 
+  addToast?: (msg: string, type: 'success'|'error') => void;
+  onDownloadSuccess?: () => void;
+}) {
   const [active, setActive] = useState<string | null>(null);
   const [phone, setPhone] = useState('');
   const [done, setDone] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleUnlock = (event: FormEvent<HTMLFormElement>) => {
+  const handleUnlock = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setDone(true);
+    if (!active) return;
+    setLoading(true);
+
+    try {
+      const selectedResource = resources.find(r => r.title === active);
+      
+      const { data, error } = await supabase.functions.invoke('request-download', {
+        body: {
+          phone,
+          resource_name: active,
+          resource_link: selectedResource?.link || 'https://example.com/resource.pdf',
+          user_id: user?.id || null
+        }
+      });
+
+      if (error) throw error;
+      
+      setDone(true);
+      if (addToast) addToast(data?.message || 'Resource sent to your WhatsApp!', 'success');
+      if (onDownloadSuccess) onDownloadSuccess();
+    } catch (err: any) {
+      console.error('Download request failed:', err);
+      if (addToast) addToast(err?.message || 'Failed to request resource. You might be rate-limited.', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const closeModal = () => {
@@ -117,9 +154,22 @@ export default function ResourceCenter() {
                   />
                   <button
                     type="submit"
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-coral px-5 py-3.5 text-sm font-black text-white transition hover:bg-[#ff7b20]"
+                    disabled={loading}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-coral px-5 py-3.5 text-sm font-black text-white transition hover:bg-[#ff7b20] disabled:opacity-50"
                   >
-                    <Download size={16} /> Unlock & Download
+                    {loading ? (
+                      <span className="flex items-center gap-2">
+                        <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                          <path d="M12 2a10 10 0 0 1 10 10" />
+                        </svg>
+                        Sending...
+                      </span>
+                    ) : (
+                      <>
+                        <Download size={16} /> Unlock & Download
+                      </>
+                    )}
                   </button>
                 </form>
                 <p className="mt-4 text-center text-[11px] text-slate-400">
