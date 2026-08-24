@@ -18,7 +18,9 @@ export default function IntroVideo({ onDone }: { onDone: () => void }) {
 
   // If already seen this session, immediately report done
   useEffect(() => {
-    if (!show) onDone();
+    if (!show && typeof onDone === 'function') {
+      onDone();
+    }
   }, [show, onDone]);
 
   const dismiss = () => {
@@ -33,8 +35,15 @@ export default function IntroVideo({ onDone }: { onDone: () => void }) {
         videoRef.current.load(); // forces resource release
       }
       setShow(false);
-      onDone();
+      if (typeof onDone === 'function') {
+        onDone();
+      }
     }, 500);
+  };
+
+  const handleVideoError = () => {
+    console.warn('Intro video failed to load or threw a 404. Skipping intro.');
+    dismiss();
   };
 
   if (!show) return null;
@@ -53,6 +62,7 @@ export default function IntroVideo({ onDone }: { onDone: () => void }) {
         muted
         playsInline
         onEnded={dismiss}
+        onError={handleVideoError}
         className="h-full w-full object-cover"
       />
 
