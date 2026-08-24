@@ -38,6 +38,7 @@ import NoticeBoard from '@/components/NoticeBoard';
 import LocationMap from '@/components/LocationMap';
 import StudyHub from '@/components/StudyHub';
 import AIChatBot from '@/components/AIChatBot';
+import IntroVideo from '@/components/IntroVideo';
 
 // @ts-ignore
 import PWAInstallPrompt from '@/components/PWAInstallPrompt';
@@ -730,6 +731,7 @@ function AppInner() {
 export default function App() {
   return (
     <ThemeProvider>
+      <IntroVideo />
       <AppInner />
     </ThemeProvider>
   );
