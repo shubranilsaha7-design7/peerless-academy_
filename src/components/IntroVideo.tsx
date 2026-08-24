@@ -30,7 +30,7 @@ export default function IntroVideo() {
       // Autoplay with audio blocked — fall back to muted playback.
       el.muted = true;
       setMuted(true);
-      el.play().catch(() => finish());
+      el.play().catch(() => undefined);
     });
 
     const onKey = (e: KeyboardEvent) => {
