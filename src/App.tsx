@@ -39,6 +39,7 @@ import LocationMap from '@/components/LocationMap';
 import StudyHub from '@/components/StudyHub';
 import AIChatBot from '@/components/AIChatBot';
 import IntroVideo from '@/components/IntroVideo';
+import SafeBoundary from '@/components/SafeBoundary';
 
 // @ts-ignore
 import PWAInstallPrompt from '@/components/PWAInstallPrompt';
@@ -616,7 +617,15 @@ function AppInner() {
         <MediaGalleryPro />
         <TeacherHub />
         <HallOfFame />
-        <SimulationLab />
+        <SafeBoundary label="3D Simulation Lab">
+          <React.Suspense fallback={
+            <div className="flex min-h-[240px] items-center justify-center bg-slate-950">
+              <div className="h-10 w-10 animate-spin rounded-full border-4 border-amber-500/30 border-t-amber-500" />
+            </div>
+          }>
+            <SimulationLab />
+          </React.Suspense>
+        </SafeBoundary>
         <StudyHub />
         <NoticeBoard />
         <LocationMap />
