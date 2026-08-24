@@ -68,6 +68,7 @@ export default function IntroVideo() {
 
   return (
     <div
+      onClick={muted ? enableSound : undefined}
       className={`fixed inset-0 z-[999] flex items-center justify-center bg-black transition-opacity duration-700 ${
         closing ? 'pointer-events-none opacity-0' : 'opacity-100'
       }`}
@@ -80,7 +81,9 @@ export default function IntroVideo() {
         autoPlay
         preload="auto"
         onEnded={finish}
+        onError={finish}
       />
+
 
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
 
