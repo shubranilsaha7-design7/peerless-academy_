@@ -3,23 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <!--
-      Content-Security-Policy:
-      - 'unsafe-eval' is required by Three.js/WebGL for GLSL shader compilation
-        and by Workbox service worker for offline caching logic.
-      - 'unsafe-inline' is needed by some Tailwind/framer-motion inline style injections.
-      - This policy intentionally only allows known safe origins.
+      CSP: permissive enough for Three.js/WebGL (unsafe-eval), Google Maps
+      embeds, Supabase, video playback, and Workbox service workers.
     -->
     <meta http-equiv="Content-Security-Policy"
-      content="
-        default-src 'self';
-        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://accounts.google.com;
-        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-        font-src 'self' https://fonts.gstatic.com;
-        img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com;
-        connect-src 'self' https://*.supabase.co https://graph.facebook.com wss://*.supabase.co;
-        worker-src 'self' blob:;
-        frame-src 'self' https://accounts.google.com;
-      "
+      content="default-src 'self' https: data: blob: 'unsafe-inline' 'unsafe-eval'; media-src * 'self' blob: data: https:; frame-src * 'self' https://www.google.com https://maps.google.com https://*.supabase.co https://accounts.google.com; worker-src 'self' blob:; img-src * 'self' data: blob: https:; connect-src * 'self' https: wss:; font-src 'self' https://fonts.gstatic.com data:;"
     />
     <link rel="icon" type="image/jpeg" href="/images/WhatsApp_Image_2026-08-17_at_21.04.26.jpeg" />
     <!-- PWA: Apple touch icon & mobile chrome -->

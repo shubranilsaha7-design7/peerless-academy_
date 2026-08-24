@@ -1,4 +1,4 @@
-import React, { FormEvent, useEffect, useState } from 'react';
+import React, { FormEvent, useCallback, useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import {
   ArrowRight, Atom, Award, BarChart3, Beaker, BookOpen,
@@ -51,6 +51,7 @@ import AdminVideoUpload from '@/components/admin/AdminVideoUpload';
 import VideoLectures    from '@/components/VideoLectures';
 import MonkMode         from '@/components/MonkMode';
 import CbtSimulator     from '@/components/dashboard/CbtSimulator';
+import IntroVideo       from '@/components/IntroVideo';
 
 // Three.js labs: lazy-loaded so WebGL/GLSL shader eval never crashes the main bundle
 const SimulationLab = React.lazy(() => import('@/components/SimulationLab'));
@@ -114,6 +115,8 @@ function AppInner() {
   const [isDoubtOpen,  setIsDoubtOpen]  = useState(false);
   const [submitted,    setSubmitted]    = useState(false);
   const [activeRoute,  setActiveRoute]  = useState('home');
+  const [introPlayed,  setIntroPlayed]  = useState(false);
+  const handleIntroDone = useCallback(() => setIntroPlayed(true), []);
 
   // ── Arena filters ─────────────────────────────────────────
   const [arenaSubject,    setArenaSubject]    = useState<Subject | undefined>(undefined);
@@ -172,6 +175,7 @@ function AppInner() {
     if (featureId === 'ai-doubt') setIsDoubtOpen(true);
     if (featureId === 'cbt') setActiveRoute('cbt');
     if (featureId === 'monk') setActiveRoute('monk-mode');
+    if (featureId === 'sim-lab') setActiveRoute('lab');
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -315,6 +319,9 @@ function AppInner() {
 
   return (
     <div className={`min-h-screen overflow-hidden transition-colors duration-300 ${isDark ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
+
+      {/* ── INTRO VIDEO (once per session) ── */}
+      {!introPlayed && <IntroVideo onDone={handleIntroDone} />}
 
       {/* ── NAVBAR ── */}
       <Navbar
