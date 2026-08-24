@@ -39,6 +39,8 @@ import LocationMap from '@/components/LocationMap';
 import StudyHub from '@/components/StudyHub';
 import AIChatBot from '@/components/AIChatBot';
 import SafeBoundary from '@/components/SafeBoundary';
+import PrivacyPolicy from '@/components/PrivacyPolicy';
+import TermsOfService from '@/components/TermsOfService';
 
 // @ts-ignore
 import PWAInstallPrompt from '@/components/PWAInstallPrompt';
@@ -115,7 +117,14 @@ function AppInner() {
   const [isArenaOpen,  setIsArenaOpen]  = useState(false);
   const [isDoubtOpen,  setIsDoubtOpen]  = useState(false);
   const [submitted,    setSubmitted]    = useState(false);
-  const [activeRoute,  setActiveRoute]  = useState('home');
+  const [activeRoute,  setActiveRoute]  = useState(() => {
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname;
+      if (path.includes('/privacy')) return 'privacy';
+      if (path.includes('/terms')) return 'terms';
+    }
+    return 'home';
+  });
   const [introPlayed,  setIntroPlayed]  = useState(false);
   const handleIntroDone = useCallback(() => setIntroPlayed(true), []);
 
@@ -232,6 +241,20 @@ function AppInner() {
     document.body.style.backgroundColor = isDark ? '#020617' : '#f8fafc';
     document.body.style.color = isDark ? '#f1f5f9' : '#0f172a';
   }, [isDark]);
+
+  if (activeRoute === 'privacy') {
+    return <PrivacyPolicy onBack={() => {
+      window.history.pushState({}, '', '/');
+      setActiveRoute('home');
+    }} />;
+  }
+
+  if (activeRoute === 'terms') {
+    return <TermsOfService onBack={() => {
+      window.history.pushState({}, '', '/');
+      setActiveRoute('home');
+    }} />;
+  }
 
   if (activeRoute === 'lectures') {
     if (!user) {
@@ -714,7 +737,17 @@ function AppInner() {
         </div>
         <div className="mx-auto mt-10 max-w-[1240px] border-t border-white/10 pt-5 text-[10px] uppercase tracking-wider text-slate-600 flex justify-between items-center">
           <span>© 2026 Peerless Academy. Made for the next breakthrough.</span>
-          <button onClick={() => setActiveRoute('admin_upload')} className="hover:text-white transition">Admin Upload</button>
+          <div className="flex items-center gap-4">
+            <button onClick={() => {
+              window.history.pushState({}, '', '/privacy');
+              setActiveRoute('privacy');
+            }} className="hover:text-white transition">Privacy</button>
+            <button onClick={() => {
+              window.history.pushState({}, '', '/terms');
+              setActiveRoute('terms');
+            }} className="hover:text-white transition">Terms</button>
+            <button onClick={() => setActiveRoute('admin_upload')} className="hover:text-white transition">Admin Upload</button>
+          </div>
         </div>
       </footer>
 
