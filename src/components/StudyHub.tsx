@@ -63,28 +63,71 @@ function Countdown() {
   }, []);
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="grid gap-6 sm:grid-cols-2">
       {TARGETS.map((t) => {
         const diff = Math.max(0, new Date(t.date).getTime() - now);
         const d = Math.floor(diff / 86400000);
         const h = Math.floor((diff % 86400000) / 3600000);
         const m = Math.floor((diff % 3600000) / 60000);
         const s = Math.floor((diff % 60000) / 1000);
+        const isNeet = t.label.includes('NEET');
+
         return (
-          <div key={t.label} className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 backdrop-blur-md">
-            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-coral">
-              <Target size={12} /> {t.label}
+          <div 
+            key={t.label} 
+            className={`relative overflow-hidden rounded-[2rem] border p-7 sm:p-8 backdrop-blur-xl shadow-2xl transition duration-500 hover:-translate-y-1 ${
+              isNeet 
+                ? 'border-emerald-500/30 bg-gradient-to-b from-slate-900/95 via-slate-900/90 to-emerald-950/30 shadow-emerald-500/10' 
+                : 'border-orange-500/30 bg-gradient-to-b from-slate-900/95 via-slate-900/90 to-orange-950/30 shadow-orange-500/10'
+            }`}
+          >
+            {/* Ambient Corner Glow */}
+            <div className={`pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full blur-2xl opacity-40 ${
+              isNeet ? 'bg-emerald-400' : 'bg-orange-400'
+            }`} />
+
+            <div className="flex items-center justify-between gap-2 mb-6">
+              <div className="flex items-center gap-2.5">
+                <span className={`flex h-8 w-8 items-center justify-center rounded-xl ${
+                  isNeet ? 'bg-emerald-500/20 text-emerald-400' : 'bg-orange-500/20 text-orange-400'
+                }`}>
+                  <Target size={18} className="animate-pulse" />
+                </span>
+                <div>
+                  <span className={`text-xs sm:text-sm font-black tracking-wide ${
+                    isNeet ? 'text-emerald-300' : 'text-orange-300'
+                  }`}>
+                    {t.label}
+                  </span>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-widest font-mono">NTA Official Countdown</p>
+                </div>
+              </div>
+
+              <span className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider ${
+                isNeet ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-orange-500/15 text-orange-400 border border-orange-500/30'
+              }`}>
+                Live Timer
+              </span>
             </div>
-            <div className="mt-4 grid grid-cols-4 gap-2 text-center">
+
+            {/* 20% Enlarged Timer Numbers */}
+            <div className="grid grid-cols-4 gap-3 text-center">
               {[
                 ['Days', d],
-                ['Hrs', h],
-                ['Min', m],
-                ['Sec', s],
+                ['Hours', h],
+                ['Mins', m],
+                ['Secs', s],
               ].map(([label, v]) => (
-                <div key={label as string} className="rounded-xl bg-slate-950/60 py-3">
-                  <div className="text-xl font-black text-white">{String(v).padStart(2, '0')}</div>
-                  <div className="mt-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-500">{label}</div>
+                <div 
+                  key={label as string} 
+                  className="rounded-2xl border border-white/5 bg-slate-950/80 py-5 sm:py-6 shadow-inner transition hover:border-white/20"
+                >
+                  <div className="text-3xl sm:text-4xl font-black tracking-tight text-white font-mono">
+                    {String(v).padStart(2, '0')}
+                  </div>
+                  <div className="mt-1 text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400">
+                    {label}
+                  </div>
                 </div>
               ))}
             </div>
