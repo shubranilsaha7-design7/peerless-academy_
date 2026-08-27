@@ -65,11 +65,11 @@ export default function PWAInstallPrompt() {
       {visible && (
         <motion.div
           key="pwa-banner"
-          initial={{ y: 120, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 120, opacity: 0 }}
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-          className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[92%] max-w-sm z-50"
+          className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-sm z-[9999]"
           role="dialog"
           aria-label="Install Peerless Academy app"
         >

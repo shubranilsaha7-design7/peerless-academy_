@@ -23,6 +23,30 @@ export default function IntroVideo({ onDone }: { onDone: () => void }) {
     }
   }, [show, onDone]);
 
+  // Attempt explicit playback for strict mobile browsers
+  useEffect(() => {
+    let fallbackTimer: NodeJS.Timeout;
+    
+    if (show && videoRef.current) {
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.warn("Autoplay prevented or video failed:", error);
+          dismiss();
+        });
+      }
+      
+      // Safety fallback: if video loops or hangs, dismiss after 8 seconds
+      fallbackTimer = setTimeout(() => {
+         dismiss();
+      }, 8000);
+    }
+    
+    return () => {
+       if (fallbackTimer) clearTimeout(fallbackTimer);
+    };
+  }, [show]);
+
   const dismiss = () => {
     setFading(true);
     sessionStorage.setItem('hasSeenIntro', '1');
