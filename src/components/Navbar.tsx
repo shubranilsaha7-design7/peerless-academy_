@@ -27,6 +27,7 @@ interface NavbarProps {
   onSignIn:        () => void;
   onSignOut:       () => void;
   onEnterArena:    () => void;
+  onOpenLeaderboard: () => void;
 }
 
 function getDisplayName(user: User): string {
@@ -48,7 +49,7 @@ function levelLabel(lvl: number) {
 
 export default function Navbar({
   user, xp, streak, level, isDark,
-  onToggleTheme, onSignIn, onSignOut, onEnterArena,
+  onToggleTheme, onSignIn, onSignOut, onEnterArena, onOpenLeaderboard
 }: NavbarProps) {
   const [menuOpen,        setMenuOpen]        = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -105,8 +106,11 @@ export default function Navbar({
 
             {/* XP + Streak badge (when logged in) */}
             {user && (
-              <div className={`hidden sm:flex items-center gap-3 rounded-full border px-3 py-1.5 text-xs font-black
-                ${isDark ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'}`}
+              <button 
+                onClick={onOpenLeaderboard}
+                title="View Global Leaderboard"
+                className={`hidden sm:flex items-center gap-3 rounded-full border px-3 py-1.5 text-xs font-black transition hover:scale-105 hover:shadow-lg
+                ${isDark ? 'border-slate-700 bg-slate-800 hover:border-yellow-500/50' : 'border-slate-200 bg-slate-50 hover:border-yellow-500/50'}`}
               >
                 {/* XP */}
                 <span className="flex items-center gap-1 text-amber-400">
@@ -126,7 +130,7 @@ export default function Navbar({
                 </span>
                 {/* Online dot */}
                 <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" title="Online" />
-              </div>
+              </button>
             )}
 
             {/* Enter Arena */}

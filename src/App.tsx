@@ -42,6 +42,8 @@ import SafeBoundary from '@/components/SafeBoundary';
 import PrivacyPolicy from '@/components/PrivacyPolicy';
 import TermsOfService from '@/components/TermsOfService';
 import LifeAtPeerless from '@/components/LifeAtPeerless';
+import CommandPalette from '@/components/CommandPalette';
+import Leaderboard from '@/components/Leaderboard';
 
 // @ts-ignore
 import PWAInstallPrompt from '@/components/PWAInstallPrompt';
@@ -118,6 +120,7 @@ function AppInner() {
   const [isAuthOpen,   setIsAuthOpen]   = useState(false);
   const [isArenaOpen,  setIsArenaOpen]  = useState(false);
   const [isDoubtOpen,  setIsDoubtOpen]  = useState(false);
+  const [isCmdOpen,    setIsCmdOpen]    = useState(false);
   const [submitted,    setSubmitted]    = useState(false);
   const [activeRoute,  setActiveRoute]  = useState(() => {
     if (typeof window !== 'undefined') {
@@ -127,6 +130,18 @@ function AppInner() {
     }
     return 'home';
   });
+
+  // Global Command Palette Listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsCmdOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
   const [introPlayed,  setIntroPlayed]  = useState(false);
   const handleIntroDone = useCallback(() => setIntroPlayed(true), []);
 
@@ -282,7 +297,11 @@ function AppInner() {
       setActiveRoute('home');
       return null;
     }
-    return <VideoLectures onBack={() => setActiveRoute('home')} />;
+    return <VideoLectures onBack={() => setActiveRoute('home')} addToast={addToast} />;
+  }
+
+  if (activeRoute === 'leaderboard') {
+    return <Leaderboard onBack={() => setActiveRoute('home')} />;
   }
 
   if (activeRoute === 'admin_upload') {
@@ -373,6 +392,13 @@ function AppInner() {
   return (
     <div className={`min-h-screen overflow-hidden transition-colors duration-300 ${isDark ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
 
+      {/* ── COMMAND PALETTE ── */}
+      <CommandPalette 
+        isOpen={isCmdOpen} 
+        onClose={() => setIsCmdOpen(false)} 
+        navigateTo={(route) => setActiveRoute(route)} 
+      />
+
       {/* ── INTRO VIDEO (once per session) ── */}
       {!introPlayed && <IntroVideo onDone={handleIntroDone} />}
 
@@ -387,6 +413,7 @@ function AppInner() {
         onSignIn={() => setIsAuthOpen(true)}
         onSignOut={handleSignOut}
         onEnterArena={openArena}
+        onOpenLeaderboard={() => setActiveRoute('leaderboard')}
       />
 
       <main>

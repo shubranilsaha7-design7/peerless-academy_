@@ -101,3 +101,16 @@ To finalize the deployment:
 3. Git Commit & Push your changes to trigger the CI/CD pipeline on Vercel.
 
 *(All Phase 1-4 logic has been integrated cleanly into the React/Vite codebase, including the unified Admin Dashboard, gamification Navbar hooks, and Toast UI).*
+ 
+## Phase 6: Leaderboard (Hall of Legends) 
+ 
+### SQL: Enable Public Leaderboard Read Access on Profiles 
+Run this to allow the Leaderboard UI to read the xp and level from the profiles table to rank top students. 
+ 
+`sql 
+-- Ensure RLS is active on profiles 
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY; 
+ 
+-- Allow public read access to essential ranking fields 
+CREATE POLICY " Allow public to view leaderboard "profiles ON public.profiles FOR SELECT USING (true); 
+` 

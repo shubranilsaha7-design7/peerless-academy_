@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { PlayCircle, CheckCircle, Clock, ChevronLeft, BookOpen, AlertCircle, Lock, Unlock } from 'lucide-react';
+import { PlayCircle, CheckCircle, Clock, ChevronLeft, BookOpen, AlertCircle, Lock, Unlock, Brain } from 'lucide-react';
 
 const MASTERY_TARGET_HRS = 65;
 
-export default function VideoLectures({ onBack }) {
+export default function VideoLectures({ onBack, addToast }) {
   const [lectures, setLectures] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -238,14 +238,26 @@ export default function VideoLectures({ onBack }) {
                 <h2 className="text-2xl font-black">{activeVideo.title}</h2>
                 <p className="text-slate-400 mt-2 text-sm">{activeVideo.description || 'No description provided.'}</p>
               </div>
-              <button
-                onClick={() => markCompleted(activeVideo.id)}
-                disabled={completedIds.has(activeVideo.id) || !canWatch(activeVideo)}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition ${completedIds.has(activeVideo.id) ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50'}`}
-              >
-                <CheckCircle size={18} />
-                {completedIds.has(activeVideo.id) ? 'Completed' : 'Mark Complete'}
-              </button>
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <button
+                  onClick={() => {
+                    if (addToast) addToast('AI Note Generation started! Notes will be emailed to you shortly.', 'success');
+                    else alert('AI Note Generation started! Notes will be emailed to you shortly.');
+                  }}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-500/40"
+                >
+                  <Brain size={18} />
+                  AI Notes
+                </button>
+                <button
+                  onClick={() => markCompleted(activeVideo.id)}
+                  disabled={completedIds.has(activeVideo.id) || !canWatch(activeVideo)}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition ${completedIds.has(activeVideo.id) ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50'}`}
+                >
+                  <CheckCircle size={18} />
+                  {completedIds.has(activeVideo.id) ? 'Completed' : 'Mark Complete'}
+                </button>
+              </div>
             </div>
           )}
         </div>
