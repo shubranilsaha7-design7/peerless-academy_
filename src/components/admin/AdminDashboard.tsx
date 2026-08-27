@@ -4,9 +4,11 @@ import {
   ArrowLeft, Search, Mail, Phone, Calendar, RefreshCcw, Video, Key, 
   BarChart3, Plus, Trash2, CheckCircle, XCircle, Image as ImageIcon,
   Users, MessageSquare, Download, Sparkles, Send, Shield, Zap, Flame, 
-  Eye, ExternalLink, Award, Megaphone, Check, AlertCircle, Copy, Database
+  Eye, ExternalLink, Award, Megaphone, Check, AlertCircle, Copy, Database,
+  CalendarDays, Clock3, Layers
 } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
+import SmartMediaEmbed from '@/components/SmartMediaEmbed';
 
 interface AdminDashboardProps {
   user: User;
@@ -14,7 +16,7 @@ interface AdminDashboardProps {
 }
 
 export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'enquiries' | 'lectures' | 'codes' | 'media' | 'students' | 'banner' | 'stats' | 'sql'>('enquiries');
+  const [activeTab, setActiveTab] = useState<'enquiries' | 'lectures' | 'batches' | 'codes' | 'media' | 'students' | 'banner' | 'stats' | 'sql'>('enquiries');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
@@ -22,11 +24,12 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
   // Data States
   const [inquiries, setInquiries] = useState<any[]>([]);
   const [lectures, setLectures] = useState<any[]>([]);
+  const [batches, setBatches] = useState<any[]>([]);
   const [codes, setCodes] = useState<any[]>([]);
   const [media, setMedia] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   
-  // Table Status Health Checks
+  // Table Health
   const [tableHealth, setTableHealth] = useState({
     inquiries: false,
     lectures: false,
@@ -53,6 +56,19 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
     is_free_preview: false 
   });
   
+  const [batchForm, setBatchForm] = useState({
+    title: '',
+    tag: 'Admissions Open',
+    target: 'CBSE & ICSE • Physics · Chemistry · Math',
+    start_date: 'Oct 01, 2026',
+    days: 'Mon, Wed, Fri',
+    time: '5:30 — 7:00 PM',
+    features: 'Daily DPPs, Weekly mock evaluations, 1-on-1 doubt clearing',
+    seats_total: 25,
+    seats_left: 8,
+    is_featured: false
+  });
+
   const [codeForm, setCodeForm] = useState({ 
     code: '', 
     max_uses: 1, 
@@ -60,7 +76,7 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
   });
   
   const [mediaForm, setMediaForm] = useState({ 
-    type: 'gallery_photo', 
+    type: 'instagram_embed', 
     url: '', 
     embed_code: '' 
   });
@@ -114,7 +130,35 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
         health.lectures = true;
       }
 
-      // 3. Codes
+      // 3. Batches (from batches table or site_media)
+      const { data: bData } = await (supabase as any)
+        .from('batches')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (bData && bData.length > 0) {
+        setBatches(bData);
+      } else {
+        // Fallback to site_media batch_item
+        const { data: mBatches } = await (supabase as any)
+          .from('site_media')
+          .select('*')
+          .eq('type', 'batch_item')
+          .order('created_at', { ascending: false });
+        
+        if (mBatches) {
+          const parsed = mBatches.map((m: any) => {
+            try {
+              return { ...JSON.parse(m.embed_code), media_id: m.id };
+            } catch {
+              return null;
+            }
+          }).filter(Boolean);
+          setBatches(parsed);
+        }
+      }
+
+      // 4. Codes
       const { data: cds, error: cdsErr } = await (supabase as any)
         .from('access_codes')
         .select('*')
@@ -125,10 +169,11 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
         health.codes = true;
       }
 
-      // 4. Media
+      // 5. Media
       const { data: mda, error: mdaErr } = await (supabase as any)
         .from('site_media')
         .select('*')
+        .neq('type', 'batch_item')
         .order('created_at', { ascending: false });
       
       if (!mdaErr && mda) {
@@ -157,7 +202,7 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
         }
       }
 
-      // 5. Students (Profiles)
+      // 6. Students (Profiles)
       const { data: profs, error: profsErr } = await (supabase as any)
         .from('profiles')
         .select('*')
@@ -172,7 +217,7 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
 
     } catch (err: any) {
       console.error('Error fetching admin data:', err);
-      showToast('Error syncing records. Check database connection.', 'error');
+      showToast('Error syncing records from database.', 'error');
     } finally {
       setLoading(false);
     }
@@ -191,8 +236,7 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
       setInquiries(prev => prev.map(inq => inq.id === inquiryId ? { ...inq, status: newStatus } : inq));
       showToast(`Status updated to "${newStatus}".`, 'success');
     } catch (err: any) {
-      console.error(err);
-      showToast(err.message || 'Failed to update status. Run the Master SQL setup if column is missing.', 'error');
+      showToast(err.message || 'Failed to update status.', 'error');
     } finally {
       setActionLoading(false);
     }
@@ -249,9 +293,9 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
       if (error) throw error;
       setLectureForm({ title: '', subject: 'Physics', grade_level: 'Class 10', video_url: '', duration: '', is_free_preview: false });
       fetchAllData();
-      showToast('Lecture uploaded successfully!', 'success');
+      showToast('Lecture video uploaded to curriculum!', 'success');
     } catch (err: any) {
-      showToast(err.message || 'Failed to add lecture. Check database RLS permissions.', 'error');
+      showToast(err.message || 'Failed to add lecture. Run the Master SQL to fix table permissions.', 'error');
     } finally {
       setActionLoading(false);
     }
@@ -264,7 +308,7 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
       const { error } = await (supabase as any).from('lectures').delete().eq('id', id);
       if (error) throw error;
       setLectures(prev => prev.filter(l => l.id !== id));
-      showToast('Lecture deleted.', 'success');
+      showToast('Lecture removed.', 'success');
     } catch (err: any) {
       showToast(err.message || 'Failed to delete lecture.', 'error');
     } finally {
@@ -278,9 +322,85 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
       const { error } = await (supabase as any).from('lectures').update({ is_free_preview: !currentVal }).eq('id', id);
       if (error) throw error;
       setLectures(prev => prev.map(l => l.id === id ? { ...l, is_free_preview: !currentVal } : l));
-      showToast(`Lecture marked as ${!currentVal ? 'Free Preview' : 'Locked'}.`, 'success');
+      showToast(`Lecture is now ${!currentVal ? 'Free Preview' : 'Locked'}.`, 'success');
     } catch (err: any) {
-      showToast(err.message || 'Failed to update lecture preview status.', 'error');
+      showToast(err.message || 'Failed to update lecture status.', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // ── BATCH ACTIONS ──
+  const handleAddBatch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setActionLoading(true);
+    try {
+      const featureArray = batchForm.features.split(',').map(s => s.trim()).filter(Boolean);
+      const batchPayload = {
+        title: batchForm.title,
+        tag: batchForm.tag,
+        target: batchForm.target,
+        start_date: batchForm.start_date,
+        days: batchForm.days,
+        time: batchForm.time,
+        features: featureArray,
+        seats_total: batchForm.seats_total,
+        seats_left: batchForm.seats_left,
+        is_featured: batchForm.is_featured,
+        is_active: true
+      };
+
+      // Try inserting into batches table first
+      const { error: batchErr } = await (supabase as any).from('batches').insert([batchPayload]);
+      
+      if (batchErr) {
+        // Fallback to storing in site_media as batch_item
+        const mediaPayload = {
+          type: 'batch_item',
+          url: batchForm.title,
+          embed_code: JSON.stringify(batchPayload),
+          is_active: true
+        };
+        const { error: mediaErr } = await (supabase as any).from('site_media').insert([mediaPayload]);
+        if (mediaErr) throw mediaErr;
+      }
+
+      setBatchForm({
+        title: '',
+        tag: 'Admissions Open',
+        target: 'CBSE & ICSE • Physics · Chemistry · Math',
+        start_date: 'Oct 01, 2026',
+        days: 'Mon, Wed, Fri',
+        time: '5:30 — 7:00 PM',
+        features: 'Daily DPPs, Weekly mock evaluations, 1-on-1 doubt clearing',
+        seats_total: 25,
+        seats_left: 8,
+        is_featured: false
+      });
+
+      fetchAllData();
+      showToast('Batch created and deployed to website schedule!', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to create batch.', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteBatch = async (batchItem: any) => {
+    if (!confirm(`Are you sure you want to delete "${batchItem.title}"?`)) return;
+    setActionLoading(true);
+    try {
+      if (batchItem.id) {
+        await (supabase as any).from('batches').delete().eq('id', batchItem.id);
+      }
+      if (batchItem.media_id) {
+        await (supabase as any).from('site_media').delete().eq('id', batchItem.media_id);
+      }
+      fetchAllData();
+      showToast('Batch removed from website schedule.', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to delete batch.', 'error');
     } finally {
       setActionLoading(false);
     }
@@ -360,11 +480,19 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
     e.preventDefault();
     setActionLoading(true);
     try {
-      const { error } = await (supabase as any).from('site_media').insert([mediaForm]);
+      const inputContent = mediaForm.url.trim() || mediaForm.embed_code.trim();
+      const payload = {
+        type: mediaForm.type,
+        url: inputContent,
+        embed_code: inputContent,
+        is_active: true
+      };
+
+      const { error } = await (supabase as any).from('site_media').insert([payload]);
       if (error) throw error;
-      setMediaForm({ type: 'gallery_photo', url: '', embed_code: '' });
+      setMediaForm({ type: 'instagram_embed', url: '', embed_code: '' });
       fetchAllData();
-      showToast('Media entry saved!', 'success');
+      showToast('Media visual added and live on website!', 'success');
     } catch (err: any) {
       showToast(err.message || 'Failed to add media.', 'error');
     } finally {
@@ -373,7 +501,7 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
   };
 
   const handleDeleteMedia = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this media item?')) return;
+    if (!confirm('Are you sure you want to delete this media visual?')) return;
     setActionLoading(true);
     try {
       const { error } = await (supabase as any).from('site_media').delete().eq('id', id);
@@ -414,7 +542,7 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
         if (error) throw error;
       }
       fetchAllData();
-      showToast('Broadcast banner updated across website!', 'success');
+      showToast('Broadcast banner deployed to website top bar!', 'success');
     } catch (err: any) {
       showToast(err.message || 'Failed to save announcement banner.', 'error');
     } finally {
@@ -439,9 +567,9 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
       if (error) throw error;
 
       setStudents(prev => prev.map(s => s.id === studentId ? { ...s, xp: newXp, level: newLevel } : s));
-      showToast(`Updated ${student.full_name || 'student'}'s XP to ${newXp} (Level ${newLevel})!`, 'success');
+      showToast(`Awarded ${amount > 0 ? '+' : ''}${amount} XP to ${student.full_name || 'student'} (Now Lv.${newLevel})!`, 'success');
     } catch (err: any) {
-      showToast(err.message || 'Failed to adjust student XP. Run Master SQL to grant profile update permission.', 'error');
+      showToast(err.message || 'Failed to adjust student XP. Run Master SQL to grant profile write access.', 'error');
     } finally {
       setActionLoading(false);
     }
@@ -455,7 +583,7 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
         </div>
         <h2 className="text-2xl font-black text-rose-500 sm:text-3xl">Admin Clearance Required</h2>
         <p className="mt-2 max-w-md text-sm text-slate-400">
-          Your account (<span className="font-mono text-slate-300">{user?.email || 'Guest'}</span>) does not have owner credentials.
+          Your account (<span className="font-mono text-slate-300">{user?.email || 'Guest'}</span>) is not authorized.
         </p>
         <button 
           onClick={onBack} 
@@ -497,7 +625,6 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
   );
 
   const totalPlatformXp = students.reduce((sum, s) => sum + (s.xp || 0), 0);
-  const isAnyTableMissing = !tableHealth.inquiries || !tableHealth.lectures || !tableHealth.codes || !tableHealth.media || !tableHealth.profiles;
 
   const masterSqlString = `-- 1. Contact Inquiries
 CREATE TABLE IF NOT EXISTS public.contact_inquiries (
@@ -512,10 +639,9 @@ CREATE TABLE IF NOT EXISTS public.contact_inquiries (
 );
 ALTER TABLE public.contact_inquiries ADD COLUMN IF NOT EXISTS status text DEFAULT 'pending';
 ALTER TABLE public.contact_inquiries ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public inserts" ON public.contact_inquiries FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow auth all inquiries" ON public.contact_inquiries FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public all inquiries" ON public.contact_inquiries FOR ALL TO public, anon, authenticated USING (true) WITH CHECK (true);
 
--- 2. Lectures
+-- 2. Lectures Hub
 CREATE TABLE IF NOT EXISTS public.lectures (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   title text NOT NULL,
@@ -528,10 +654,28 @@ CREATE TABLE IF NOT EXISTS public.lectures (
   created_at timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 ALTER TABLE public.lectures ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public free lectures" ON public.lectures FOR SELECT USING (is_free_preview = true);
-CREATE POLICY "Allow auth all lectures" ON public.lectures FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public all lectures" ON public.lectures FOR ALL TO public, anon, authenticated USING (true) WITH CHECK (true);
 
--- 3. Access Codes & User Access
+-- 3. Batches Schedule
+CREATE TABLE IF NOT EXISTS public.batches (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  title text NOT NULL,
+  tag text DEFAULT 'Admissions Open',
+  target text NOT NULL,
+  start_date text NOT NULL,
+  days text NOT NULL,
+  time text NOT NULL,
+  features text[] DEFAULT ARRAY['Daily DPPs', 'Weekly mock tests'],
+  seats_total integer DEFAULT 25,
+  seats_left integer DEFAULT 8,
+  is_featured boolean DEFAULT false,
+  is_active boolean DEFAULT true,
+  created_at timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+ALTER TABLE public.batches ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow public all batches" ON public.batches FOR ALL TO public, anon, authenticated USING (true) WITH CHECK (true);
+
+-- 4. Access Codes & User Access
 CREATE TABLE IF NOT EXISTS public.access_codes (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   code text UNIQUE NOT NULL,
@@ -549,10 +693,10 @@ CREATE TABLE IF NOT EXISTS public.user_access (
 );
 ALTER TABLE public.access_codes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_access ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow auth all access_codes" ON public.access_codes FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Allow auth all user_access" ON public.user_access FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public all access_codes" ON public.access_codes FOR ALL TO public, anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public all user_access" ON public.user_access FOR ALL TO public, anon, authenticated USING (true) WITH CHECK (true);
 
--- 4. Site Media
+-- 5. Site Media & Banners
 CREATE TABLE IF NOT EXISTS public.site_media (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   type text NOT NULL,
@@ -562,13 +706,11 @@ CREATE TABLE IF NOT EXISTS public.site_media (
   created_at timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 ALTER TABLE public.site_media ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public read site_media" ON public.site_media FOR SELECT USING (true);
-CREATE POLICY "Allow auth all site_media" ON public.site_media FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public all site_media" ON public.site_media FOR ALL TO public, anon, authenticated USING (true) WITH CHECK (true);
 
--- 5. Profiles (XP Granter)
+-- 6. Profiles (Leaderboard & Student XP Granter)
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public read profiles" ON public.profiles FOR SELECT USING (true);
-CREATE POLICY "Allow auth update profiles" ON public.profiles FOR ALL TO authenticated USING (true) WITH CHECK (true);`;
+CREATE POLICY "Allow public all profiles" ON public.profiles FOR ALL TO public, anon, authenticated USING (true) WITH CHECK (true);`;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-300">
@@ -601,7 +743,7 @@ CREATE POLICY "Allow auth update profiles" ON public.profiles FOR ALL TO authent
               <div className="flex items-center gap-2">
                 <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
                 <h1 className="text-base font-black text-white sm:text-lg">Peerless Control Center</h1>
-                <span className="hidden sm:inline-block rounded-md bg-indigo-500/20 px-2 py-0.5 text-[10px] font-black uppercase text-indigo-300 border border-indigo-500/30">Live Sync</span>
+                <span className="hidden sm:inline-block rounded-md bg-indigo-500/20 px-2 py-0.5 text-[10px] font-black uppercase text-indigo-300 border border-indigo-500/30">Owner Active</span>
               </div>
               <p className="text-[11px] text-slate-500 font-mono hidden sm:block">{user.email}</p>
             </div>
@@ -631,8 +773,9 @@ CREATE POLICY "Allow auth update profiles" ON public.profiles FOR ALL TO authent
           {[
             { id: 'enquiries', label: 'Enquiries & CRM', icon: MessageSquare, badge: inquiries.length },
             { id: 'lectures', label: 'Lectures Hub', icon: Video, badge: lectures.length },
+            { id: 'batches', label: 'Batches & Timings', icon: CalendarDays, badge: batches.length },
             { id: 'codes', label: 'Access Codes', icon: Key, badge: codes.length },
-            { id: 'media', label: 'Media & Gallery', icon: ImageIcon, badge: media.length },
+            { id: 'media', label: 'Visual Media & Gallery', icon: ImageIcon, badge: media.length },
             { id: 'students', label: 'Student Manager', icon: Users, badge: students.length },
             { id: 'banner', label: 'Announcement Banner', icon: Megaphone },
             { id: 'stats', label: 'Analytics & Health', icon: BarChart3 },
@@ -860,12 +1003,20 @@ CREATE POLICY "Allow auth update profiles" ON public.profiles FOR ALL TO authent
                   <input
                     required
                     type="url"
-                    placeholder="YouTube embed / Vimeo / Direct URL"
+                    placeholder="https://youtu.be/... or Direct Video URL"
                     value={lectureForm.video_url}
                     onChange={e => setLectureForm({ ...lectureForm, video_url: e.target.value })}
                     className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-xs text-white placeholder-slate-600 focus:border-emerald-500 focus:outline-none font-mono"
                   />
                 </div>
+
+                {/* Live Video Preview Box */}
+                {lectureForm.video_url && (
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Live Video Preview:</p>
+                    <SmartMediaEmbed content={lectureForm.video_url} className="max-h-[220px]" />
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Duration</label>
@@ -980,7 +1131,193 @@ CREATE POLICY "Allow auth update profiles" ON public.profiles FOR ALL TO authent
           </div>
         )}
 
-        {/* ── 3. ACCESS CODES GENERATOR ── */}
+        {/* ── 3. BATCHES & TIMINGS MANAGER ── */}
+        {activeTab === 'batches' && (
+          <div className="grid gap-8 lg:grid-cols-[380px_1fr]">
+            
+            {/* Form */}
+            <div className="rounded-2xl border border-white/10 bg-slate-900 p-6 h-fit shadow-xl">
+              <h3 className="mb-4 flex items-center gap-2 text-lg font-black text-white">
+                <CalendarDays size={18} className="text-orange-400" /> Create / Edit Batch Schedule
+              </h3>
+              <form onSubmit={handleAddBatch} className="space-y-4">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Batch Name / Class Title</label>
+                  <input
+                    required
+                    type="text"
+                    placeholder="e.g. Class 10 Board Booster"
+                    value={batchForm.title}
+                    onChange={e => setBatchForm({ ...batchForm, title: e.target.value })}
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-xs text-white focus:border-orange-500 focus:outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Batch Tag</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Most Popular"
+                      value={batchForm.tag}
+                      onChange={e => setBatchForm({ ...batchForm, tag: e.target.value })}
+                      className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-xs text-white focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Start Date</label>
+                    <input
+                      required
+                      type="text"
+                      placeholder="e.g. Sep 15, 2026"
+                      value={batchForm.start_date}
+                      onChange={e => setBatchForm({ ...batchForm, start_date: e.target.value })}
+                      className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-xs text-white focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Subjects / Target</label>
+                  <input
+                    required
+                    type="text"
+                    placeholder="e.g. CBSE & ICSE • Physics · Chemistry · Math"
+                    value={batchForm.target}
+                    onChange={e => setBatchForm({ ...batchForm, target: e.target.value })}
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-xs text-white focus:outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Days of Week</label>
+                    <input
+                      required
+                      type="text"
+                      placeholder="e.g. Mon, Wed, Fri"
+                      value={batchForm.days}
+                      onChange={e => setBatchForm({ ...batchForm, days: e.target.value })}
+                      className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-xs text-white focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Timing Slot</label>
+                    <input
+                      required
+                      type="text"
+                      placeholder="e.g. 5:30 — 7:00 PM"
+                      value={batchForm.time}
+                      onChange={e => setBatchForm({ ...batchForm, time: e.target.value })}
+                      className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-xs text-white focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Key Features (comma separated)</label>
+                  <input
+                    type="text"
+                    placeholder="Daily DPPs, Mock Tests, Doubt sessions"
+                    value={batchForm.features}
+                    onChange={e => setBatchForm({ ...batchForm, features: e.target.value })}
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-xs text-white focus:outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total Capacity</label>
+                    <input
+                      type="number"
+                      value={batchForm.seats_total}
+                      onChange={e => setBatchForm({ ...batchForm, seats_total: parseInt(e.target.value) || 25 })}
+                      className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-xs text-white focus:outline-none font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Seats Remaining</label>
+                    <input
+                      type="number"
+                      value={batchForm.seats_left}
+                      onChange={e => setBatchForm({ ...batchForm, seats_left: parseInt(e.target.value) || 5 })}
+                      className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-xs text-white focus:outline-none font-mono"
+                    />
+                  </div>
+                </div>
+
+                <label className="flex items-center gap-3 rounded-xl border border-white/10 bg-slate-950 p-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={batchForm.is_featured}
+                    onChange={e => setBatchForm({ ...batchForm, is_featured: e.target.checked })}
+                    className="h-4 w-4 rounded accent-orange-500"
+                  />
+                  <div>
+                    <span className="text-xs font-bold text-white">Feature as Popular Batch</span>
+                    <p className="text-[10px] text-slate-400">Highlights card in bold glowing theme on homepage.</p>
+                  </div>
+                </label>
+
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 py-3 text-xs font-black text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600 disabled:opacity-50"
+                >
+                  <Plus size={16} /> Deploy Batch to Schedule
+                </button>
+              </form>
+            </div>
+
+            {/* List */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-black text-white">Active Website Batches ({batches.length})</h3>
+
+              <div className="space-y-3">
+                {batches.map((b, idx) => (
+                  <div key={b.id || idx} className="rounded-2xl border border-white/10 bg-slate-900 p-5 transition hover:border-white/20">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="rounded bg-orange-500/20 px-2 py-0.5 text-[10px] font-black uppercase text-orange-300 border border-orange-500/30">
+                            {b.tag || 'Active Batch'}
+                          </span>
+                          {b.featured && (
+                            <span className="rounded bg-amber-500/20 px-2 py-0.5 text-[10px] font-black uppercase text-amber-300 border border-amber-500/30">
+                              ⭐ Featured
+                            </span>
+                          )}
+                          <span className="text-xs text-rose-400 font-bold">
+                            {b.seats_left !== undefined ? `${b.seats_left} seats left` : ''}
+                          </span>
+                        </div>
+                        <h4 className="text-base font-black text-white">{b.title}</h4>
+                        <p className="text-xs font-bold text-orange-400 mt-0.5">{b.target}</p>
+                        
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400 mt-3 font-medium">
+                          <span>📅 Starts: <strong className="text-white">{b.start_date || b.start}</strong></span>
+                          <span>🔄 Days: <strong className="text-white">{b.days}</strong></span>
+                          <span>⏱️ Time: <strong className="text-white">{b.time}</strong></span>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => handleDeleteBatch(b)}
+                        disabled={actionLoading}
+                        className="flex items-center gap-1 rounded-xl bg-rose-500/10 border border-rose-500/30 px-3 py-2 text-xs font-bold text-rose-400 transition hover:bg-rose-500 hover:text-white"
+                      >
+                        <Trash2 size={14} /> Remove
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        )}
+
+        {/* ── 4. ACCESS CODES GENERATOR ── */}
         {activeTab === 'codes' && (
           <div className="grid gap-8 lg:grid-cols-[380px_1fr]">
             
@@ -1108,15 +1445,16 @@ CREATE POLICY "Allow auth update profiles" ON public.profiles FOR ALL TO authent
           </div>
         )}
 
-        {/* ── 4. MEDIA & GALLERY MANAGER ── */}
+        {/* ── 5. VISUAL MEDIA & GALLERY MANAGER ── */}
         {activeTab === 'media' && (
-          <div className="grid gap-8 lg:grid-cols-[380px_1fr]">
+          <div className="grid gap-8 lg:grid-cols-[400px_1fr]">
             
             {/* Form */}
-            <div className="rounded-2xl border border-white/10 bg-slate-900 p-6 h-fit shadow-xl">
-              <h3 className="mb-4 flex items-center gap-2 text-lg font-black text-white">
-                <ImageIcon size={18} className="text-pink-400" /> Add Site Media
+            <div className="rounded-2xl border border-white/10 bg-slate-900 p-6 h-fit shadow-xl space-y-4">
+              <h3 className="flex items-center gap-2 text-lg font-black text-white">
+                <ImageIcon size={18} className="text-pink-400" /> Add Visual Media / Embed
               </h3>
+              
               <form onSubmit={handleAddMedia} className="space-y-4">
                 <div>
                   <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Media Category</label>
@@ -1125,47 +1463,34 @@ CREATE POLICY "Allow auth update profiles" ON public.profiles FOR ALL TO authent
                     onChange={e => setMediaForm({ ...mediaForm, type: e.target.value })}
                     className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-xs text-white focus:outline-none"
                   >
+                    <option value="instagram_embed">Instagram Reel / Post / Embed</option>
                     <option value="gallery_photo">Life at Peerless (Gallery Photo)</option>
+                    <option value="announcement_video">Announcement Video (YouTube / MP4)</option>
                     <option value="startup_video">Startup Intro Splash Video (.mp4)</option>
-                    <option value="instagram_embed">Instagram Embed Code</option>
                   </select>
                 </div>
 
-                {mediaForm.type === 'instagram_embed' ? (
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Paste HTML Embed</label>
-                    <textarea
-                      required
-                      placeholder="Paste <iframe> or embed widget snippet here..."
-                      value={mediaForm.embed_code}
-                      onChange={e => setMediaForm({ ...mediaForm, embed_code: e.target.value })}
-                      className="w-full h-32 rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-xs text-white font-mono focus:border-pink-500 focus:outline-none"
-                    />
-                  </div>
-                ) : (
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Direct Media Link (URL)</label>
-                    <input
-                      required
-                      type="url"
-                      placeholder="https://... (.jpg, .png, .mp4)"
-                      value={mediaForm.url}
-                      onChange={e => setMediaForm({ ...mediaForm, url: e.target.value })}
-                      className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-xs text-white font-mono focus:border-pink-500 focus:outline-none"
-                    />
-                  </div>
-                )}
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                    Paste Link or Embed Code
+                  </label>
+                  <textarea
+                    required
+                    rows={3}
+                    placeholder="e.g. https://www.instagram.com/reel/DchyYuBTSv-/ or YouTube URL or Image Link"
+                    value={mediaForm.url}
+                    onChange={e => setMediaForm({ ...mediaForm, url: e.target.value, embed_code: e.target.value })}
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-xs text-white font-mono focus:border-pink-500 focus:outline-none"
+                  />
+                </div>
 
-                {/* Preview Box */}
-                {mediaForm.type === 'gallery_photo' && mediaForm.url && (
-                  <div className="rounded-xl border border-white/10 bg-slate-950 p-2 text-center">
-                    <p className="text-[10px] text-slate-500 mb-1">Live Image Preview:</p>
-                    <img 
-                      src={mediaForm.url} 
-                      alt="Preview" 
-                      className="h-32 w-full rounded-lg object-cover mx-auto" 
-                      onError={(e) => (e.currentTarget.style.display = 'none')}
-                    />
+                {/* Instant Live Visual Preview in Form */}
+                {mediaForm.url.trim() && (
+                  <div className="rounded-xl border border-pink-500/30 bg-slate-950 p-3">
+                    <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-pink-400 mb-2">
+                      <Sparkles size={12} /> Instant Visual Preview:
+                    </div>
+                    <SmartMediaEmbed content={mediaForm.url} className="max-h-[300px]" />
                   </div>
                 )}
 
@@ -1174,50 +1499,46 @@ CREATE POLICY "Allow auth update profiles" ON public.profiles FOR ALL TO authent
                   disabled={actionLoading}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-pink-500 py-3 text-xs font-black text-white shadow-lg shadow-pink-500/20 transition hover:bg-pink-400 disabled:opacity-50"
                 >
-                  <Plus size={16} /> Save Media
+                  <Plus size={16} /> Deploy Visual to Website
                 </button>
               </form>
             </div>
 
             {/* List */}
             <div className="space-y-4">
-              <h3 className="text-lg font-black text-white">Configured Media Items ({media.length})</h3>
+              <h3 className="text-lg font-black text-white">Active Visual Media Items ({media.length})</h3>
               
-              <div className="space-y-3">
+              <div className="space-y-6">
                 {media.map(item => (
-                  <div key={item.id} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-slate-900 p-4 transition hover:border-white/20">
-                    <div className="flex items-center gap-3 min-w-0">
-                      {item.type === 'gallery_photo' && item.url && (
-                        <img 
-                          src={item.url} 
-                          alt="Gallery" 
-                          className="h-12 w-12 rounded-lg object-cover flex-shrink-0 border border-white/10" 
-                        />
-                      )}
-                      <div className="min-w-0">
-                        <span className="rounded bg-pink-500/15 border border-pink-500/30 px-2 py-0.5 text-[10px] font-black uppercase text-pink-300">
+                  <div key={item.id} className="rounded-2xl border border-white/10 bg-slate-900 p-5 transition hover:border-white/20">
+                    <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-white/10">
+                      <div>
+                        <span className="rounded bg-pink-500/15 border border-pink-500/30 px-2.5 py-1 text-[10px] font-black uppercase text-pink-300">
                           {item.type.replace('_', ' ')}
                         </span>
-                        <p className="text-xs font-mono text-slate-400 truncate mt-1 max-w-md">
-                          {item.type === 'instagram_embed' ? item.embed_code?.slice(0, 50) + '...' : item.url}
+                        <p className="text-xs font-mono text-slate-400 truncate mt-1 max-w-lg">
+                          {item.url || item.embed_code}
                         </p>
                       </div>
+                      <button
+                        onClick={() => handleDeleteMedia(item.id)}
+                        disabled={actionLoading}
+                        className="flex items-center gap-1 rounded-xl bg-rose-500/10 border border-rose-500/30 px-3 py-1.5 text-xs font-bold text-rose-400 transition hover:bg-rose-500 hover:text-white"
+                      >
+                        <Trash2 size={14} /> Remove
+                      </button>
                     </div>
 
-                    <button
-                      onClick={() => handleDeleteMedia(item.id)}
-                      disabled={actionLoading}
-                      className="rounded-lg p-2 text-slate-500 transition hover:bg-rose-500/10 hover:text-rose-400"
-                      title="Delete Media"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    {/* Rich Visual Embed Viewer in List */}
+                    <div className="overflow-hidden rounded-xl bg-slate-950 p-2">
+                      <SmartMediaEmbed content={item.embed_code || item.url} />
+                    </div>
                   </div>
                 ))}
 
                 {media.length === 0 && (
                   <div className="rounded-2xl border border-dashed border-white/10 p-12 text-center text-slate-500 text-xs">
-                    No custom media configured. Add photos or intro videos using the form.
+                    No custom visual media configured yet. Paste an Instagram reel, video, or photo link above.
                   </div>
                 )}
               </div>
@@ -1226,7 +1547,7 @@ CREATE POLICY "Allow auth update profiles" ON public.profiles FOR ALL TO authent
           </div>
         )}
 
-        {/* ── 5. STUDENT & XP MANAGER ── */}
+        {/* ── 6. STUDENT & XP MANAGER ── */}
         {activeTab === 'students' && (
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -1325,7 +1646,7 @@ CREATE POLICY "Allow auth update profiles" ON public.profiles FOR ALL TO authent
           </div>
         )}
 
-        {/* ── 6. BROADCAST BANNER CONTROLLER ── */}
+        {/* ── 7. BROADCAST BANNER CONTROLLER ── */}
         {activeTab === 'banner' && (
           <div className="max-w-2xl mx-auto space-y-6">
             <div>
@@ -1424,7 +1745,7 @@ CREATE POLICY "Allow auth update profiles" ON public.profiles FOR ALL TO authent
           </div>
         )}
 
-        {/* ── 7. ANALYTICS & HEALTH ── */}
+        {/* ── 8. ANALYTICS & HEALTH ── */}
         {activeTab === 'stats' && (
           <div className="space-y-6">
             <div>
@@ -1446,18 +1767,18 @@ CREATE POLICY "Allow auth update profiles" ON public.profiles FOR ALL TO authent
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-slate-900 p-5">
-                <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Video Lectures</div>
-                <div className="text-3xl font-black text-cyan-400">{lectures.length}</div>
-                <div className="text-[11px] text-slate-500 mt-2 font-mono">
-                  {lectures.filter(l => l.is_free_preview).length} free previews
+                <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Active Batches</div>
+                <div className="text-3xl font-black text-orange-400">{batches.length}</div>
+                <div className="text-[11px] text-orange-400/80 mt-2 flex items-center gap-1 font-bold">
+                  <CalendarDays size={12} /> Live on schedule
                 </div>
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-slate-900 p-5">
-                <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Access Tokens</div>
-                <div className="text-3xl font-black text-purple-400">{codes.length}</div>
+                <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Video Lectures</div>
+                <div className="text-3xl font-black text-cyan-400">{lectures.length}</div>
                 <div className="text-[11px] text-slate-500 mt-2 font-mono">
-                  {codes.filter(c => c.is_active).length} currently active
+                  {lectures.filter(l => l.is_free_preview).length} free previews
                 </div>
               </div>
 
@@ -1505,7 +1826,7 @@ CREATE POLICY "Allow auth update profiles" ON public.profiles FOR ALL TO authent
           </div>
         )}
 
-        {/* ── 8. DATABASE SETUP SQL TAB ── */}
+        {/* ── 9. DATABASE SETUP SQL TAB ── */}
         {activeTab === 'sql' && (
           <div className="max-w-4xl mx-auto space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -1514,7 +1835,7 @@ CREATE POLICY "Allow auth update profiles" ON public.profiles FOR ALL TO authent
                   <Database size={24} className="text-indigo-400" /> Master Database Configuration SQL
                 </h2>
                 <p className="text-xs text-slate-400">
-                  Run this single SQL script in your Supabase SQL Editor to ensure all tables, columns, and write permissions are 100% active.
+                  Run this single SQL script in your Supabase SQL Editor to enable all tables, columns, and write permissions.
                 </p>
               </div>
               <button

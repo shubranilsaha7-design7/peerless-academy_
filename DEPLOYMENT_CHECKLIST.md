@@ -111,7 +111,30 @@ USING (true);
 
 
 -- ============================================================
--- 3. ACCESS CODES & USER ACCESS TABLES
+-- 3. BATCHES & TIMINGS TABLE (Dynamic Schedule)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.batches (
+  id           uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  title        text NOT NULL,
+  tag          text DEFAULT 'Admissions Open',
+  target       text NOT NULL,
+  start_date   text NOT NULL,
+  days         text NOT NULL,
+  time         text NOT NULL,
+  features     text[] DEFAULT ARRAY['Daily DPPs', 'Weekly mock tests'],
+  seats_total  integer DEFAULT 25,
+  seats_left   integer DEFAULT 8,
+  is_featured  boolean DEFAULT false,
+  is_active    boolean DEFAULT true,
+  created_at   timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.batches ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow public all batches" ON public.batches FOR ALL TO public, anon, authenticated USING (true) WITH CHECK (true);
+
+
+-- ============================================================
+-- 4. ACCESS CODES & USER ACCESS TABLES
 -- ============================================================
 CREATE TABLE IF NOT EXISTS public.access_codes (
   id           uuid DEFAULT gen_random_uuid() PRIMARY KEY,

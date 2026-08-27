@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Instagram } from 'lucide-react';
+import { Instagram, Sparkles, Image as ImageIcon, Video, Film } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import SmartMediaEmbed from '@/components/SmartMediaEmbed';
 
 export default function LifeAtPeerless() {
-  const [photos, setPhotos] = useState<string[]>([]);
-  const [embedHtml, setEmbedHtml] = useState<string | null>(null);
+  const [mediaItems, setMediaItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -17,11 +17,7 @@ export default function LifeAtPeerless() {
           .order('created_at', { ascending: false });
 
         if (!error && data) {
-          const gallery = data.filter((m: any) => m.type === 'gallery_photo').map((m: any) => m.url);
-          const instagram = data.find((m: any) => m.type === 'instagram_embed')?.embed_code;
-          
-          setPhotos(gallery);
-          if (instagram) setEmbedHtml(instagram);
+          setMediaItems(data);
         }
       } catch (err) {
         console.error("Failed to fetch site media:", err);
@@ -35,78 +31,111 @@ export default function LifeAtPeerless() {
 
   if (loading) return null;
 
+  const photos = mediaItems.filter(m => m.type === 'gallery_photo' && m.url);
+  const socialEmbeds = mediaItems.filter(m => (m.type === 'instagram_embed' || m.type === 'social_embed') && (m.embed_code || m.url));
+  const announcementVideos = mediaItems.filter(m => m.type === 'announcement_video' && m.url);
+
+  // Default photos fallback if none added yet
+  const defaultPhotos = [
+    '/images/WhatsApp_Image_2026-08-17_at_21.04.26.jpeg',
+    '/images/WhatsApp_Image_2026-08-17_at_21.03.36.jpeg',
+    '/images/WhatsApp_Image_2026-08-17_at_21.03.11.jpeg',
+  ];
+
+  const displayPhotos = photos.length > 0 ? photos.map(p => p.url) : defaultPhotos;
+
   return (
-    <section className="bg-slate-950 px-5 py-20 lg:px-8">
+    <section className="bg-slate-950 px-5 py-20 lg:px-8 border-b border-white/5">
       <div className="mx-auto max-w-[1240px]">
-        <div className="mb-12 text-center">
-          <h2 className="text-3xl font-black text-white sm:text-4xl">Media Gallery & Announcements</h2>
-          <p className="mt-4 text-sm text-slate-400">Glimpses of our students, events, and culture.</p>
+        
+        {/* Section Header */}
+        <div className="mb-14 text-center">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-pink-500/30 bg-pink-500/10 px-3.5 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-pink-300">
+            <Sparkles size={13} className="text-pink-400" /> Life At Peerless
+          </div>
+          <h2 className="text-3xl font-black text-white sm:text-5xl tracking-tight">
+            Media Gallery & Announcements
+          </h2>
+          <p className="mt-4 text-sm text-slate-400 max-w-xl mx-auto">
+            Experience our interactive lectures, student milestones, campus events, and real-time community updates.
+          </p>
         </div>
 
-        {/* Dynamic Gallery Photos */}
-        {photos.length > 0 && (
-          <div className="mb-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {photos.map((src, idx) => (
-              <div key={idx} className="group relative aspect-square overflow-hidden rounded-[2rem] bg-slate-900 shadow-xl border border-white/5">
+        {/* ── 1. PHOTO GALLERY GRID ── */}
+        <div className="mb-16">
+          <div className="flex items-center gap-2 mb-6 text-xs font-black uppercase tracking-wider text-slate-400">
+            <ImageIcon size={16} className="text-cyan-400" /> Curated Moments
+          </div>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {displayPhotos.map((src, idx) => (
+              <div 
+                key={idx} 
+                className="group relative aspect-square overflow-hidden rounded-[2rem] bg-slate-900 shadow-2xl border border-white/10 transition duration-500 hover:border-pink-500/40 hover:-translate-y-1.5"
+              >
                 <img 
                   src={src} 
-                  alt={`Peerless Gallery ${idx + 1}`} 
+                  alt={`Life at Peerless ${idx + 1}`} 
                   className="h-full w-full object-cover opacity-90 transition duration-700 group-hover:scale-105 group-hover:opacity-100"
+                  onError={(e) => {
+                    // Fallback to placeholder if a bad URL was entered
+                    e.currentTarget.src = defaultPhotos[idx % defaultPhotos.length];
+                  }}
                 />
-                <div className="absolute inset-0 rounded-[2rem] ring-1 ring-inset ring-white/10" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-0 transition duration-300 group-hover:opacity-100 flex items-end p-6">
+                  <span className="text-xs font-bold text-white tracking-wide">Peerless Academy Campus</span>
+                </div>
               </div>
             ))}
           </div>
-        )}
+        </div>
 
-        {/* Dynamic Instagram / Media Embed */}
-        <div className="rounded-[2rem] border border-white/10 bg-slate-900 p-6 sm:p-10 shadow-2xl">
-          <div className="mb-8 flex items-center justify-between border-b border-white/10 pb-6">
+        {/* ── 2. DYNAMIC SOCIAL & REEL VISUAL EMBEDS ── */}
+        <div className="rounded-[2.5rem] border border-white/10 bg-slate-900/90 p-6 sm:p-10 shadow-2xl backdrop-blur-xl">
+          
+          <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500 text-white">
-                <Instagram size={24} />
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500 text-white shadow-xl shadow-pink-500/20">
+                <Instagram size={28} />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-white">@peerlessacademyofficial</h3>
-                <p className="text-sm text-slate-400">Follow us on Instagram</p>
+                <h3 className="text-xl font-black text-white">@peerlessacademyofficial</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Official Instagram Feed & Community Reels</p>
               </div>
             </div>
             <a 
               href="https://instagram.com/peerlessacademyofficial" 
               target="_blank" 
               rel="noreferrer"
-              className="hidden sm:flex rounded-full bg-white/10 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-white/20"
+              className="flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 px-6 py-3 text-xs font-black text-white shadow-lg shadow-pink-500/25 transition hover:scale-105"
             >
-              Follow
+              <Instagram size={15} /> Follow on Instagram
             </a>
           </div>
-          
-          <div className="relative w-full overflow-hidden rounded-xl bg-slate-800/50 min-h-[400px] flex items-center justify-center border border-white/5">
-            {embedHtml ? (
-              <div 
-                className="w-full h-full flex justify-center items-center overflow-auto"
-                dangerouslySetInnerHTML={{ __html: embedHtml }} 
-              />
-            ) : (
-              <div className="text-center p-6">
-                <Instagram size={40} className="mx-auto text-slate-500 mb-4 opacity-50" />
-                <p className="text-sm font-medium text-slate-400">Instagram Feed Widget Container</p>
-                <p className="text-xs text-slate-500 mt-2 max-w-sm">
-                  Add your embed code in the Admin Control Panel.
-                </p>
-              </div>
-            )}
-          </div>
-          
-          <a 
-            href="https://instagram.com/peerlessacademyofficial" 
-            target="_blank" 
-            rel="noreferrer"
-            className="mt-6 flex w-full justify-center sm:hidden rounded-full bg-white/10 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/20"
-          >
-            Follow on Instagram
-          </a>
+
+          {/* Render Rich Visual Embeds */}
+          {socialEmbeds.length > 0 ? (
+            <div className="grid gap-8 sm:grid-cols-1 md:grid-cols-2 items-center justify-center">
+              {socialEmbeds.map((embedItem, idx) => (
+                <div key={embedItem.id || idx} className="w-full flex justify-center">
+                  <SmartMediaEmbed 
+                    content={embedItem.embed_code || embedItem.url} 
+                    className="w-full"
+                  />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="w-full flex flex-col items-center justify-center p-8 sm:p-12 text-center rounded-2xl border border-dashed border-white/10 bg-slate-950/50">
+              <Instagram size={40} className="text-pink-400 mb-3 opacity-60 animate-bounce" />
+              <h4 className="text-base font-bold text-white">Instagram Media Hub Active</h4>
+              <p className="mt-1 text-xs text-slate-400 max-w-md">
+                Paste any Instagram Reel, Post URL, or embed code in the Admin Control Panel to display it as an interactive visual player here!
+              </p>
+            </div>
+          )}
+
         </div>
+
       </div>
     </section>
   );
