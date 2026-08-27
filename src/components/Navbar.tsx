@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import {
   ChevronDown, LogOut, Menu, Moon, Phone,
-  Sun, Swords, Zap, Flame, X,
+  Sun, Swords, Zap, Flame, X, Shield
 } from 'lucide-react';
 
 const logoImage = '/images/WhatsApp_Image_2026-08-17_at_21.04.26.jpeg';
@@ -28,6 +28,7 @@ interface NavbarProps {
   onSignOut:       () => void;
   onEnterArena:    () => void;
   onOpenLeaderboard: () => void;
+  onOpenAdmin?:     () => void;
 }
 
 function getDisplayName(user: User): string {
@@ -49,13 +50,14 @@ function levelLabel(lvl: number) {
 
 export default function Navbar({
   user, xp, streak, level, isDark,
-  onToggleTheme, onSignIn, onSignOut, onEnterArena, onOpenLeaderboard
+  onToggleTheme, onSignIn, onSignOut, onEnterArena, onOpenLeaderboard, onOpenAdmin
 }: NavbarProps) {
   const [menuOpen,        setMenuOpen]        = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
   const displayName = user ? getDisplayName(user) : null;
   const avatarUrl   = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
+  const isAdmin     = user?.email === 'admin@peerlessacademy.com' || user?.email === 'shubranilsaha7@gmail.com' || user?.email === 'xprasenjit1992@gmail.com';
 
   return (
     <div className="fixed inset-x-0 top-0 z-[60]">
@@ -165,6 +167,17 @@ export default function Navbar({
               {isDark ? <Sun size={18} /> : <Moon size={18} />}
             </button>
 
+            {/* Admin Console Direct Button */}
+            {isAdmin && onOpenAdmin && (
+              <button
+                onClick={onOpenAdmin}
+                className="hidden xl:flex items-center gap-1.5 rounded-full border border-indigo-500/40 bg-indigo-500/15 px-3 py-1.5 text-xs font-black text-indigo-300 shadow-[0_0_15px_rgba(99,102,241,0.2)] transition hover:bg-indigo-500 hover:text-white"
+                title="Open Admin Control Center"
+              >
+                <Shield size={13} className="text-indigo-400" /> Admin
+              </button>
+            )}
+
             {/* Auth section */}
             {user ? (
               <div className="relative">
@@ -200,6 +213,16 @@ export default function Navbar({
                           <span className="text-orange-400">🔥 {streak} streak</span>
                         </div>
                       </div>
+
+                      {isAdmin && onOpenAdmin && (
+                        <button
+                          onClick={() => { onOpenAdmin(); setProfileMenuOpen(false); }}
+                          className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-bold text-indigo-400 hover:bg-indigo-500/10 transition mb-1"
+                        >
+                          <Shield size={14} /> Admin Control Center
+                        </button>
+                      )}
+
                       <button
                         onClick={() => { onSignOut(); setProfileMenuOpen(false); }}
                         className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-red-400 hover:bg-red-500/10 transition"
@@ -257,6 +280,14 @@ export default function Navbar({
               <a href="tel:+918794130855" className="mt-2 flex items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-3 text-sm font-bold text-white">
                 Call: +91 87941 30855
               </a>
+              {isAdmin && onOpenAdmin && (
+                <button
+                  onClick={() => { onOpenAdmin(); setMenuOpen(false); }}
+                  className="mt-2 flex items-center justify-center gap-2 rounded-lg border border-indigo-500/40 bg-indigo-500/15 px-4 py-3 text-sm font-bold text-indigo-300"
+                >
+                  <Shield size={15} /> Admin Control Center
+                </button>
+              )}
               {user ? (
                 <button
                   onClick={() => { onSignOut(); setMenuOpen(false); }}

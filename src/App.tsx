@@ -44,6 +44,7 @@ import TermsOfService from '@/components/TermsOfService';
 import LifeAtPeerless from '@/components/LifeAtPeerless';
 import CommandPalette from '@/components/CommandPalette';
 import Leaderboard from '@/components/Leaderboard';
+import BroadcastBanner from '@/components/BroadcastBanner';
 
 // @ts-ignore
 import PWAInstallPrompt from '@/components/PWAInstallPrompt';
@@ -402,6 +403,9 @@ function AppInner() {
       {/* ── INTRO VIDEO (once per session) ── */}
       {!introPlayed && <IntroVideo onDone={handleIntroDone} />}
 
+      {/* ── BROADCAST ANNOUNCEMENT BANNER ── */}
+      <BroadcastBanner />
+
       {/* ── NAVBAR ── */}
       <Navbar
         user={user}
@@ -414,6 +418,7 @@ function AppInner() {
         onSignOut={handleSignOut}
         onEnterArena={openArena}
         onOpenLeaderboard={() => setActiveRoute('leaderboard')}
+        onOpenAdmin={() => setActiveRoute('admin')}
       />
 
       <main>
