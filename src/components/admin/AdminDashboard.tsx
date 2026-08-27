@@ -78,7 +78,8 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
   const [mediaForm, setMediaForm] = useState({ 
     type: 'instagram_embed', 
     url: '', 
-    embed_code: '' 
+    embed_code: '',
+    hideIgHeader: false
   });
 
   const [bannerForm, setBannerForm] = useState({
@@ -480,7 +481,17 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
     e.preventDefault();
     setActionLoading(true);
     try {
-      const inputContent = mediaForm.url.trim() || mediaForm.embed_code.trim();
+      let inputContent = mediaForm.url.trim() || mediaForm.embed_code.trim();
+      
+      // Append hide_ig_header parameter if checked
+      if (mediaForm.hideIgHeader && mediaForm.type === 'instagram_embed' && inputContent) {
+        if (inputContent.includes('?')) {
+          inputContent += '&hide_ig_header=true';
+        } else {
+          inputContent += '?hide_ig_header=true';
+        }
+      }
+
       const payload = {
         type: mediaForm.type,
         url: inputContent,
@@ -490,7 +501,7 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
 
       const { error } = await (supabase as any).from('site_media').insert([payload]);
       if (error) throw error;
-      setMediaForm({ type: 'instagram_embed', url: '', embed_code: '' });
+      setMediaForm({ type: 'instagram_embed', url: '', embed_code: '', hideIgHeader: false });
       fetchAllData();
       showToast('Media visual added and live on website!', 'success');
     } catch (err: any) {
@@ -1483,6 +1494,18 @@ CREATE POLICY "Allow public all profiles" ON public.profiles FOR ALL TO public, 
                     className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-xs text-white font-mono focus:border-pink-500 focus:outline-none"
                   />
                 </div>
+
+                {mediaForm.type === 'instagram_embed' && (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={mediaForm.hideIgHeader}
+                      onChange={e => setMediaForm({ ...mediaForm, hideIgHeader: e.target.checked })}
+                      className="rounded border-slate-700 bg-slate-900 text-pink-500 focus:ring-pink-500 focus:ring-offset-slate-950"
+                    />
+                    <span className="text-xs font-semibold text-slate-300">Disable Account Name / Header on Video</span>
+                  </label>
+                )}
 
                 {/* Instant Live Visual Preview in Form */}
                 {mediaForm.url.trim() && (

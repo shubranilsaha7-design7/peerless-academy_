@@ -22,18 +22,17 @@ export default function SmartMediaEmbed({ content, className = '' }: SmartMediaE
   }
 
   // Helper to extract Instagram Shortcode
-  // Matches: instagram.com/reel/CODE/, instagram.com/p/CODE/, instagram.com/tv/CODE/
   const igMatch = trimmed.match(/instagram\.com\/(?:[a-zA-Z0-9_.]+\/)?(reel|p|tv)\/([a-zA-Z0-9_-]+)/i);
   if (igMatch) {
     const type = igMatch[1]; // reel or p
     const code = igMatch[2];
     const embedUrl = `https://www.instagram.com/${type}/${code}/embed/`;
+    const hideHeader = trimmed.includes('hide_ig_header=true');
 
     return (
-      <div className={`w-full flex flex-col items-center justify-center p-2 sm:p-4 ${className}`}>
-        {/* We use overflow-hidden and negative margins to crop out the thick white Instagram header and bezels */}
-        <div className="relative w-full max-w-[340px] overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950 shadow-2xl">
-          <div className="-mt-[58px] -mb-[58px] -mx-[2px]">
+      <div className={`w-full flex flex-col items-center justify-center ${className}`}>
+        <div className={`relative w-full max-w-[340px] overflow-hidden rounded-[2rem] bg-transparent shadow-xl`}>
+          <div className={hideHeader ? "-mt-[58px] -mb-[58px] -mx-[2px]" : ""}>
             <iframe
               src={embedUrl}
               title={`Instagram ${type}`}
@@ -50,14 +49,13 @@ export default function SmartMediaEmbed({ content, className = '' }: SmartMediaE
   }
 
   // Helper to extract YouTube Video ID
-  // Matches: youtu.be/ID, youtube.com/watch?v=ID, youtube.com/shorts/ID, youtube.com/embed/ID
   const ytMatch = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/i);
   if (ytMatch) {
     const videoId = ytMatch[1];
     const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=0&rel=0&modestbranding=1`;
 
     return (
-      <div className={`relative w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl aspect-video ${className}`}>
+      <div className={`relative w-full overflow-hidden rounded-2xl bg-transparent shadow-xl aspect-video ${className}`}>
         <iframe
           src={embedUrl}
           title="YouTube Video Embed"
@@ -72,7 +70,7 @@ export default function SmartMediaEmbed({ content, className = '' }: SmartMediaE
   // Check if it's a Direct Video file (.mp4, .webm, .ogg, .mov)
   if (/\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(trimmed)) {
     return (
-      <div className={`relative w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl ${className}`}>
+      <div className={`relative w-full overflow-hidden rounded-2xl bg-transparent shadow-xl ${className}`}>
         <video
           src={trimmed}
           controls
