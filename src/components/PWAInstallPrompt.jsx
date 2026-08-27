@@ -69,11 +69,11 @@ export default function PWAInstallPrompt() {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-          className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-sm z-[9999]"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-6 pointer-events-none"
           role="dialog"
           aria-label="Install Peerless Academy app"
         >
-          <div className="relative flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-900/95 p-5 shadow-2xl backdrop-blur-md">
+          <div className="w-full max-w-sm pointer-events-auto relative flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-900/95 p-5 shadow-2xl backdrop-blur-md mx-auto">
             {/* Dismiss */}
             <button
               onClick={handleDismiss}

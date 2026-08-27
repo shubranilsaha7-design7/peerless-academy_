@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Search, Mail, Phone, Calendar, RefreshCcw, Video, Key, BarChart3, Plus, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, Search, Mail, Phone, Calendar, RefreshCcw, Video, Key, BarChart3, Plus, Trash2, CheckCircle, XCircle, Image as ImageIcon } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 
 interface AdminDashboardProps {
@@ -9,19 +9,21 @@ interface AdminDashboardProps {
 }
 
 export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'enquiries' | 'lectures' | 'codes' | 'stats'>('enquiries');
+  const [activeTab, setActiveTab] = useState<'enquiries' | 'lectures' | 'codes' | 'media' | 'stats'>('enquiries');
   const [loading, setLoading] = useState(true);
   
   // Data States
   const [inquiries, setInquiries] = useState<any[]>([]);
   const [lectures, setLectures] = useState<any[]>([]);
   const [codes, setCodes] = useState<any[]>([]);
+  const [media, setMedia] = useState<any[]>([]);
   
   const [stats, setStats] = useState({ activeLectures: 0, enrolledStudents: 0, redemptions: 0 });
 
   // Forms
   const [lectureForm, setLectureForm] = useState({ title: '', subject: 'Physics', grade_level: 'Class 10', video_url: '', duration: '', is_free_preview: false });
   const [codeForm, setCodeForm] = useState({ code: '', max_uses: 1, description: '' });
+  const [mediaForm, setMediaForm] = useState({ type: 'gallery_photo', url: '', embed_code: '' });
 
   const isAdmin = user?.email === 'admin@peerlessacademy.com' || user?.email === 'shubranilsaha7@gmail.com' || user?.email === 'xprasenjit1992@gmail.com';
 
@@ -45,6 +47,10 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
       // Codes
       const { data: cds } = await (supabase as any).from('access_codes').select('*').order('created_at', { ascending: false });
       setCodes(cds || []);
+
+      // Media
+      const { data: mda } = await (supabase as any).from('site_media').select('*').order('created_at', { ascending: false });
+      setMedia(mda || []);
       
       // Stats
       const { count: usersCount } = await (supabase as any).from('profiles').select('*', { count: 'exact', head: true });
@@ -90,6 +96,20 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
     fetchAllData();
   };
 
+  // Media Actions
+  const handleAddMedia = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await (supabase as any).from('site_media').insert([mediaForm]);
+    setMediaForm({ type: 'gallery_photo', url: '', embed_code: '' });
+    fetchAllData();
+  };
+
+  const handleDeleteMedia = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this media item?')) return;
+    await (supabase as any).from('site_media').delete().eq('id', id);
+    fetchAllData();
+  };
+
   if (!isAdmin) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 text-white">
@@ -110,8 +130,8 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
           <h1 className="text-xl font-bold text-white hidden sm:block">Admin Console</h1>
         </div>
         
-        <div className="flex gap-2">
-          {['enquiries', 'lectures', 'codes', 'stats'].map(tab => (
+        <div className="flex gap-2 flex-wrap">
+          {['enquiries', 'lectures', 'codes', 'media', 'stats'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab as any)}
@@ -238,6 +258,52 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* MEDIA TAB */}
+        {activeTab === 'media' && (
+          <div className="grid lg:grid-cols-[350px_1fr] gap-8">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 h-fit">
+               <h3 className="text-lg font-black text-white mb-4 flex items-center gap-2"><ImageIcon size={18} className="text-pink-400"/> Add Media</h3>
+               <form onSubmit={handleAddMedia} className="space-y-4">
+                 <select value={mediaForm.type} onChange={e => setMediaForm({...mediaForm, type: e.target.value})} className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white">
+                   <option value="startup_video">Startup Intro Video</option>
+                   <option value="gallery_photo">Life at Peerless Gallery Photo</option>
+                   <option value="instagram_embed">Instagram Embed Code</option>
+                 </select>
+                 
+                 {mediaForm.type === 'instagram_embed' ? (
+                   <textarea placeholder="Paste <iframe> or Embed HTML" value={mediaForm.embed_code} onChange={e => setMediaForm({...mediaForm, embed_code: e.target.value})} className="w-full h-32 bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white font-mono" />
+                 ) : (
+                   <input type="url" placeholder="Direct Media URL (.mp4, .jpg, .png)" required value={mediaForm.url} onChange={e => setMediaForm({...mediaForm, url: e.target.value})} className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white" />
+                 )}
+                 
+                 <button type="submit" className="w-full flex justify-center items-center gap-2 bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 rounded-xl transition">
+                   <Plus size={16} /> Add Media
+                 </button>
+               </form>
+            </div>
+            
+            <div className="space-y-4">
+              <h3 className="text-xl font-black text-white">Active Site Media</h3>
+              {media.map(item => (
+                <div key={item.id} className="flex items-center justify-between p-4 bg-slate-900 border border-slate-800 rounded-xl">
+                  <div className="flex-1 min-w-0 pr-4">
+                    <h4 className="font-bold text-white uppercase text-xs tracking-wider text-pink-400 mb-1">
+                      {item.type.replace('_', ' ')}
+                    </h4>
+                    <div className="text-sm text-slate-400 truncate">
+                      {item.type === 'instagram_embed' ? 'HTML Embed Code Snippet' : item.url}
+                    </div>
+                  </div>
+                  <button onClick={() => handleDeleteMedia(item.id)} className="p-2 text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition">
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              ))}
+              {media.length === 0 && <p className="text-slate-500 text-sm">No custom media configured.</p>}
             </div>
           </div>
         )}

@@ -114,3 +114,21 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 -- Allow public read access to essential ranking fields 
 CREATE POLICY " Allow public to view leaderboard "profiles ON public.profiles FOR SELECT USING (true); 
 ` 
+ 
+## Phase 7: Site Media Management 
+ 
+### SQL: Create Site Media Table 
+Run this to create the media table for dynamic homepage photos and intro video. 
+`sql 
+CREATE TABLE IF NOT EXISTS public.site_media ( 
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY, 
+  type text NOT NULL, 
+  url text, 
+  embed_code text, 
+  is_active boolean DEFAULT true, 
+  created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL 
+); 
+ 
+ALTER TABLE public.site_media ENABLE ROW LEVEL SECURITY; 
+CREATE POLICY " Allow public read access to site "media ON public.site_media FOR SELECT USING (true); 
+` 
