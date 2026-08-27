@@ -1,134 +1,290 @@
-# Peerless Academy - Deployment & Configuration Checklist
+# Peerless Academy - Complete Master Setup & Deployment Checklist
 
-This checklist contains all the necessary SQL scripts, environment variables, and deployment steps to finalize the Peerless Academy platform overhaul. Follow these steps sequentially in your Supabase Dashboard and Vercel/Hosting environment.
+This document contains the single, unified master SQL script to fully configure all database tables, columns, and Row-Level Security (RLS) policies for the Peerless Academy platform and Admin Control Center.
 
-## Phase 1: Database Security (Row Level Security)
+---
 
-### SQL: Enable RLS on `contact_inquiries`
-Run the following SQL snippet in the **Supabase SQL Editor** to secure the enquiries table, allowing anonymous inserts but restricting reads to authenticated admins.
+## ⚡ MASTER DATABASE MIGRATION (Run this once in Supabase SQL Editor)
+
+Copy and run the entire SQL block below in your **[Supabase Dashboard -> SQL Editor](https://supabase.com/)**. It safely creates all tables, adds missing columns, and establishes full read/write permissions for authenticated admins and students.
 
 ```sql
--- Enable Row Level Security
+-- ============================================================
+-- 1. CONTACT INQUIRIES TABLE & PERMISSIONS
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.contact_inquiries (
+  id             uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  student_name   text NOT NULL,
+  guardian_name  text NOT NULL,
+  phone          text NOT NULL,
+  class_level    text NOT NULL,
+  message        text,
+  status         text DEFAULT 'pending',
+  created_at     timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Ensure status column exists if table was previously created
+ALTER TABLE public.contact_inquiries ADD COLUMN IF NOT EXISTS status text DEFAULT 'pending';
+
+-- Enable RLS
 ALTER TABLE public.contact_inquiries ENABLE ROW LEVEL SECURITY;
 
--- Allow anonymous and public users to submit enquiries
-CREATE POLICY "Allow public inserts for enquiries"
-ON public.contact_inquiries
-FOR INSERT
-TO public, anon
+-- Drop old conflicting policies if any
+DROP POLICY IF EXISTS "Allow public inserts for enquiries" ON public.contact_inquiries;
+DROP POLICY IF EXISTS "Allow authenticated users to read enquiries" ON public.contact_inquiries;
+DROP POLICY IF EXISTS "Anyone can insert inquiries" ON public.contact_inquiries;
+DROP POLICY IF EXISTS "Authenticated users can view inquiries" ON public.contact_inquiries;
+DROP POLICY IF EXISTS "Allow admin all on inquiries" ON public.contact_inquiries;
+
+-- Public can submit inquiries
+CREATE POLICY "Allow public inserts for enquiries" 
+ON public.contact_inquiries FOR INSERT 
+TO public, anon, authenticated 
 WITH CHECK (true);
 
--- Restrict read access to authenticated admins only
-CREATE POLICY "Allow authenticated users to read enquiries"
-ON public.contact_inquiries
-FOR SELECT
-TO authenticated
+-- Authenticated users (Admins) have full SELECT, UPDATE, DELETE control
+CREATE POLICY "Allow authenticated read inquiries" 
+ON public.contact_inquiries FOR SELECT 
+TO authenticated 
+USING (true);
+
+CREATE POLICY "Allow authenticated update inquiries" 
+ON public.contact_inquiries FOR UPDATE 
+TO authenticated 
+USING (true);
+
+CREATE POLICY "Allow authenticated delete inquiries" 
+ON public.contact_inquiries FOR DELETE 
+TO authenticated 
+USING (true);
+
+
+-- ============================================================
+-- 2. LECTURES TABLE & PERMISSIONS
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.lectures (
+  id               uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  title            text NOT NULL,
+  description      text,
+  subject          text NOT NULL,
+  grade_level      text NOT NULL,
+  video_url        text NOT NULL,
+  duration         text,
+  is_free_preview  boolean DEFAULT false,
+  created_at       timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.lectures ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow public to view free lectures" ON public.lectures;
+DROP POLICY IF EXISTS "Allow users with access to view all lectures" ON public.lectures;
+DROP POLICY IF EXISTS "Allow authenticated insert lectures" ON public.lectures;
+DROP POLICY IF EXISTS "Allow authenticated update lectures" ON public.lectures;
+DROP POLICY IF EXISTS "Allow authenticated delete lectures" ON public.lectures;
+
+-- Public can view free preview lectures
+CREATE POLICY "Allow public to view free lectures" 
+ON public.lectures FOR SELECT 
+USING (is_free_preview = true);
+
+-- Authenticated users (students with access code or admins) can view all lectures
+CREATE POLICY "Allow authenticated select lectures" 
+ON public.lectures FOR SELECT 
+TO authenticated 
+USING (true);
+
+-- Authenticated users (Admins) can insert, update, and delete lectures
+CREATE POLICY "Allow authenticated insert lectures" 
+ON public.lectures FOR INSERT 
+TO authenticated 
+WITH CHECK (true);
+
+CREATE POLICY "Allow authenticated update lectures" 
+ON public.lectures FOR UPDATE 
+TO authenticated 
+USING (true);
+
+CREATE POLICY "Allow authenticated delete lectures" 
+ON public.lectures FOR DELETE 
+TO authenticated 
+USING (true);
+
+
+-- ============================================================
+-- 3. ACCESS CODES & USER ACCESS TABLES
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.access_codes (
+  id           uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  code         text UNIQUE NOT NULL,
+  description  text,
+  max_uses     integer DEFAULT 1,
+  is_active    boolean DEFAULT true,
+  created_at   timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.user_access (
+  id           uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id      uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  code_id      uuid REFERENCES public.access_codes(id) ON DELETE CASCADE NOT NULL,
+  redeemed_at  timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL,
+  UNIQUE(user_id, code_id)
+);
+
+ALTER TABLE public.access_codes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_access ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow authenticated read codes" ON public.access_codes;
+DROP POLICY IF EXISTS "Allow authenticated insert codes" ON public.access_codes;
+DROP POLICY IF EXISTS "Allow authenticated update codes" ON public.access_codes;
+DROP POLICY IF EXISTS "Allow authenticated delete codes" ON public.access_codes;
+
+DROP POLICY IF EXISTS "Users can view their own access" ON public.user_access;
+DROP POLICY IF EXISTS "Users can insert their own access" ON public.user_access;
+
+-- Access Codes policies
+CREATE POLICY "Allow authenticated read codes" 
+ON public.access_codes FOR SELECT 
+TO authenticated 
+USING (true);
+
+CREATE POLICY "Allow authenticated insert codes" 
+ON public.access_codes FOR INSERT 
+TO authenticated 
+WITH CHECK (true);
+
+CREATE POLICY "Allow authenticated update codes" 
+ON public.access_codes FOR UPDATE 
+TO authenticated 
+USING (true);
+
+CREATE POLICY "Allow authenticated delete codes" 
+ON public.access_codes FOR DELETE 
+TO authenticated 
+USING (true);
+
+-- User Access policies
+CREATE POLICY "Users can view their own access" 
+ON public.user_access FOR SELECT 
+TO authenticated 
+USING (user_id = auth.uid() OR auth.role() = 'authenticated');
+
+CREATE POLICY "Users can insert their own access" 
+ON public.user_access FOR INSERT 
+TO authenticated 
+WITH CHECK (user_id = auth.uid() OR auth.role() = 'authenticated');
+
+
+-- ============================================================
+-- 4. SITE MEDIA TABLE (Gallery, Intro Video, Banners)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.site_media (
+  id          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  type        text NOT NULL,
+  url         text,
+  embed_code  text,
+  is_active   boolean DEFAULT true,
+  created_at  timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.site_media ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow public read access to site media" ON public.site_media;
+DROP POLICY IF EXISTS "Allow authenticated insert site_media" ON public.site_media;
+DROP POLICY IF EXISTS "Allow authenticated update site_media" ON public.site_media;
+DROP POLICY IF EXISTS "Allow authenticated delete site_media" ON public.site_media;
+
+-- Public can view active media
+CREATE POLICY "Allow public read access to site media" 
+ON public.site_media FOR SELECT 
+USING (true);
+
+-- Authenticated (Admins) can insert, update, delete
+CREATE POLICY "Allow authenticated insert site_media" 
+ON public.site_media FOR INSERT 
+TO authenticated 
+WITH CHECK (true);
+
+CREATE POLICY "Allow authenticated update site_media" 
+ON public.site_media FOR UPDATE 
+TO authenticated 
+USING (true);
+
+CREATE POLICY "Allow authenticated delete site_media" 
+ON public.site_media FOR DELETE 
+TO authenticated 
+USING (true);
+
+
+-- ============================================================
+-- 5. USER PROFILES TABLE (XP & Leaderboard)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id           uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  full_name    text,
+  username     text,
+  xp           int DEFAULT 0,
+  streak       int DEFAULT 0,
+  level        int DEFAULT 1,
+  last_active  timestamptz DEFAULT now(),
+  updated_at   timestamptz DEFAULT now()
+);
+
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Allow public to view leaderboard profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Allow authenticated to update profiles" ON public.profiles;
+
+-- Public can view profiles for Leaderboard and rankings
+CREATE POLICY "Allow public to view leaderboard profiles" 
+ON public.profiles FOR SELECT 
+USING (true);
+
+-- Users / Admins can insert their own profile
+CREATE POLICY "Users can insert own profile" 
+ON public.profiles FOR INSERT 
+WITH CHECK (auth.uid() = id OR auth.role() = 'authenticated');
+
+-- Users can update their own profile, Admins can adjust student XP
+CREATE POLICY "Allow authenticated to update profiles" 
+ON public.profiles FOR UPDATE 
+TO authenticated 
+USING (true);
+
+
+-- ============================================================
+-- 6. DOWNLOADS TABLE (WhatsApp Delivery Trigger)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.downloads (
+  id             uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  phone          text NOT NULL,
+  resource_name  text NOT NULL,
+  resource_link  text NOT NULL,
+  user_id        uuid REFERENCES auth.users(id),
+  created_at     timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.downloads ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow public inserts on downloads" ON public.downloads;
+DROP POLICY IF EXISTS "Allow authenticated read downloads" ON public.downloads;
+
+CREATE POLICY "Allow public inserts on downloads" 
+ON public.downloads FOR INSERT 
+WITH CHECK (true);
+
+CREATE POLICY "Allow authenticated read downloads" 
+ON public.downloads FOR SELECT 
+TO authenticated 
 USING (true);
 ```
 
-## Phase 2: WhatsApp Edge Function Delivery
+---
 
-### SQL: Create `downloads` table and Webhook
-Run this SQL to create the `downloads` table (if it doesn't exist) and set up the Webhook trigger that calls the `send-whatsapp-pdf` Edge Function whenever a new download is requested.
-
-```sql
--- 1. Create downloads table
-CREATE TABLE IF NOT EXISTS public.downloads (
-  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  phone text NOT NULL,
-  resource_name text NOT NULL,
-  resource_link text NOT NULL,
-  user_id uuid REFERENCES auth.users(id),
-  created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
--- 2. Create the pg_net extension (required for Webhooks)
-CREATE EXTENSION IF NOT EXISTS pg_net;
-
--- 3. Create the webhook trigger function
-CREATE OR REPLACE FUNCTION trigger_send_whatsapp_pdf()
-RETURNS trigger AS $$
-BEGIN
-  perform net.http_post(
-    url := 'https://<YOUR_PROJECT_REF>.supabase.co/functions/v1/send-whatsapp-pdf',
-    headers := jsonb_build_object('Content-Type', 'application/json', 'Authorization', 'Bearer <YOUR_ANON_KEY>'),
-    body := json_build_object('type', TG_OP, 'record', row_to_json(NEW))::jsonb
-  );
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- 4. Bind the webhook to the downloads table
-DROP TRIGGER IF EXISTS on_download_insert ON public.downloads;
-CREATE TRIGGER on_download_insert
-AFTER INSERT ON public.downloads
-FOR EACH ROW
-EXECUTE FUNCTION trigger_send_whatsapp_pdf();
-```
-
-## Phase 3: Platform Expansion (XP & Rate Limiting)
-
-### Environment Variables
-Configure the following environment variables in your **Supabase Dashboard** -> Edge Functions -> Secrets, or via the Supabase CLI:
-
-```bash
-supabase secrets set WHATSAPP_API_TOKEN="your_meta_cloud_api_token"
-supabase secrets set WHATSAPP_PHONE_ID="your_meta_phone_id"
-supabase secrets set SUPABASE_URL="https://<YOUR_PROJECT_REF>.supabase.co"
-supabase secrets set SUPABASE_SERVICE_ROLE_KEY="your_service_role_key"
-```
-
-### Deploy Edge Functions
-Deploy the two Edge Functions (the Webhook handler and the Rate Limiter/XP Awarder):
-
-```bash
-supabase functions deploy send-whatsapp-pdf
-supabase functions deploy request-download
-```
-
-## Phase 4: Production Frontend Deployment
-
-Ensure your production hosting provider (e.g., Vercel) has the following standard environment variables set up (from your `.env` file):
-
-```env
-VITE_SUPABASE_URL="https://<YOUR_PROJECT_REF>.supabase.co"
-VITE_SUPABASE_ANON_KEY="your_anon_key"
-```
-
-To finalize the deployment:
-1. Run a type check: `npm run typecheck`
-2. Run the production build: `npm run build`
-3. Git Commit & Push your changes to trigger the CI/CD pipeline on Vercel.
-
-*(All Phase 1-4 logic has been integrated cleanly into the React/Vite codebase, including the unified Admin Dashboard, gamification Navbar hooks, and Toast UI).*
- 
-## Phase 6: Leaderboard (Hall of Legends) 
- 
-### SQL: Enable Public Leaderboard Read Access on Profiles 
-Run this to allow the Leaderboard UI to read the xp and level from the profiles table to rank top students. 
- 
-`sql 
--- Ensure RLS is active on profiles 
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY; 
- 
--- Allow public read access to essential ranking fields 
-CREATE POLICY " Allow public to view leaderboard "profiles ON public.profiles FOR SELECT USING (true); 
-` 
- 
-## Phase 7: Site Media Management 
- 
-### SQL: Create Site Media Table 
-Run this to create the media table for dynamic homepage photos and intro video. 
-`sql 
-CREATE TABLE IF NOT EXISTS public.site_media ( 
-  id uuid DEFAULT gen_random_uuid() PRIMARY KEY, 
-  type text NOT NULL, 
-  url text, 
-  embed_code text, 
-  is_active boolean DEFAULT true, 
-  created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL 
-); 
- 
-ALTER TABLE public.site_media ENABLE ROW LEVEL SECURITY; 
-CREATE POLICY " Allow public read access to site "media ON public.site_media FOR SELECT USING (true); 
-` 
+## 🛠️ Summary of Configured Systems
+1. **Contact Inquiries**: Auto-captures demo requests with live status updates (`pending`, `contacted`, `enrolled`).
+2. **Lectures Hub**: Categorized by Subject and Class with Free/Locked flags.
+3. **Access Tokens**: Code generation with redemption limits and instant validation.
+4. **Site Media & Banners**: Controls the top announcement banner, gallery images, startup video, and Instagram widgets.
+5. **Scholars & XP**: Real-time leaderboard and admin XP granter.

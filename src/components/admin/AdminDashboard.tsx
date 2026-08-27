@@ -4,7 +4,7 @@ import {
   ArrowLeft, Search, Mail, Phone, Calendar, RefreshCcw, Video, Key, 
   BarChart3, Plus, Trash2, CheckCircle, XCircle, Image as ImageIcon,
   Users, MessageSquare, Download, Sparkles, Send, Shield, Zap, Flame, 
-  Eye, ExternalLink, Award, Megaphone, Check, AlertCircle
+  Eye, ExternalLink, Award, Megaphone, Check, AlertCircle, Copy, Database
 } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 
@@ -14,10 +14,10 @@ interface AdminDashboardProps {
 }
 
 export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'enquiries' | 'lectures' | 'codes' | 'media' | 'students' | 'banner' | 'stats'>('enquiries');
+  const [activeTab, setActiveTab] = useState<'enquiries' | 'lectures' | 'codes' | 'media' | 'students' | 'banner' | 'stats' | 'sql'>('enquiries');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   // Data States
   const [inquiries, setInquiries] = useState<any[]>([]);
@@ -26,6 +26,15 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
   const [media, setMedia] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   
+  // Table Status Health Checks
+  const [tableHealth, setTableHealth] = useState({
+    inquiries: false,
+    lectures: false,
+    codes: false,
+    media: false,
+    profiles: false,
+  });
+
   // Search & Filter States
   const [searchInquiry, setSearchInquiry] = useState('');
   const [inquiryStatusFilter, setInquiryStatusFilter] = useState('all');
@@ -65,15 +74,11 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
     is_active: true
   });
 
-  // Student XP Tool
-  const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
-  const [customXpAmount, setCustomXpAmount] = useState<number>(100);
-
   const isAdmin = user?.email === 'admin@peerlessacademy.com' || user?.email === 'shubranilsaha7@gmail.com' || user?.email === 'xprasenjit1992@gmail.com';
 
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
+  const showToast = (text: string, type: 'success' | 'error' | 'info' = 'success') => {
+    setToastMessage({ text, type });
+    setTimeout(() => setToastMessage(null), 4000);
   };
 
   useEffect(() => {
@@ -84,37 +89,52 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
 
   const fetchAllData = async () => {
     setLoading(true);
+    let health = { inquiries: false, lectures: false, codes: false, media: false, profiles: false };
+
     try {
       // 1. Inquiries
-      const { data: inq } = await (supabase as any)
+      const { data: inq, error: inqErr } = await (supabase as any)
         .from('contact_inquiries')
         .select('*')
         .order('created_at', { ascending: false });
-      setInquiries(inq || []);
+      
+      if (!inqErr) {
+        setInquiries(inq || []);
+        health.inquiries = true;
+      }
 
       // 2. Lectures
-      const { data: lecs } = await (supabase as any)
+      const { data: lecs, error: lecsErr } = await (supabase as any)
         .from('lectures')
         .select('*')
         .order('created_at', { ascending: false });
-      setLectures(lecs || []);
+      
+      if (!lecsErr) {
+        setLectures(lecs || []);
+        health.lectures = true;
+      }
 
       // 3. Codes
-      const { data: cds } = await (supabase as any)
+      const { data: cds, error: cdsErr } = await (supabase as any)
         .from('access_codes')
         .select('*')
         .order('created_at', { ascending: false });
-      setCodes(cds || []);
+      
+      if (!cdsErr) {
+        setCodes(cds || []);
+        health.codes = true;
+      }
 
       // 4. Media
-      const { data: mda } = await (supabase as any)
+      const { data: mda, error: mdaErr } = await (supabase as any)
         .from('site_media')
         .select('*')
         .order('created_at', { ascending: false });
-      setMedia(mda || []);
+      
+      if (!mdaErr && mda) {
+        setMedia(mda);
+        health.media = true;
 
-      // Check for existing Banner in media
-      if (mda) {
         const activeBanner = mda.find((m: any) => m.type === 'announcement_banner');
         if (activeBanner) {
           try {
@@ -138,15 +158,21 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
       }
 
       // 5. Students (Profiles)
-      const { data: profs } = await (supabase as any)
+      const { data: profs, error: profsErr } = await (supabase as any)
         .from('profiles')
         .select('*')
         .order('xp', { ascending: false });
-      setStudents(profs || []);
+      
+      if (!profsErr) {
+        setStudents(profs || []);
+        health.profiles = true;
+      }
 
-    } catch (err) {
+      setTableHealth(health);
+
+    } catch (err: any) {
       console.error('Error fetching admin data:', err);
-      showToast('Error loading platform records.');
+      showToast('Error syncing records. Check database connection.', 'error');
     } finally {
       setLoading(false);
     }
@@ -156,43 +182,49 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
   const handleUpdateInquiryStatus = async (inquiryId: string, newStatus: string) => {
     setActionLoading(true);
     try {
-      await (supabase as any)
+      const { error } = await (supabase as any)
         .from('contact_inquiries')
         .update({ status: newStatus })
         .eq('id', inquiryId);
       
+      if (error) throw error;
       setInquiries(prev => prev.map(inq => inq.id === inquiryId ? { ...inq, status: newStatus } : inq));
-      showToast(`Status updated to "${newStatus}".`);
-    } catch (err) {
+      showToast(`Status updated to "${newStatus}".`, 'success');
+    } catch (err: any) {
       console.error(err);
-      showToast('Failed to update status.');
+      showToast(err.message || 'Failed to update status. Run the Master SQL setup if column is missing.', 'error');
     } finally {
       setActionLoading(false);
     }
   };
 
   const handleDeleteInquiry = async (id: string) => {
-    if (!confirm('Are you sure you want to permanently remove this enquiry?')) return;
+    if (!confirm('Are you sure you want to delete this enquiry lead?')) return;
+    setActionLoading(true);
     try {
-      await (supabase as any).from('contact_inquiries').delete().eq('id', id);
+      const { error } = await (supabase as any).from('contact_inquiries').delete().eq('id', id);
+      if (error) throw error;
       setInquiries(prev => prev.filter(inq => inq.id !== id));
-      showToast('Enquiry deleted.');
-    } catch (err) {
-      showToast('Failed to delete enquiry.');
+      showToast('Enquiry deleted successfully.', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to delete enquiry.', 'error');
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const exportInquiriesCSV = () => {
     if (inquiries.length === 0) {
-      showToast('No enquiries to export.');
+      showToast('No enquiries to export.', 'info');
       return;
     }
-    const headers = ['Student Name', 'Guardian Name', 'Phone', 'Class', 'Message', 'Date Submitted'];
+    const headers = ['Student Name', 'Guardian Name', 'Phone', 'Class', 'Status', 'Message', 'Date Submitted'];
     const rows = inquiries.map(i => [
       `"${i.student_name || ''}"`,
       `"${i.guardian_name || ''}"`,
       `"${i.phone || ''}"`,
       `"${i.class_level || ''}"`,
+      `"${i.status || 'pending'}"`,
       `"${(i.message || '').replace(/"/g, '""')}"`,
       `"${new Date(i.created_at).toLocaleString()}"`
     ]);
@@ -205,7 +237,7 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showToast('Enquiries exported to CSV successfully!');
+    showToast('Enquiries exported to CSV successfully!', 'success');
   };
 
   // ── LECTURE ACTIONS ──
@@ -217,9 +249,9 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
       if (error) throw error;
       setLectureForm({ title: '', subject: 'Physics', grade_level: 'Class 10', video_url: '', duration: '', is_free_preview: false });
       fetchAllData();
-      showToast('Lecture uploaded successfully!');
+      showToast('Lecture uploaded successfully!', 'success');
     } catch (err: any) {
-      showToast(err.message || 'Failed to add lecture.');
+      showToast(err.message || 'Failed to add lecture. Check database RLS permissions.', 'error');
     } finally {
       setActionLoading(false);
     }
@@ -227,15 +259,31 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
 
   const handleDeleteLecture = async (id: string) => {
     if (!confirm('Are you sure you want to delete this lecture?')) return;
-    await (supabase as any).from('lectures').delete().eq('id', id);
-    setLectures(prev => prev.filter(l => l.id !== id));
-    showToast('Lecture deleted.');
+    setActionLoading(true);
+    try {
+      const { error } = await (supabase as any).from('lectures').delete().eq('id', id);
+      if (error) throw error;
+      setLectures(prev => prev.filter(l => l.id !== id));
+      showToast('Lecture deleted.', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to delete lecture.', 'error');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const toggleLecturePreview = async (id: string, currentVal: boolean) => {
-    await (supabase as any).from('lectures').update({ is_free_preview: !currentVal }).eq('id', id);
-    setLectures(prev => prev.map(l => l.id === id ? { ...l, is_free_preview: !currentVal } : l));
-    showToast(`Lecture marked as ${!currentVal ? 'Free Preview' : 'Locked'}.`);
+    setActionLoading(true);
+    try {
+      const { error } = await (supabase as any).from('lectures').update({ is_free_preview: !currentVal }).eq('id', id);
+      if (error) throw error;
+      setLectures(prev => prev.map(l => l.id === id ? { ...l, is_free_preview: !currentVal } : l));
+      showToast(`Lecture marked as ${!currentVal ? 'Free Preview' : 'Locked'}.`, 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to update lecture preview status.', 'error');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   // ── CODE ACTIONS ──
@@ -247,9 +295,9 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
       if (error) throw error;
       setCodeForm({ code: '', max_uses: 1, description: '' });
       fetchAllData();
-      showToast('Access code created!');
+      showToast('Access code created!', 'success');
     } catch (err: any) {
-      showToast(err.message || 'Failed to create code.');
+      showToast(err.message || 'Failed to create code.', 'error');
     } finally {
       setActionLoading(false);
     }
@@ -267,27 +315,44 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
           is_active: true
         };
       });
-      await (supabase as any).from('access_codes').insert(batch);
+      const { error } = await (supabase as any).from('access_codes').insert(batch);
+      if (error) throw error;
       fetchAllData();
-      showToast(`Generated ${count} new access codes!`);
-    } catch (err) {
-      showToast('Failed to generate batch codes.');
+      showToast(`Generated ${count} new access codes!`, 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to generate batch codes.', 'error');
     } finally {
       setActionLoading(false);
     }
   };
 
   const toggleCodeStatus = async (id: string, currentStatus: boolean) => {
-    await (supabase as any).from('access_codes').update({ is_active: !currentStatus }).eq('id', id);
-    setCodes(prev => prev.map(c => c.id === id ? { ...c, is_active: !currentStatus } : c));
-    showToast(`Code is now ${!currentStatus ? 'Active' : 'Inactive'}.`);
+    setActionLoading(true);
+    try {
+      const { error } = await (supabase as any).from('access_codes').update({ is_active: !currentStatus }).eq('id', id);
+      if (error) throw error;
+      setCodes(prev => prev.map(c => c.id === id ? { ...c, is_active: !currentStatus } : c));
+      showToast(`Code is now ${!currentStatus ? 'Active' : 'Inactive'}.`, 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to update code status.', 'error');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const handleDeleteCode = async (id: string) => {
     if (!confirm('Are you sure you want to delete this access code?')) return;
-    await (supabase as any).from('access_codes').delete().eq('id', id);
-    setCodes(prev => prev.filter(c => c.id !== id));
-    showToast('Code deleted.');
+    setActionLoading(true);
+    try {
+      const { error } = await (supabase as any).from('access_codes').delete().eq('id', id);
+      if (error) throw error;
+      setCodes(prev => prev.filter(c => c.id !== id));
+      showToast('Code deleted.', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to delete code.', 'error');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   // ── MEDIA ACTIONS ──
@@ -299,9 +364,9 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
       if (error) throw error;
       setMediaForm({ type: 'gallery_photo', url: '', embed_code: '' });
       fetchAllData();
-      showToast('Media entry saved!');
+      showToast('Media entry saved!', 'success');
     } catch (err: any) {
-      showToast(err.message || 'Failed to add media.');
+      showToast(err.message || 'Failed to add media.', 'error');
     } finally {
       setActionLoading(false);
     }
@@ -309,9 +374,17 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
 
   const handleDeleteMedia = async (id: string) => {
     if (!confirm('Are you sure you want to delete this media item?')) return;
-    await (supabase as any).from('site_media').delete().eq('id', id);
-    setMedia(prev => prev.filter(m => m.id !== id));
-    showToast('Media item removed.');
+    setActionLoading(true);
+    try {
+      const { error } = await (supabase as any).from('site_media').delete().eq('id', id);
+      if (error) throw error;
+      setMedia(prev => prev.filter(m => m.id !== id));
+      showToast('Media item removed.', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to delete media.', 'error');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   // ── BANNER ACTIONS ──
@@ -319,7 +392,6 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
     e.preventDefault();
     setActionLoading(true);
     try {
-      // Find existing announcement_banner or create new
       const existing = media.find((m: any) => m.type === 'announcement_banner');
       const payload = {
         type: 'announcement_banner',
@@ -335,14 +407,16 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
       };
 
       if (existing) {
-        await (supabase as any).from('site_media').update(payload).eq('id', existing.id);
+        const { error } = await (supabase as any).from('site_media').update(payload).eq('id', existing.id);
+        if (error) throw error;
       } else {
-        await (supabase as any).from('site_media').insert([payload]);
+        const { error } = await (supabase as any).from('site_media').insert([payload]);
+        if (error) throw error;
       }
       fetchAllData();
-      showToast('Broadcast banner updated across website!');
+      showToast('Broadcast banner updated across website!', 'success');
     } catch (err: any) {
-      showToast('Failed to save announcement banner.');
+      showToast(err.message || 'Failed to save announcement banner.', 'error');
     } finally {
       setActionLoading(false);
     }
@@ -357,16 +431,17 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
       const newXp = Math.max(0, (student.xp || 0) + amount);
       const newLevel = Math.max(1, Math.floor(newXp / 1000) + 1);
 
-      await (supabase as any)
+      const { error } = await (supabase as any)
         .from('profiles')
         .update({ xp: newXp, level: newLevel })
         .eq('id', studentId);
 
+      if (error) throw error;
+
       setStudents(prev => prev.map(s => s.id === studentId ? { ...s, xp: newXp, level: newLevel } : s));
-      showToast(`Updated ${student.full_name || 'student'}'s XP to ${newXp} (Level ${newLevel})!`);
-      setSelectedStudent(null);
-    } catch (err) {
-      showToast('Failed to adjust student XP.');
+      showToast(`Updated ${student.full_name || 'student'}'s XP to ${newXp} (Level ${newLevel})!`, 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to adjust student XP. Run Master SQL to grant profile update permission.', 'error');
     } finally {
       setActionLoading(false);
     }
@@ -380,7 +455,7 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
         </div>
         <h2 className="text-2xl font-black text-rose-500 sm:text-3xl">Admin Clearance Required</h2>
         <p className="mt-2 max-w-md text-sm text-slate-400">
-          Your account (<span className="font-mono text-slate-300">{user?.email || 'Guest'}</span>) does not have owner credentials to access this system.
+          Your account (<span className="font-mono text-slate-300">{user?.email || 'Guest'}</span>) does not have owner credentials.
         </p>
         <button 
           onClick={onBack} 
@@ -422,15 +497,91 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
   );
 
   const totalPlatformXp = students.reduce((sum, s) => sum + (s.xp || 0), 0);
+  const isAnyTableMissing = !tableHealth.inquiries || !tableHealth.lectures || !tableHealth.codes || !tableHealth.media || !tableHealth.profiles;
+
+  const masterSqlString = `-- 1. Contact Inquiries
+CREATE TABLE IF NOT EXISTS public.contact_inquiries (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  student_name text NOT NULL,
+  guardian_name text NOT NULL,
+  phone text NOT NULL,
+  class_level text NOT NULL,
+  message text,
+  status text DEFAULT 'pending',
+  created_at timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+ALTER TABLE public.contact_inquiries ADD COLUMN IF NOT EXISTS status text DEFAULT 'pending';
+ALTER TABLE public.contact_inquiries ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow public inserts" ON public.contact_inquiries FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow auth all inquiries" ON public.contact_inquiries FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- 2. Lectures
+CREATE TABLE IF NOT EXISTS public.lectures (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  title text NOT NULL,
+  description text,
+  subject text NOT NULL,
+  grade_level text NOT NULL,
+  video_url text NOT NULL,
+  duration text,
+  is_free_preview boolean DEFAULT false,
+  created_at timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+ALTER TABLE public.lectures ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow public free lectures" ON public.lectures FOR SELECT USING (is_free_preview = true);
+CREATE POLICY "Allow auth all lectures" ON public.lectures FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- 3. Access Codes & User Access
+CREATE TABLE IF NOT EXISTS public.access_codes (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  code text UNIQUE NOT NULL,
+  description text,
+  max_uses integer DEFAULT 1,
+  is_active boolean DEFAULT true,
+  created_at timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+CREATE TABLE IF NOT EXISTS public.user_access (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  code_id uuid REFERENCES public.access_codes(id) ON DELETE CASCADE NOT NULL,
+  redeemed_at timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL,
+  UNIQUE(user_id, code_id)
+);
+ALTER TABLE public.access_codes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_access ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow auth all access_codes" ON public.access_codes FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow auth all user_access" ON public.user_access FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- 4. Site Media
+CREATE TABLE IF NOT EXISTS public.site_media (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  type text NOT NULL,
+  url text,
+  embed_code text,
+  is_active boolean DEFAULT true,
+  created_at timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+ALTER TABLE public.site_media ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow public read site_media" ON public.site_media FOR SELECT USING (true);
+CREATE POLICY "Allow auth all site_media" ON public.site_media FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- 5. Profiles (XP Granter)
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow public read profiles" ON public.profiles FOR SELECT USING (true);
+CREATE POLICY "Allow auth update profiles" ON public.profiles FOR ALL TO authenticated USING (true) WITH CHECK (true);`;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-300">
       
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-6 right-6 z-[9999] flex items-center gap-3 rounded-2xl border border-indigo-500/30 bg-slate-900/95 px-5 py-3.5 text-sm font-bold text-white shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-4">
-          <Sparkles size={18} className="text-indigo-400" />
-          <span>{toastMessage}</span>
+        <div className={`fixed top-6 right-6 z-[9999] flex items-center gap-3 rounded-2xl border px-5 py-3.5 text-sm font-bold text-white shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-4 ${
+          toastMessage.type === 'error' ? 'border-rose-500/50 bg-rose-950/90 text-rose-200' :
+          toastMessage.type === 'info' ? 'border-cyan-500/50 bg-cyan-950/90 text-cyan-200' :
+          'border-emerald-500/50 bg-slate-900/95 text-white'
+        }`}>
+          {toastMessage.type === 'error' ? <AlertCircle size={18} className="text-rose-400" /> : <Sparkles size={18} className="text-emerald-400" />}
+          <span>{toastMessage.text}</span>
         </div>
       )}
 
@@ -450,7 +601,7 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
               <div className="flex items-center gap-2">
                 <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
                 <h1 className="text-base font-black text-white sm:text-lg">Peerless Control Center</h1>
-                <span className="hidden sm:inline-block rounded-md bg-indigo-500/20 px-2 py-0.5 text-[10px] font-black uppercase text-indigo-300 border border-indigo-500/30">Owner Mode</span>
+                <span className="hidden sm:inline-block rounded-md bg-indigo-500/20 px-2 py-0.5 text-[10px] font-black uppercase text-indigo-300 border border-indigo-500/30">Live Sync</span>
               </div>
               <p className="text-[11px] text-slate-500 font-mono hidden sm:block">{user.email}</p>
             </div>
@@ -459,17 +610,17 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
           <div className="flex items-center gap-2">
             <button 
               onClick={fetchAllData} 
-              disabled={loading}
-              className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3.5 py-2 text-xs font-bold text-slate-300 transition hover:bg-white/10 hover:text-white"
+              disabled={loading || actionLoading}
+              className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3.5 py-2 text-xs font-bold text-slate-300 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
             >
               <RefreshCcw size={14} className={loading ? 'animate-spin text-indigo-400' : ''} />
-              <span className="hidden sm:inline">Sync Data</span>
+              <span className="hidden sm:inline">Refresh Data</span>
             </button>
             <button 
               onClick={onBack} 
               className="rounded-xl bg-orange-500/15 border border-orange-500/30 px-3.5 py-2 text-xs font-bold text-orange-400 transition hover:bg-orange-500 hover:text-white"
             >
-              Live Site
+              View Site
             </button>
           </div>
 
@@ -485,6 +636,7 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
             { id: 'students', label: 'Student Manager', icon: Users, badge: students.length },
             { id: 'banner', label: 'Announcement Banner', icon: Megaphone },
             { id: 'stats', label: 'Analytics & Health', icon: BarChart3 },
+            { id: 'sql', label: 'Database Setup SQL', icon: Database },
           ].map(tab => (
             <button
               key={tab.id}
@@ -548,10 +700,10 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
                 className="rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-xs text-white focus:outline-none"
               >
                 <option value="all">All Statuses</option>
-                <option value="pending">Pending / New</option>
-                <option value="contacted">Contacted</option>
-                <option value="enrolled">Enrolled</option>
-                <option value="closed">Closed</option>
+                <option value="pending">⏳ Pending / New</option>
+                <option value="contacted">📞 Contacted</option>
+                <option value="enrolled">🎉 Enrolled</option>
+                <option value="closed">❌ Closed</option>
               </select>
             </div>
 
@@ -613,7 +765,8 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
                           <select
                             value={inq.status || 'pending'}
                             onChange={e => handleUpdateInquiryStatus(inq.id, e.target.value)}
-                            className="rounded-lg border border-white/10 bg-slate-950 px-2.5 py-1 text-xs font-bold text-white focus:outline-none"
+                            disabled={actionLoading}
+                            className="rounded-lg border border-white/10 bg-slate-950 px-2.5 py-1 text-xs font-bold text-white focus:outline-none disabled:opacity-50"
                           >
                             <option value="pending">⏳ Pending</option>
                             <option value="contacted">📞 Contacted</option>
@@ -627,7 +780,8 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
                         <td className="px-5 py-4 text-right">
                           <button
                             onClick={() => handleDeleteInquiry(inq.id)}
-                            className="rounded-lg p-2 text-slate-500 transition hover:bg-rose-500/10 hover:text-rose-400"
+                            disabled={actionLoading}
+                            className="rounded-lg p-2 text-slate-500 transition hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-50"
                             title="Delete Lead"
                           >
                             <Trash2 size={15} />
@@ -639,7 +793,7 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
                   {filteredInquiries.length === 0 && (
                     <tr>
                       <td colSpan={6} className="px-5 py-12 text-center text-slate-500">
-                        No enquiries match your search criteria.
+                        No enquiries found. Submissions from the contact form will appear here live.
                       </td>
                     </tr>
                   )}
@@ -795,6 +949,7 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => toggleLecturePreview(lec.id, lec.is_free_preview)}
+                        disabled={actionLoading}
                         className={`rounded-lg px-2.5 py-1 text-xs font-bold border transition ${
                           lec.is_free_preview 
                             ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20' 
@@ -805,6 +960,7 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
                       </button>
                       <button
                         onClick={() => handleDeleteLecture(lec.id)}
+                        disabled={actionLoading}
                         className="rounded-lg p-2 text-slate-500 transition hover:bg-rose-500/10 hover:text-rose-400"
                         title="Delete Lecture"
                       >
@@ -884,7 +1040,7 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
                 <button
                   onClick={() => handleGenerateBatchCodes(5)}
                   disabled={actionLoading}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-purple-500/30 bg-purple-500/10 py-2.5 text-xs font-bold text-purple-300 transition hover:bg-purple-500/20"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-purple-500/30 bg-purple-500/10 py-2.5 text-xs font-bold text-purple-300 transition hover:bg-purple-500/20 disabled:opacity-50"
                 >
                   <Sparkles size={14} /> Quick Batch: 5 Random Codes
                 </button>
@@ -927,6 +1083,7 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => toggleCodeStatus(code.id, code.is_active)}
+                        disabled={actionLoading}
                         className={`rounded-lg p-2 transition ${
                           code.is_active ? 'text-emerald-400 hover:bg-emerald-400/10' : 'text-slate-500 hover:bg-slate-800'
                         }`}
@@ -936,6 +1093,7 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
                       </button>
                       <button
                         onClick={() => handleDeleteCode(code.id)}
+                        disabled={actionLoading}
                         className="rounded-lg p-2 text-slate-500 transition hover:bg-rose-500/10 hover:text-rose-400"
                         title="Delete Code"
                       >
@@ -968,7 +1126,7 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
                     className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-xs text-white focus:outline-none"
                   >
                     <option value="gallery_photo">Life at Peerless (Gallery Photo)</option>
-                    <option value="startup_video">Startup Intro Splash Video</option>
+                    <option value="startup_video">Startup Intro Splash Video (.mp4)</option>
                     <option value="instagram_embed">Instagram Embed Code</option>
                   </select>
                 </div>
@@ -1048,6 +1206,7 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
 
                     <button
                       onClick={() => handleDeleteMedia(item.id)}
+                      disabled={actionLoading}
                       className="rounded-lg p-2 text-slate-500 transition hover:bg-rose-500/10 hover:text-rose-400"
                       title="Delete Media"
                     >
@@ -1127,21 +1286,24 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => handleAdjustStudentXp(student.id, 100)}
-                            className="rounded-lg bg-amber-500/10 border border-amber-500/30 px-2 py-1 text-[11px] font-bold text-amber-300 transition hover:bg-amber-500 hover:text-black"
+                            disabled={actionLoading}
+                            className="rounded-lg bg-amber-500/10 border border-amber-500/30 px-2 py-1 text-[11px] font-bold text-amber-300 transition hover:bg-amber-500 hover:text-black disabled:opacity-50"
                             title="Award +100 XP"
                           >
                             +100
                           </button>
                           <button
                             onClick={() => handleAdjustStudentXp(student.id, 500)}
-                            className="rounded-lg bg-amber-500/20 border border-amber-500/40 px-2.5 py-1 text-[11px] font-black text-amber-300 transition hover:bg-amber-500 hover:text-black"
+                            disabled={actionLoading}
+                            className="rounded-lg bg-amber-500/20 border border-amber-500/40 px-2.5 py-1 text-[11px] font-black text-amber-300 transition hover:bg-amber-500 hover:text-black disabled:opacity-50"
                             title="Award +500 XP"
                           >
                             +500
                           </button>
                           <button
                             onClick={() => handleAdjustStudentXp(student.id, -100)}
-                            className="rounded-lg bg-rose-500/10 border border-rose-500/30 px-2 py-1 text-[11px] font-bold text-rose-300 transition hover:bg-rose-500 hover:text-white"
+                            disabled={actionLoading}
+                            className="rounded-lg bg-rose-500/10 border border-rose-500/30 px-2 py-1 text-[11px] font-bold text-rose-300 transition hover:bg-rose-500 hover:text-white disabled:opacity-50"
                             title="Deduct 100 XP"
                           >
                             -100
@@ -1340,6 +1502,59 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
               </div>
             </div>
 
+          </div>
+        )}
+
+        {/* ── 8. DATABASE SETUP SQL TAB ── */}
+        {activeTab === 'sql' && (
+          <div className="max-w-4xl mx-auto space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-black text-white flex items-center gap-2">
+                  <Database size={24} className="text-indigo-400" /> Master Database Configuration SQL
+                </h2>
+                <p className="text-xs text-slate-400">
+                  Run this single SQL script in your Supabase SQL Editor to ensure all tables, columns, and write permissions are 100% active.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(masterSqlString);
+                  showToast('Master SQL copied to clipboard!', 'success');
+                }}
+                className="flex w-fit items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-black text-white shadow-lg shadow-indigo-600/30 transition hover:bg-indigo-500 active:scale-95"
+              >
+                <Copy size={15} /> Copy Full SQL
+              </button>
+            </div>
+
+            {/* Table Health Check Matrix */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              {[
+                { name: 'contact_inquiries', label: 'Enquiries Table', active: tableHealth.inquiries },
+                { name: 'lectures', label: 'Lectures Table', active: tableHealth.lectures },
+                { name: 'access_codes', label: 'Codes Table', active: tableHealth.codes },
+                { name: 'site_media', label: 'Site Media Table', active: tableHealth.media },
+                { name: 'profiles', label: 'Profiles Table', active: tableHealth.profiles },
+              ].map(item => (
+                <div key={item.name} className={`rounded-xl border p-3 text-center transition ${
+                  item.active ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-rose-500/30 bg-rose-500/10 text-rose-300'
+                }`}>
+                  <div className="flex items-center justify-center gap-1 text-xs font-black mb-1">
+                    {item.active ? <CheckCircle size={14} /> : <XCircle size={14} />}
+                    <span>{item.active ? 'Ready' : 'Pending'}</span>
+                  </div>
+                  <p className="text-[10px] font-mono opacity-80 truncate">{item.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Code Block */}
+            <div className="relative rounded-2xl border border-white/10 bg-slate-900 p-4 shadow-2xl">
+              <pre className="text-[11px] font-mono text-slate-300 overflow-x-auto max-h-[400px] leading-relaxed select-all">
+                {masterSqlString}
+              </pre>
+            </div>
           </div>
         )}
 
