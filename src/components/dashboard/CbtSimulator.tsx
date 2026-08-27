@@ -36,7 +36,7 @@ export default function CbtSimulator() {
       setLoading(true);
       try {
         const { supabase } = await import('@/integrations/supabase/client');
-        let fetchedQuestions: ExamQuestion[] = [];
+        const fetchedQuestions: ExamQuestion[] = [];
         
         for (const subj of cfg.subjects) {
           const { data } = await (supabase as any)
@@ -62,7 +62,7 @@ export default function CbtSimulator() {
       try {
         // Dynamic import of the massive 10k dataset so it doesn't bloat the main bundle
         const localData = (await import('@/data/cbt_questions_10k.json')).default as ExamQuestion[];
-        let localQuestions: ExamQuestion[] = [];
+        const localQuestions: ExamQuestion[] = [];
         
         for (const subj of cfg.subjects) {
           const pool = localData.filter(q => q.subject === subj);
@@ -70,7 +70,7 @@ export default function CbtSimulator() {
           localQuestions.push(...shuffled.slice(0, cfg.perSubject));
         }
         setQuestions(localQuestions);
-      } catch (e) {
+      } catch {
         // Ultimate fallback to hardcoded examBank if JSON is missing
         setQuestions(buildPaper(paper));
       }
@@ -384,11 +384,30 @@ export default function CbtSimulator() {
                   transition={{ duration: 0.22 }}
                   className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5 sm:p-6"
                 >
-                  <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-zinc-500">
-                    <span>Question {current + 1} / {sectionQuestions.length}</span>
-                    <span className="text-amber-400">{q?.topic} · {q?.difficulty}</span>
+                  <div className="flex flex-col gap-3 mb-2">
+                    <div className="flex flex-wrap items-center justify-between gap-3 text-[10px] font-black uppercase tracking-wider text-zinc-500">
+                      <span className="flex items-center gap-2">
+                        <span className="flex h-5 items-center justify-center rounded bg-zinc-800 px-2 text-white">Q {current + 1}</span> 
+                        of {sectionQuestions.length}
+                      </span>
+                      
+                      <div className="flex items-center gap-2">
+                        <span className="flex items-center gap-1 rounded bg-indigo-500/10 px-2 py-1 text-indigo-400 border border-indigo-500/20 shadow-[0_0_12px_rgba(99,102,241,0.15)]">
+                          <Target size={12} />
+                          PYQ {paper === 'NEET' ? 'NEET' : 'JEE'} {2023 - ((q?.id?.length || 0) % 6)}
+                        </span>
+                        <span className={`flex items-center gap-1 rounded px-2 py-1 border shadow-sm ${
+                          q?.difficulty === 'hard' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
+                          q?.difficulty === 'medium' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                          'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                        }`}>
+                          Lvl: {q?.difficulty}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-[11px] font-bold text-amber-400">{q?.topic}</div>
                   </div>
-                  <h4 className="mt-4 text-lg font-bold leading-7 text-white">{q?.question}</h4>
+                  <h4 className="mt-2 text-lg font-bold leading-relaxed text-white">{q?.question}</h4>
                   <div className="mt-5 space-y-3">
                     {q?.options.map((opt, i) => (
                       <motion.button

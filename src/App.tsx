@@ -7,7 +7,7 @@ import {
   Swords, Target, Trophy, X, Zap,
 } from 'lucide-react';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 import { supabase } from '@/integrations/supabase/client';
 import type { Subject, ExamType } from './services/questionEngine';
 import { ThemeProvider, useTheme } from './context/ThemeContext';

@@ -105,7 +105,7 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
 
   const fetchAllData = async () => {
     setLoading(true);
-    let health = { inquiries: false, lectures: false, codes: false, media: false, profiles: false };
+    const health = { inquiries: false, lectures: false, codes: false, media: false, profiles: false };
 
     try {
       // 1. Inquiries

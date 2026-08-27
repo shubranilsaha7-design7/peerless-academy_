@@ -72,16 +72,13 @@ export default function LifeAtPeerless() {
                 key={idx} 
                 className="group relative aspect-square overflow-hidden rounded-[2rem] bg-slate-900 shadow-2xl border border-white/10 transition duration-500 hover:border-pink-500/40 hover:-translate-y-1.5"
               >
-                <img 
-                  src={src} 
-                  alt={`Life at Peerless ${idx + 1}`} 
-                  className="h-full w-full object-cover opacity-90 transition duration-700 group-hover:scale-105 group-hover:opacity-100"
-                  onError={(e) => {
-                    // Fallback to placeholder if a bad URL was entered
-                    e.currentTarget.src = defaultPhotos[idx % defaultPhotos.length];
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-0 transition duration-300 group-hover:opacity-100 flex items-end p-6">
+                <div className="absolute inset-0 h-full w-full">
+                  <SmartMediaEmbed 
+                    content={src} 
+                    className="h-full w-full object-cover transition duration-700 group-hover:scale-105" 
+                  />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-0 transition duration-300 group-hover:opacity-100 flex items-end p-6 pointer-events-none z-10">
                   <span className="text-xs font-bold text-white tracking-wide">Peerless Academy Campus</span>
                 </div>
               </div>
