@@ -95,13 +95,13 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-xl">
-      <div className="flex min-h-full items-center justify-center p-4 pt-32 sm:pt-24 pb-12">
+      <div className="flex min-h-full flex-col p-4 pt-[130px] sm:pt-[100px] pb-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
-          className="relative w-full max-w-md rounded-[2.5rem] border border-amber-500/30 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 p-8 shadow-[0_0_60px_rgba(245,158,11,0.15)] overflow-hidden"
+          className="relative m-auto w-full max-w-md rounded-[2.5rem] border border-amber-500/30 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 p-8 shadow-[0_0_60px_rgba(245,158,11,0.15)] overflow-hidden"
         >
         {/* Background ambient lighting */}
         <div className="pointer-events-none absolute -top-20 -left-20 h-44 w-44 rounded-full bg-amber-500/15 blur-3xl" />
