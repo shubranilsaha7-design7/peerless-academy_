@@ -27,20 +27,23 @@ export default function SmartMediaEmbed({ content, className = '' }: SmartMediaE
   if (igMatch) {
     const type = igMatch[1]; // reel or p
     const code = igMatch[2];
-    const embedUrl = `https://www.instagram.com/${type}/${code}/embed/captioned/`;
+    const embedUrl = `https://www.instagram.com/${type}/${code}/embed/`;
 
     return (
       <div className={`w-full flex flex-col items-center justify-center p-2 sm:p-4 ${className}`}>
-        <div className="relative w-full max-w-[440px] overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
-          <iframe
-            src={embedUrl}
-            title={`Instagram ${type}`}
-            className="w-full min-h-[520px] sm:min-h-[580px] border-0 rounded-2xl"
-            frameBorder="0"
-            scrolling="no"
-            allowTransparency
-            allow="encrypted-media"
-          />
+        {/* We use overflow-hidden and negative margins to crop out the thick white Instagram header and bezels */}
+        <div className="relative w-full max-w-[340px] overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950 shadow-2xl">
+          <div className="-mt-[58px] -mb-[58px] -mx-[2px]">
+            <iframe
+              src={embedUrl}
+              title={`Instagram ${type}`}
+              className="w-full min-h-[620px] border-0"
+              frameBorder="0"
+              scrolling="no"
+              allowTransparency
+              allow="encrypted-media"
+            />
+          </div>
         </div>
       </div>
     );
