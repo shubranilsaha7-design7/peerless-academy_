@@ -69,42 +69,44 @@ export default function PWAInstallPrompt() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 120, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-          className="fixed bottom-6 left-1/2 z-[90] w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 sm:left-auto sm:right-6 sm:translate-x-0"
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[92%] max-w-sm z-50"
           role="dialog"
           aria-label="Install Peerless Academy app"
         >
-          <div className="relative flex items-center gap-4 rounded-2xl border border-orange-500/30 bg-slate-900/95 p-4 shadow-[0_8px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl">
-            {/* App icon */}
-            <div className="flex-shrink-0 rounded-xl bg-orange-500/15 p-3 text-orange-400">
-              <Smartphone size={22} />
-            </div>
+          <div className="relative flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-900/95 p-5 shadow-2xl backdrop-blur-md">
+            {/* Dismiss */}
+            <button
+              onClick={handleDismiss}
+              className="absolute top-3 right-3 flex h-7 w-7 items-center justify-center rounded-full bg-slate-800 text-slate-400 transition hover:bg-slate-700 hover:text-white"
+              aria-label="Dismiss install prompt"
+            >
+              <X size={14} />
+            </button>
+            
+            <div className="flex items-center gap-4">
+              {/* App icon */}
+              <div className="flex-shrink-0 rounded-xl bg-orange-500/15 p-3 text-orange-400">
+                <Smartphone size={24} />
+              </div>
 
-            {/* Text */}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-black text-white leading-tight">
-                Install Peerless Academy
-              </p>
-              <p className="mt-0.5 text-[11px] text-slate-400 leading-snug">
-                Add to home screen for offline access & faster loads.
-              </p>
+              {/* Text */}
+              <div className="flex-1 pr-6">
+                <p className="text-base font-black text-white leading-tight">
+                  Install Peerless Academy
+                </p>
+                <p className="mt-1 text-xs text-slate-400 leading-snug">
+                  Add to home screen for offline access & faster loads.
+                </p>
+              </div>
             </div>
 
             {/* Install CTA */}
             <button
               onClick={handleInstall}
-              className="flex-shrink-0 flex items-center gap-1.5 rounded-xl bg-orange-500 px-3.5 py-2 text-xs font-black text-white transition hover:bg-orange-600 active:scale-95"
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 px-4 py-3 text-sm font-black text-white transition hover:bg-orange-600 active:scale-95"
             >
-              <Download size={13} />
-              Install
-            </button>
-
-            {/* Dismiss */}
-            <button
-              onClick={handleDismiss}
-              className="absolute -top-2.5 -right-2.5 flex h-6 w-6 items-center justify-center rounded-full bg-slate-700 text-slate-300 transition hover:bg-slate-600 hover:text-white"
-              aria-label="Dismiss install prompt"
-            >
-              <X size={12} />
+              <Download size={16} />
+              Install App
             </button>
           </div>
 

@@ -61,6 +61,7 @@ export default function IntroVideo({ onDone }: { onDone: () => void }) {
         autoPlay
         muted
         playsInline
+        loop
         onEnded={dismiss}
         onError={handleVideoError}
         className="h-full w-full object-cover"

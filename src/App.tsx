@@ -41,6 +41,7 @@ import AIChatBot from '@/components/AIChatBot';
 import SafeBoundary from '@/components/SafeBoundary';
 import PrivacyPolicy from '@/components/PrivacyPolicy';
 import TermsOfService from '@/components/TermsOfService';
+import LifeAtPeerless from '@/components/LifeAtPeerless';
 
 // @ts-ignore
 import PWAInstallPrompt from '@/components/PWAInstallPrompt';
@@ -443,6 +444,8 @@ function AppInner() {
             </div>
           </div>
         </section>
+
+        <LifeAtPeerless />
 
         {/* ── TICKER STRIP ── */}
         <section className={`border-y px-5 py-6 lg:px-8 ${isDark ? 'border-white/10 bg-[#0d1b32]' : 'border-slate-200 bg-slate-100'}`}>

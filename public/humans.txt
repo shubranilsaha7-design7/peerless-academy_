@@ -1,0 +1,9 @@
+/* TEAM */
+Developer: Shubranil Saha
+Role: System Architect & Full-Stack Developer
+
+/* SITE */
+Last update: 2026
+Standards: HTML5, CSS3, React, TypeScript
+Components: Supabase Backend, Google Cloud OAuth, Vercel Edge Network
+Software: Bespoke Custom Web Application

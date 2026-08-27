@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { PlayCircle, CheckCircle, Clock, ChevronLeft, BookOpen, AlertCircle } from 'lucide-react';
+import { PlayCircle, CheckCircle, Clock, ChevronLeft, BookOpen, AlertCircle, Lock, Unlock } from 'lucide-react';
 
 const MASTERY_TARGET_HRS = 65;
 
@@ -8,29 +8,111 @@ export default function VideoLectures({ onBack }) {
   const [lectures, setLectures] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
   const [activeVideo, setActiveVideo] = useState(null);
-  const [completedIds, setCompletedIds] = useState(new Set());
   const [activeSubject, setActiveSubject] = useState('Physics');
+  const [completedIds, setCompletedIds] = useState(new Set());
+  
+  // Access Code State
+  const [showCodeModal, setShowCodeModal] = useState(false);
+  const [accessCode, setAccessCode] = useState('');
+  const [verifying, setVerifying] = useState(false);
+  const [codeError, setCodeError] = useState('');
+  const [hasAccess, setHasAccess] = useState(false); // Does the user have global access?
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
+    checkUserAndAccess();
     fetchLectures();
   }, []);
 
+  const checkUserAndAccess = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      setUser(session.user);
+      // Check if user has redeemed any code in user_access table
+      const { data } = await supabase
+        .from('user_access')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .limit(1);
+      
+      if (data && data.length > 0) {
+        setHasAccess(true);
+      }
+    }
+  };
+
   const fetchLectures = async () => {
     try {
+      // Query the new lectures table
       const { data, error } = await supabase
-        .from('video_lectures')
+        .from('lectures')
         .select('*')
         .order('created_at', { ascending: true });
         
       if (error) throw error;
       setLectures(data || []);
-      if (data && data.length > 0) setActiveVideo(data[0]);
+      if (data && data.length > 0) {
+        // Set first free video as active default
+        const freeVid = data.find(l => l.is_free_preview) || data[0];
+        setActiveVideo(freeVid);
+      }
     } catch (err) {
       console.error(err);
       setError('Failed to load lectures.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleVerifyCode = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      setCodeError('You must be logged in to redeem a code.');
+      return;
+    }
+    
+    setVerifying(true);
+    setCodeError('');
+    
+    try {
+      // Find code
+      const { data: codeData, error: codeErr } = await supabase
+        .from('access_codes')
+        .select('*')
+        .eq('code', accessCode.trim())
+        .eq('is_active', true)
+        .single();
+        
+      if (codeErr || !codeData) {
+        throw new Error('Invalid or expired code.');
+      }
+      
+      // Insert into user_access
+      const { error: insertErr } = await supabase
+        .from('user_access')
+        .insert([{ user_id: user.id, code_id: codeData.id }]);
+        
+      if (insertErr) {
+        // Check if already redeemed constraint error
+        if (insertErr.code === '23505') {
+           setHasAccess(true);
+           setShowCodeModal(false);
+           return;
+        }
+        throw new Error('Failed to redeem code.');
+      }
+      
+      setHasAccess(true);
+      setShowCodeModal(false);
+      // Re-fetch lectures now that we have access (RLS might expose protected URLs now)
+      fetchLectures();
+      
+    } catch (err) {
+      setCodeError(err.message || 'Verification failed');
+    } finally {
+      setVerifying(false);
     }
   };
 
@@ -42,28 +124,16 @@ export default function VideoLectures({ onBack }) {
     });
   };
 
-  // Group lectures by Subject -> Chapter
+  // Group lectures by Subject -> Class (grade_level)
   const curriculum = useMemo(() => {
     const grouped = {};
     lectures.forEach(lec => {
       if (!grouped[lec.subject]) grouped[lec.subject] = {};
-      if (!grouped[lec.subject][lec.chapter]) grouped[lec.subject][lec.chapter] = [];
-      grouped[lec.subject][lec.chapter].push(lec);
+      if (!grouped[lec.subject][lec.grade_level]) grouped[lec.subject][lec.grade_level] = [];
+      grouped[lec.subject][lec.grade_level].push(lec);
     });
     return grouped;
   }, [lectures]);
-
-  // Calculate progress for active subject
-  const subjectProgress = useMemo(() => {
-    const subjectLectures = lectures.filter(l => l.subject === activeSubject);
-    const completedDuration = subjectLectures
-      .filter(l => completedIds.has(l.id))
-      .reduce((sum, l) => sum + (l.duration || 0), 0);
-    
-    const completedHrs = (completedDuration / 60).toFixed(1);
-    const pct = Math.min((completedHrs / MASTERY_TARGET_HRS) * 100, 100);
-    return { completedHrs, pct };
-  }, [lectures, completedIds, activeSubject]);
 
   // Convert youtube links to embed links safely
   const getEmbedUrl = (url) => {
@@ -80,10 +150,20 @@ export default function VideoLectures({ onBack }) {
   if (loading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">Loading curriculum...</div>;
   if (error) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-red-500"><AlertCircle className="mr-2"/> {error}</div>;
 
-  const subjects = Object.keys(curriculum);
+  const subjects = Object.keys(curriculum).length > 0 ? Object.keys(curriculum) : ['Physics', 'Chemistry', 'Biology', 'Math'];
+
+  const canWatch = (lec) => lec.is_free_preview || hasAccess;
+
+  const handleVideoSelect = (lec) => {
+    if (canWatch(lec)) {
+      setActiveVideo(lec);
+    } else {
+      setShowCodeModal(true);
+    }
+  };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-slate-950 flex flex-col font-sans">
+    <div className="fixed inset-0 z-[100] bg-slate-950 flex flex-col font-sans text-white">
       
       {/* Top Navbar */}
       <header className="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-6 flex-shrink-0">
@@ -93,17 +173,17 @@ export default function VideoLectures({ onBack }) {
           </button>
           <div className="h-6 w-px bg-slate-800 mx-2" />
           <h1 className="text-lg font-black text-white flex items-center gap-2">
-            <BookOpen size={18} className="text-cyan-400" /> Video Lectures Hub
+            <BookOpen size={18} className="text-cyan-400" /> Video Lectures
           </h1>
         </div>
         
         {/* Subject Tabs */}
-        <div className="hidden md:flex bg-slate-950 rounded-xl p-1 border border-slate-800">
+        <div className="hidden md:flex gap-2">
           {subjects.map(sub => (
             <button
               key={sub}
-              onClick={() => { setActiveSubject(sub); setActiveVideo(curriculum[sub]?.[Object.keys(curriculum[sub])[0]]?.[0]); }}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${activeSubject === sub ? 'bg-cyan-500/20 text-cyan-400' : 'text-slate-500 hover:text-white'}`}
+              onClick={() => setActiveSubject(sub)}
+              className={`px-4 py-2 rounded-lg text-sm font-bold transition ${activeSubject === sub ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-transparent text-slate-400 hover:text-white hover:bg-slate-800'}`}
             >
               {sub}
             </button>
@@ -111,113 +191,151 @@ export default function VideoLectures({ onBack }) {
         </div>
       </header>
 
-      {/* Main Split Layout */}
-      <div className="flex flex-1 overflow-hidden">
+      {/* Main Layout */}
+      <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
         
-        {/* Left Pane: Video Player (70%) */}
-        <div className="flex-1 bg-black flex flex-col overflow-y-auto">
-          {activeVideo ? (
-            <>
-              <div className="w-full bg-black aspect-video relative flex-shrink-0 border-b border-slate-800">
-                <iframe 
-                  src={getEmbedUrl(activeVideo.video_url)} 
+        {/* Player Section */}
+        <div className="flex-1 bg-black flex flex-col border-r border-slate-800 relative">
+          <div className="flex-1 relative aspect-video md:aspect-auto">
+            {activeVideo ? (
+              canWatch(activeVideo) ? (
+                <iframe
+                  src={getEmbedUrl(activeVideo.video_url)}
                   title={activeVideo.title}
                   className="absolute inset-0 w-full h-full"
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                 />
-              </div>
-              <div className="p-8 max-w-5xl mx-auto w-full">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-cyan-400 mb-3">
-                      <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
-                      {activeVideo.subject} · {activeVideo.chapter}
-                    </div>
-                    <h2 className="text-3xl font-black text-white">{activeVideo.title}</h2>
-                    <p className="text-slate-400 flex items-center gap-2 mt-2 text-sm">
-                      <Clock size={16} /> Estimated Time: {activeVideo.duration} mins
-                    </p>
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 border border-slate-800 p-8 text-center">
+                  <div className="w-16 h-16 bg-rose-500/20 rounded-full flex items-center justify-center text-rose-500 mb-4">
+                    <Lock size={32} />
                   </div>
-                  
-                  <button 
-                    onClick={() => markCompleted(activeVideo.id)}
-                    disabled={completedIds.has(activeVideo.id)}
-                    className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition ${completedIds.has(activeVideo.id) ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-cyan-500 hover:bg-cyan-600 text-slate-950'}`}
-                  >
-                    <CheckCircle size={18} />
-                    {completedIds.has(activeVideo.id) ? 'Completed' : 'Mark as Completed'}
+                  <h3 className="text-2xl font-black mb-2">Lecture Locked</h3>
+                  <p className="text-slate-400 mb-6 max-w-md">This lecture requires an active enrollment code to view.</p>
+                  <button onClick={() => setShowCodeModal(true)} className="bg-rose-500 hover:bg-rose-600 px-6 py-3 rounded-full font-bold transition">
+                    Enter Access Code
                   </button>
                 </div>
+              )
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center text-slate-500">Select a lecture to start watching</div>
+            )}
+          </div>
+          
+          {/* Active Video Meta */}
+          {activeVideo && (
+            <div className="p-6 bg-slate-900 flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="px-2 py-1 bg-cyan-500/10 text-cyan-400 text-xs font-black uppercase rounded">{activeVideo.subject}</span>
+                  <span className="px-2 py-1 bg-slate-800 text-slate-300 text-xs font-black uppercase rounded">{activeVideo.grade_level}</span>
+                  {activeVideo.is_free_preview && (
+                     <span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 text-xs font-black uppercase rounded">Free Preview</span>
+                  )}
+                </div>
+                <h2 className="text-2xl font-black">{activeVideo.title}</h2>
+                <p className="text-slate-400 mt-2 text-sm">{activeVideo.description || 'No description provided.'}</p>
               </div>
-            </>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-slate-500">
-              <PlayCircle size={64} className="mb-4 opacity-20" />
-              <p>Select a lecture from the playlist to begin.</p>
+              <button
+                onClick={() => markCompleted(activeVideo.id)}
+                disabled={completedIds.has(activeVideo.id) || !canWatch(activeVideo)}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition ${completedIds.has(activeVideo.id) ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50'}`}
+              >
+                <CheckCircle size={18} />
+                {completedIds.has(activeVideo.id) ? 'Completed' : 'Mark Complete'}
+              </button>
             </div>
           )}
         </div>
-
-        {/* Right Pane: Playlist (30%) */}
-        <div className="w-96 bg-slate-900 border-l border-slate-800 flex flex-col flex-shrink-0">
-          
-          {/* Progress Tracker */}
-          <div className="p-6 border-b border-slate-800 bg-slate-900/50">
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">{activeSubject} Mastery Target</h3>
-            <div className="flex justify-between text-sm font-bold text-white mb-2">
-              <span>{subjectProgress.completedHrs} hrs</span>
-              <span className="text-slate-500">{MASTERY_TARGET_HRS} hrs</span>
-            </div>
-            <div className="w-full h-2 rounded-full bg-slate-950 overflow-hidden border border-slate-800">
-              <div 
-                className="h-full bg-gradient-to-r from-cyan-500 to-emerald-400 transition-all duration-1000"
-                style={{ width: `${subjectProgress.pct}%` }}
-              />
-            </div>
+        
+        {/* Sidebar / Curriculum List */}
+        <div className="w-full md:w-[400px] flex flex-col bg-slate-900 flex-shrink-0">
+          <div className="p-5 border-b border-slate-800">
+            <h3 className="font-black text-lg mb-1">Curriculum</h3>
+            <p className="text-xs text-slate-400">Select a class to view lessons</p>
           </div>
-
-          {/* Chapters Accordion */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {curriculum[activeSubject] ? Object.entries(curriculum[activeSubject]).map(([chapter, videos]) => (
-              <div key={chapter} className="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden">
-                <div className="px-4 py-3 bg-slate-900 border-b border-slate-800 font-bold text-sm text-white">
-                  {chapter}
-                </div>
-                <div className="divide-y divide-slate-800/50">
-                  {videos.map(video => {
-                    const isActive = activeVideo?.id === video.id;
-                    const isDone = completedIds.has(video.id);
+          
+          <div className="flex-1 overflow-y-auto p-3 space-y-6">
+            {curriculum[activeSubject] && Object.keys(curriculum[activeSubject]).map((grade, gIdx) => (
+              <div key={gIdx}>
+                <h4 className="text-xs font-black uppercase text-slate-500 mb-3 px-2 border-b border-slate-800 pb-2">{grade}</h4>
+                <div className="space-y-1">
+                  {curriculum[activeSubject][grade].map((lec, idx) => {
+                    const isLocked = !canWatch(lec);
+                    const isActive = activeVideo?.id === lec.id;
+                    const isCompleted = completedIds.has(lec.id);
+                    
                     return (
                       <button
-                        key={video.id}
-                        onClick={() => setActiveVideo(video)}
-                        className={`w-full flex items-start gap-3 p-4 text-left transition hover:bg-slate-900/50 ${isActive ? 'bg-cyan-500/5' : ''}`}
+                        key={lec.id}
+                        onClick={() => handleVideoSelect(lec)}
+                        className={`w-full flex items-start gap-3 p-3 rounded-xl transition text-left ${isActive ? 'bg-slate-800 border-l-4 border-cyan-400' : 'hover:bg-slate-800/50 border-l-4 border-transparent'}`}
                       >
-                        <div className={`mt-0.5 flex-shrink-0 ${isDone ? 'text-emerald-400' : isActive ? 'text-cyan-400' : 'text-slate-600'}`}>
-                          {isDone ? <CheckCircle size={16} /> : <PlayCircle size={16} />}
+                        <div className={`mt-0.5 ${isActive ? 'text-cyan-400' : 'text-slate-500'}`}>
+                           {isLocked ? <Lock size={16} className="text-rose-400" /> : <PlayCircle size={16} />}
                         </div>
-                        <div>
-                          <p className={`text-sm font-semibold leading-tight ${isActive ? 'text-cyan-300' : 'text-slate-300'}`}>
-                            {video.title}
-                          </p>
-                          <p className="text-[10px] text-slate-500 mt-1 flex items-center gap-1">
-                            <Clock size={10} /> {video.duration}m
-                          </p>
+                        <div className="flex-1 min-w-0">
+                          <h5 className={`text-sm font-bold truncate ${isActive ? 'text-white' : 'text-slate-300'}`}>
+                            {idx + 1}. {lec.title}
+                          </h5>
+                          <div className="flex items-center gap-3 mt-1.5 text-[11px] font-medium text-slate-500">
+                            {lec.duration && <span className="flex items-center gap-1"><Clock size={11} /> {lec.duration} min</span>}
+                            {isCompleted && <span className="flex items-center gap-1 text-emerald-400"><CheckCircle size={11} /> Done</span>}
+                            {lec.is_free_preview && <span className="text-emerald-400">Preview</span>}
+                          </div>
                         </div>
                       </button>
                     );
                   })}
                 </div>
               </div>
-            )) : (
-              <p className="text-center text-sm text-slate-500 mt-10">No lectures available for {activeSubject} yet.</p>
+            ))}
+            
+            {!curriculum[activeSubject] && (
+               <div className="p-4 text-sm text-slate-500 text-center">No lectures found for {activeSubject}.</div>
             )}
           </div>
         </div>
-
       </div>
+      
+      {/* Access Code Modal */}
+      {showCodeModal && (
+        <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+             <button onClick={() => setShowCodeModal(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white">
+               <ChevronLeft className="rotate-180" />
+             </button>
+             <div className="w-12 h-12 bg-indigo-500/20 text-indigo-400 rounded-xl flex items-center justify-center mb-5">
+               <Unlock size={24} />
+             </div>
+             <h3 className="text-xl font-black mb-2">Unlock Full Access</h3>
+             <p className="text-sm text-slate-400 mb-6">Enter your enrollment access code provided by Peerless Academy to view protected lectures.</p>
+             
+             <form onSubmit={handleVerifyCode} className="space-y-4">
+               <div>
+                 <input
+                   type="text"
+                   required
+                   value={accessCode}
+                   onChange={e => setAccessCode(e.target.value.toUpperCase())}
+                   placeholder="e.g. PEER-2026-XYZ"
+                   className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 uppercase tracking-widest font-mono"
+                 />
+                 {codeError && <p className="text-rose-400 text-xs mt-2">{codeError}</p>}
+               </div>
+               <button 
+                 type="submit" 
+                 disabled={verifying}
+                 className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 rounded-xl transition disabled:opacity-50"
+               >
+                 {verifying ? 'Verifying...' : 'Redeem Code'}
+               </button>
+             </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
