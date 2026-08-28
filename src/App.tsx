@@ -794,7 +794,7 @@ function AppInner() {
         </section>
             </main>
       {/* ── FOOTER ── */}
-      <footer className={`border-t px-5 py-12 lg:px-8 ${isDark ? 'border-white/10 bg-slate-950' : 'border-slate-200 bg-slate-900'}`}>
+      <footer className={`border-t px-5 pt-12 pb-28 lg:px-8 lg:pb-32 ${isDark ? 'border-white/10 bg-slate-950' : 'border-slate-200 bg-slate-900'}`}>
         <div className="mx-auto flex max-w-[1240px] flex-col justify-between gap-10 md:flex-row md:items-end">
           <div>
             <a href="#home" className="flex items-center gap-3">
@@ -871,7 +871,6 @@ function AppInner() {
 
       {isArenaOpen && <Arena onBack={() => setIsArenaOpen(false)} />}
 
-      <BottomTabBar activeRoute={activeRoute} setActiveRoute={setActiveRoute} openAiDoubt={() => setIsDoubtOpen(true)} />
       <AIDoubtSolver
         isOpen={isDoubtOpen}
         onClose={() => setIsDoubtOpen(false)}

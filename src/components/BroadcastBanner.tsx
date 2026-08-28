@@ -106,8 +106,10 @@ export default function BroadcastBanner() {
                   className="animate-marquee-track cursor-default text-sm md:text-base font-extrabold tracking-wider"
                   style={{ animationDuration: banner.marqueeSpeed || '25s' }}
                 >
-                  <span className="pr-12">{banner.message}</span>
-                  <span className="pr-12">{banner.message}</span>
+                  <span className="pr-12 whitespace-nowrap flex-shrink-0">{banner.message}</span>
+                  <span className="pr-12 whitespace-nowrap flex-shrink-0">{banner.message}</span>
+                  <span className="pr-12 whitespace-nowrap flex-shrink-0">{banner.message}</span>
+                  <span className="pr-12 whitespace-nowrap flex-shrink-0">{banner.message}</span>
                 </div>
               ) : (
                 <p className="truncate cursor-default text-sm md:text-base font-extrabold tracking-wider">
