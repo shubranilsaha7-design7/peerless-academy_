@@ -45,6 +45,8 @@ import LifeAtPeerless from '@/components/LifeAtPeerless';
 import CommandPalette from '@/components/CommandPalette';
 import Leaderboard from '@/components/Leaderboard';
 import BroadcastBanner from '@/components/BroadcastBanner';
+import BottomTabBar from '@/components/layout/BottomTabBar';
+import { usePlatformState } from '@/hooks/usePlatformState';
 
 // @ts-ignore
 import PWAInstallPrompt from '@/components/PWAInstallPrompt';
@@ -110,6 +112,7 @@ const CLASS_LEVELS = [7, 8, 9, 10, 11, 12];
 // ── Inner App (has access to ThemeContext) ────────────────────────
 function AppInner() {
   const { isDark, toggleTheme } = useTheme();
+  const { isAppMode } = usePlatformState();
 
   // ── Auth state ──────────────────────────────────────────────
   const [user,    setUser]    = useState<User | null>(null);
@@ -121,6 +124,7 @@ function AppInner() {
   const [isAuthOpen,   setIsAuthOpen]   = useState(false);
   const [isArenaOpen,  setIsArenaOpen]  = useState(false);
   const [isDoubtOpen,  setIsDoubtOpen]  = useState(false);
+  const [aiQuestion, setAiQuestion] = useState<any>(null);
   const [isCmdOpen,    setIsCmdOpen]    = useState(false);
   const [submitted,    setSubmitted]    = useState(false);
   const [activeRoute,  setActiveRoute]  = useState(() => {
@@ -391,7 +395,7 @@ function AppInner() {
   }
 
   return (
-    <div className={`min-h-screen overflow-hidden transition-colors duration-300 ${isDark ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
+    <div className={`relative w-full ${isAppMode ? 'h-[100dvh] overflow-hidden flex flex-col' : 'min-h-screen overflow-x-hidden'} transition-colors duration-300 ${isDark ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
 
       {/* ── COMMAND PALETTE ── */}
       <CommandPalette 
@@ -404,7 +408,7 @@ function AppInner() {
       {!introPlayed && <IntroVideo onDone={handleIntroDone} />}
 
       {/* ── BROADCAST ANNOUNCEMENT BANNER ── */}
-      <BroadcastBanner />
+      {!isAppMode && <BroadcastBanner />}
 
       {/* ── NAVBAR ── */}
       <Navbar
@@ -830,8 +834,7 @@ function AppInner() {
       <AIDoubtSolver
         isOpen={isDoubtOpen}
         onClose={() => setIsDoubtOpen(false)}
-        question={null}
-        userAnswer={null}
+        q={aiQuestion}
       />
 
       <PWAInstallPrompt />

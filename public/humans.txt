@@ -1,9 +1,10 @@
 /* TEAM */
-Developer: Shubranil Saha
-Role: System Architect & Full-Stack Developer
+Architect, Lead Developer & System Engineer: Shubranil Saha
+Credentials: IIT Madras Electronic Systems & Google Certified Developer
+Role: Core Architecture, GenAI Edge Functions, NTA CBT Simulator, AI Mentor
 
 /* SITE */
 Last update: 2026
-Standards: HTML5, CSS3, React, TypeScript
-Components: Supabase Backend, Google Cloud OAuth, Vercel Edge Network
-Software: Bespoke Custom Web Application
+Language: English
+Tech Stack: React, Vite, TypeScript, Deno, Supabase Edge Functions, Gemini 1.5 Pro, TailwindCSS, Framer Motion, Three.js
+

@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   ArrowLeft, Search, Mail, Phone, Calendar, RefreshCcw, Video, Key, 
-  BarChart3, Plus, Trash2, CheckCircle, XCircle, Image as ImageIcon,
+  BarChart3, Plus, Trash2, CheckCircle, XCircle, Image as ImageIcon, Edit2,
   Users, MessageSquare, Download, Sparkles, Send, Shield, Zap, Flame, 
   Eye, ExternalLink, Award, Megaphone, Check, AlertCircle, Copy, Database,
-  CalendarDays, Clock3, Layers
+  CalendarDays, Clock3, Layers, Bot
 } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import SmartMediaEmbed from '@/components/SmartMediaEmbed';
+import BatchQuestionGenerator from './BatchQuestionGenerator';
 
 interface AdminDashboardProps {
   user: User;
@@ -16,7 +17,7 @@ interface AdminDashboardProps {
 }
 
 export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'enquiries' | 'lectures' | 'batches' | 'codes' | 'media' | 'students' | 'banner' | 'stats' | 'sql'>('enquiries');
+  const [activeTab, setActiveTab] = useState<'enquiries' | 'lectures' | 'batches' | 'codes' | 'media' | 'students' | 'banner' | 'stats' | 'sql' | 'ai_ingest'>('enquiries');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
@@ -76,10 +77,13 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
   });
   
   const [mediaForm, setMediaForm] = useState({ 
+    id: '',
     type: 'instagram_embed', 
     url: '', 
     embed_code: '',
-    hideIgHeader: false
+    hideIgHeader: false,
+    hideIgFooter: false,
+    fullFrame: false
   });
 
   const [bannerForm, setBannerForm] = useState({
@@ -483,12 +487,19 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
     try {
       let inputContent = mediaForm.url.trim() || mediaForm.embed_code.trim();
       
-      // Append hide_ig_header parameter if checked
-      if (mediaForm.hideIgHeader && mediaForm.type === 'instagram_embed' && inputContent) {
-        if (inputContent.includes('?')) {
-          inputContent += '&hide_ig_header=true';
-        } else {
-          inputContent += '?hide_ig_header=true';
+      // Append query parameters if any toggle is checked
+      if (inputContent) {
+        let separator = inputContent.includes('?') ? '&' : '?';
+        if (mediaForm.hideIgHeader && mediaForm.type === 'instagram_embed') {
+          inputContent += `${separator}hide_header=true`;
+          separator = '&';
+        }
+        if (mediaForm.hideIgFooter && mediaForm.type === 'instagram_embed') {
+          inputContent += `${separator}hide_footer=true`;
+          separator = '&';
+        }
+        if (mediaForm.fullFrame) {
+          inputContent += `${separator}full_frame=true`;
         }
       }
 
@@ -499,11 +510,18 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
         is_active: true
       };
 
-      const { error } = await (supabase as any).from('site_media').insert([payload]);
-      if (error) throw error;
-      setMediaForm({ type: 'instagram_embed', url: '', embed_code: '', hideIgHeader: false });
+      if (mediaForm.id) {
+        const { error } = await (supabase as any).from('site_media').update(payload).eq('id', mediaForm.id);
+        if (error) throw error;
+        showToast('Media visual updated successfully!', 'success');
+      } else {
+        const { error } = await (supabase as any).from('site_media').insert([payload]);
+        if (error) throw error;
+        showToast('Media visual added and live on website!', 'success');
+      }
+      
+      setMediaForm({ id: '', type: 'instagram_embed', url: '', embed_code: '', hideIgHeader: false, hideIgFooter: false, fullFrame: false });
       fetchAllData();
-      showToast('Media visual added and live on website!', 'success');
     } catch (err: any) {
       showToast(err.message || 'Failed to add media.', 'error');
     } finally {
@@ -524,6 +542,26 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const handleEditMedia = (item: any) => {
+    const code = item.embed_code || item.url;
+    const isIgHeaderHidden = code.includes('hide_ig_header=true') || code.includes('hide_header=true');
+    const isIgFooterHidden = code.includes('hide_footer=true');
+    const isFullFrame = code.includes('full_frame=true');
+    
+    const cleanUrl = code.split('?')[0];
+
+    setMediaForm({
+      id: item.id,
+      type: item.type,
+      url: cleanUrl,
+      embed_code: cleanUrl,
+      hideIgHeader: isIgHeaderHidden,
+      hideIgFooter: isIgFooterHidden,
+      fullFrame: isFullFrame
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // ── BANNER ACTIONS ──
@@ -791,6 +829,7 @@ CREATE POLICY "Allow public all profiles" ON public.profiles FOR ALL TO public, 
             { id: 'banner', label: 'Announcement Banner', icon: Megaphone },
             { id: 'stats', label: 'Analytics & Health', icon: BarChart3 },
             { id: 'sql', label: 'Database Setup SQL', icon: Database },
+            { id: 'ai_ingest', label: 'GenAI Ingestion', icon: Bot },
           ].map(tab => (
             <button
               key={tab.id}
@@ -1054,12 +1093,22 @@ CREATE POLICY "Allow public all profiles" ON public.profiles FOR ALL TO public, 
                 </label>
 
                 <button
-                  type="submit"
-                  disabled={actionLoading}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-xs font-black text-slate-950 shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400 disabled:opacity-50"
-                >
-                  <Plus size={16} /> Add to Curriculum Hub
-                </button>
+                    type="submit"
+                    disabled={actionLoading}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-xs font-black text-slate-950 shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400 disabled:opacity-50"
+                  >
+                    {mediaForm.id ? <Edit2 size={16} /> : <Plus size={16} />}
+                    {mediaForm.id ? 'Update Visual Media' : 'Add to Curriculum Hub'}
+                  </button>
+                  {mediaForm.id && (
+                    <button
+                      type="button"
+                      onClick={() => setMediaForm({ id: '', type: 'instagram_embed', url: '', embed_code: '', hideIgHeader: false, hideIgFooter: false, fullFrame: false })}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-800 py-3 text-xs font-black text-white transition hover:bg-slate-700"
+                    >
+                      <XCircle size={16} /> Cancel Edit
+                    </button>
+                  )}
               </form>
             </div>
 
@@ -1496,16 +1545,37 @@ CREATE POLICY "Allow public all profiles" ON public.profiles FOR ALL TO public, 
                 </div>
 
                 {mediaForm.type === 'instagram_embed' && (
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={mediaForm.hideIgHeader}
-                      onChange={e => setMediaForm({ ...mediaForm, hideIgHeader: e.target.checked })}
-                      className="rounded border-slate-700 bg-slate-900 text-pink-500 focus:ring-pink-500 focus:ring-offset-slate-950"
-                    />
-                    <span className="text-xs font-semibold text-slate-300">Disable Account Name / Header on Video</span>
-                  </label>
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={mediaForm.hideIgHeader}
+                        onChange={e => setMediaForm({ ...mediaForm, hideIgHeader: e.target.checked })}
+                        className="rounded border-slate-700 bg-slate-900 text-pink-500 focus:ring-pink-500 focus:ring-offset-slate-950"
+                      />
+                      <span className="text-xs font-semibold text-slate-300">Disable Account Name / Header</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={mediaForm.hideIgFooter}
+                        onChange={e => setMediaForm({ ...mediaForm, hideIgFooter: e.target.checked })}
+                        className="rounded border-slate-700 bg-slate-900 text-pink-500 focus:ring-pink-500 focus:ring-offset-slate-950"
+                      />
+                      <span className="text-xs font-semibold text-slate-300">Hide Like / Comment Button Footer</span>
+                    </label>
+                  </div>
                 )}
+
+                <label className="flex items-center gap-2 cursor-pointer mt-2">
+                  <input
+                    type="checkbox"
+                    checked={mediaForm.fullFrame}
+                    onChange={e => setMediaForm({ ...mediaForm, fullFrame: e.target.checked })}
+                    className="rounded border-slate-700 bg-slate-900 text-pink-500 focus:ring-pink-500 focus:ring-offset-slate-950"
+                  />
+                  <span className="text-xs font-semibold text-slate-300">Force Full Frame (No Bezels/Borders)</span>
+                </label>
 
                 {/* Instant Live Visual Preview in Form */}
                 {mediaForm.url.trim() && (
@@ -1902,7 +1972,23 @@ CREATE POLICY "Allow public all profiles" ON public.profiles FOR ALL TO public, 
           </div>
         )}
 
+        {/* 🤖 10. GENAI QUESTION INGESTION TAB 🤖 */}
+        {activeTab === 'ai_ingest' && (
+          <div className="max-w-4xl mx-auto space-y-6">
+            <div>
+              <h2 className="text-2xl font-black text-white flex items-center gap-2">
+                <Bot size={24} className="text-indigo-400" /> Autonomous GenAI Question Engine
+              </h2>
+              <p className="text-xs text-slate-400">
+                Trigger Deno Edge functions to dynamically generate mathematically rigorous PYQs via Gemini 1.5 Pro and ingest them instantly.
+              </p>
+            </div>
+            <BatchQuestionGenerator />
+          </div>
+        )}
+
       </main>
     </div>
   );
 }
+

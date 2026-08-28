@@ -1,80 +1,102 @@
-import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { GoogleGenerativeAI } from "npm:@google/generative-ai";
 
-const SYSTEM = `You are the Peerless Academy AI Doubt Solver, helping Class 5-12, NEET and JEE aspirants in Agartala, Tripura.
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const ACADEMIC_SYSTEM = `You are an Elite AI Socratic Tutor for JEE/NEET.
 Rules:
-- Answer Physics, Chemistry, Maths and Biology doubts step by step, short and exam-focused.
-- When a formula matters, put it on its own line prefixed with "FORMULA:" so the app can highlight it.
-- For questions about fees, batches, admissions or timings, say a mentor will confirm details on WhatsApp (+91 87941 30855).
-- Keep answers under 220 words. Use simple language and plain-text math.`;
+- Respond in Markdown. Use LaTeX for math ($ for inline, $$ for block).
+- If the user asks for a "Hint", guide them Socratically without giving the final answer.
+- If they ask for a "Full Breakdown", provide a highly detailed, step-by-step resolution.
+- Never spoon-feed if they just upload an image; ask what they have tried first unless they explicitly want the full solution.`;
 
-type Block = Record<string, unknown>;
+const NON_ACADEMIC_SYSTEM = `You are an Elite Academic Mentor and Strategist for JEE/NEET aspirants.
+Rules:
+- Provide exam strategy, time management routines, revision schedules, and motivational guidance.
+- Do not solve physics/math problems here. Direct them to Academic Mode.
+- Be highly empathetic, structured, and practical.`;
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
 
   try {
-    const key = Deno.env.get('LOVABLE_API_KEY');
-    if (!key) {
-      return new Response(JSON.stringify({ error: 'AI is not configured yet.' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    const { messages, mode = "academic" } = await req.json();
+
+    const apiKey = Deno.env.get("GEMINI_API_KEY");
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY is not configured");
     }
 
-    const body = await req.json().catch(() => ({}));
-    const question = typeof body?.question === 'string' ? body.question.trim() : '';
-    const image = typeof body?.image === 'string' && body.image.startsWith('data:image/') ? body.image : null;
-    const history = Array.isArray(body?.history) ? body.history.slice(-10) : [];
-
-    if ((!question && !image) || question.length > 4000) {
-      return new Response(JSON.stringify({ error: 'Please send a question between 1 and 4000 characters.' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const content: Block[] = [{ type: 'text', text: question || 'Solve the problem in this image step by step.' }];
-    if (image) content.push({ type: 'image_url', image_url: { url: image } });
-
-    const messages = [
-      { role: 'system', content: SYSTEM },
-      ...history
-        .filter((m: Block) => (m?.role === 'user' || m?.role === 'assistant') && typeof m?.content === 'string')
-        .map((m: Block) => ({ role: m.role, content: m.content })),
-      { role: 'user', content },
-    ];
-
-    const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Lovable-API-Key': key },
-      body: JSON.stringify({ model: 'google/gemini-2.5-flash', messages }),
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const systemInstruction = mode === "academic" ? ACADEMIC_SYSTEM : NON_ACADEMIC_SYSTEM;
+    
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-pro",
+      systemInstruction
     });
 
-    if (!res.ok) {
-      const text = await res.text();
-      return new Response(JSON.stringify({ error: text || 'AI request failed.' }), {
-        status: res.status,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    // Convert messages to Gemini format
+    const history = messages.slice(0, -1).map((m: any) => ({
+      role: m.role === "ai" || m.role === "model" ? "model" : "user",
+      parts: [{ text: m.content }]
+    }));
+
+    const latestMessage = messages[messages.length - 1];
+    
+    const chat = model.startChat({ history });
+
+    // Handle images in latest message
+    let resultStream;
+    if (latestMessage.image) {
+      // Assuming base64 image like "data:image/jpeg;base64,..."
+      const [mimeType, b64Data] = latestMessage.image.split(";base64,");
+      const mime = mimeType.replace("data:", "");
+      
+      resultStream = await chat.sendMessageStream([
+        { text: latestMessage.content || "Analyze this image." },
+        { inlineData: { data: b64Data, mimeType: mime } }
+      ]);
+    } else {
+      resultStream = await chat.sendMessageStream(latestMessage.content);
     }
 
-    const data = await res.json();
-    const answer = data?.choices?.[0]?.message?.content ?? '';
-    if (!answer) {
-      return new Response(JSON.stringify({ error: 'The AI returned an empty answer.' }), {
-        status: 502,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    return new Response(JSON.stringify({ answer }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of resultStream) {
+            const text = chunk.text();
+            if (text) {
+              const data = JSON.stringify({ text });
+              controller.enqueue(new TextEncoder().encode(`data: ${data}\n\n`));
+            }
+          }
+          controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"));
+          controller.close();
+        } catch (e: any) {
+          controller.error(e);
+        }
+      }
     });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unexpected error';
-    return new Response(JSON.stringify({ error: message }), {
+
+    return new Response(stream, {
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive"
+      }
+    });
+
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
+

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bookmark, CheckCircle2, ChevronLeft, ChevronRight, Clock, RotateCcw, Send, Share2, Target } from 'lucide-react';
+import { Bookmark, CheckCircle2, ChevronLeft, ChevronRight, Clock, RotateCcw, Send, Share2, Target, BrainCircuit } from 'lucide-react';
 import {
   buildPaper, PAPER_CONFIG,
   type ExamPaper, type ExamQuestion, type ExamSubject,
@@ -333,6 +333,12 @@ export default function CbtSimulator() {
                       <p className="mt-2 text-sm font-bold text-white">Q{i + 1}. {item.question}</p>
                       <p className="mt-2 text-xs text-emerald-300">Answer: {String.fromCharCode(65 + item.answer)}) {item.options[item.answer]}</p>
                       <p className="mt-1 text-xs leading-5 text-zinc-400">{item.solution}</p>
+                      <button
+                        onClick={() => window.dispatchEvent(new CustomEvent('open-ai-tutor', { detail: item }))}
+                        className="mt-3 flex items-center gap-1.5 rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-indigo-400 transition hover:bg-indigo-500/20"
+                      >
+                        <BrainCircuit size={12} /> Ask AI Tutor
+                      </button>
                     </div>
                   );
                 })}
@@ -397,8 +403,8 @@ export default function CbtSimulator() {
                           PYQ {paper === 'NEET' ? 'NEET' : 'JEE'} {2023 - ((q?.id?.length || 0) % 6)}
                         </span>
                         <span className={`flex items-center gap-1 rounded px-2 py-1 border shadow-sm ${
-                          q?.difficulty === 'hard' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
-                          q?.difficulty === 'medium' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                          q?.difficulty === 'Hard' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
+                          q?.difficulty === 'Moderate' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
                           'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                         }`}>
                           Lvl: {q?.difficulty}

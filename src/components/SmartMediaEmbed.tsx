@@ -11,11 +11,20 @@ export default function SmartMediaEmbed({ content, className = '' }: SmartMediaE
 
   const trimmed = content.trim();
 
+  // Extract advanced parameters
+  const hideHeader = trimmed.includes('hide_header=true') || trimmed.includes('hide_ig_header=true');
+  const hideFooter = trimmed.includes('hide_footer=true');
+  const fullFrame = trimmed.includes('full_frame=true');
+
+  const baseWrapperStyles = fullFrame 
+    ? 'w-full h-full object-cover rounded-none' 
+    : 'relative w-full overflow-hidden rounded-2xl bg-transparent shadow-xl';
+
   // 1. Check if it's already an <iframe> HTML code snippet
   if (trimmed.toLowerCase().includes('<iframe') || trimmed.toLowerCase().includes('</iframe>')) {
     return (
       <div 
-        className={`w-full flex justify-center items-center overflow-hidden rounded-2xl ${className}`}
+        className={`w-full flex justify-center items-center overflow-hidden ${fullFrame ? 'rounded-none' : 'rounded-2xl'} ${className}`}
         dangerouslySetInnerHTML={{ __html: trimmed }} 
       />
     );
@@ -27,12 +36,16 @@ export default function SmartMediaEmbed({ content, className = '' }: SmartMediaE
     const type = igMatch[1]; // reel or p
     const code = igMatch[2];
     const embedUrl = `https://www.instagram.com/${type}/${code}/embed/`;
-    const hideHeader = trimmed.includes('hide_ig_header=true');
+
+    // Calculate margins based on toggles
+    let marginClass = "-mx-[2px]";
+    if (hideHeader) marginClass += " -mt-[58px]";
+    if (hideFooter) marginClass += " -mb-[58px]";
 
     return (
       <div className={`w-full flex flex-col items-center justify-center ${className}`}>
-        <div className={`relative w-full max-w-[340px] overflow-hidden rounded-[2rem] bg-transparent shadow-xl`}>
-          <div className={hideHeader ? "-mt-[58px] -mb-[58px] -mx-[2px]" : ""}>
+        <div className={`relative w-full max-w-[340px] overflow-hidden ${fullFrame ? 'rounded-none' : 'rounded-[2rem]'} bg-transparent shadow-xl`}>
+          <div className={marginClass}>
             <iframe
               src={embedUrl}
               title={`Instagram ${type}`}
@@ -41,6 +54,7 @@ export default function SmartMediaEmbed({ content, className = '' }: SmartMediaE
               scrolling="no"
               allowTransparency
               allow="encrypted-media"
+              loading="lazy"
             />
           </div>
         </div>
@@ -55,13 +69,14 @@ export default function SmartMediaEmbed({ content, className = '' }: SmartMediaE
     const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=0&rel=0&modestbranding=1`;
 
     return (
-      <div className={`relative w-full overflow-hidden rounded-2xl bg-transparent shadow-xl aspect-video ${className}`}>
+      <div className={`${baseWrapperStyles} aspect-video ${className}`}>
         <iframe
           src={embedUrl}
           title="YouTube Video Embed"
           className="absolute inset-0 h-full w-full border-0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
+          loading="lazy"
         />
       </div>
     );
@@ -69,13 +84,15 @@ export default function SmartMediaEmbed({ content, className = '' }: SmartMediaE
 
   // Check if it's a Direct Video file (.mp4, .webm, .ogg, .mov)
   if (/\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(trimmed)) {
+    // Strip our injected query params so the video src works natively
+    const cleanUrl = trimmed.split('?')[0];
     return (
-      <div className={`relative w-full overflow-hidden rounded-2xl bg-transparent shadow-xl ${className}`}>
+      <div className={`${baseWrapperStyles} ${className}`}>
         <video
-          src={trimmed}
+          src={cleanUrl}
           controls
           playsInline
-          className="h-full w-full rounded-2xl object-cover max-h-[550px]"
+          className={`h-full w-full object-cover ${fullFrame ? 'rounded-none max-h-none' : 'rounded-2xl max-h-[550px]'}`}
         />
       </div>
     );
@@ -83,12 +100,14 @@ export default function SmartMediaEmbed({ content, className = '' }: SmartMediaE
 
   // Check if it's a Direct Image (.jpg, .jpeg, .png, .webp, .gif, .svg)
   if (/\.(jpg|jpeg|png|webp|gif|svg)(\?.*)?$/i.test(trimmed)) {
+    const cleanUrl = trimmed.split('?')[0];
     return (
-      <div className={`relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl ${className}`}>
+      <div className={`${baseWrapperStyles} ${className}`}>
         <img
-          src={trimmed}
+          src={cleanUrl}
           alt="Visual Media"
-          className="h-full w-full object-cover rounded-2xl transition duration-500 hover:scale-105"
+          loading="lazy"
+          className={`h-full w-full object-cover transition duration-500 hover:scale-105 ${fullFrame ? 'rounded-none' : 'rounded-2xl'}`}
           onError={(e) => {
             e.currentTarget.style.display = 'none';
           }}
