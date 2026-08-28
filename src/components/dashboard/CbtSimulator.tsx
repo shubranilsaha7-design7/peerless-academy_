@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Latex from 'react-latex-next';
 import 'katex/dist/katex.min.css';
-import { Bookmark, ChevronLeft, ChevronRight, CheckCircle2, RotateCcw, AlertTriangle, Send } from 'lucide-react';
+import { Bookmark, ChevronLeft, ChevronRight, CheckCircle2, RotateCcw, ShieldAlert, Send } from 'lucide-react';
 import { useCbtStore, QuestionStatus } from '@/store/cbtStore';
 import { useTestHydration } from '@/hooks/useTestHydration';
 import { useProctoring } from '@/hooks/useProctoring';
@@ -12,12 +12,10 @@ import CbtDiagnostics from './CbtDiagnostics';
 export default function CbtSimulator() {
   const [examType, setExamType] = useState<'JEE Main' | 'NEET'>('JEE Main');
   const [showPalette, setShowPalette] = useState(false);
+  const [swipeDirection, setSwipeDirection] = useState(0); // 1 for next, -1 for prev
   
   const { loading } = useTestHydration(examType, false);
   
-
-  
-    // Phase 4 Anti-Cheat Matrix
   const { 
     questions, currentQuestionId, currentIndex, 
     statuses, answers, timeSpentMs,
@@ -25,11 +23,9 @@ export default function CbtSimulator() {
     startTest, tickTimer, nextQuestion, prevQuestion, 
     jumpToQuestion, selectOption, markReview, clearResponse, submitTest 
   } = useCbtStore();
+  
   const { infractions } = useProctoring('temp-user-id', 'temp-session-id', isTestActive);
   
-  // Phase 4 Anti-Cheat Matrix
-
-  // The Timer Tick
   useEffect(() => {
     if (!isTestActive) return;
     const interval = setInterval(() => {
@@ -39,7 +35,10 @@ export default function CbtSimulator() {
   }, [isTestActive, tickTimer]);
 
   if (loading) {
-    return <div className="h-full w-full flex items-center justify-center text-slate-400">Hydrating Adaptive Payload...</div>;
+    return <div className="h-full w-full flex flex-col items-center justify-center text-cyan-500 bg-slate-950 font-black tracking-widest uppercase">
+      <div className="w-16 h-16 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin mb-4" />
+      Hydrating OLED Engine...
+    </div>;
   }
 
   if (isTestSubmitted) {
@@ -48,14 +47,14 @@ export default function CbtSimulator() {
 
   if (!isTestActive) {
     return (
-      <div className="flex flex-col items-center justify-center h-full max-w-md mx-auto text-center space-y-6">
-        <h2 className="text-3xl font-black text-white">NTA CBT Simulator</h2>
-        <p className="text-slate-400 text-sm">Offline resilience enabled. Activity tracking active.</p>
+      <div className="h-full flex flex-col items-center justify-center bg-slate-950 p-6 text-center text-white">
+        <h1 className="text-4xl font-black mb-4 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-500 uppercase tracking-tight">OLED Simulator</h1>
+        <p className="text-slate-400 mb-8 max-w-sm">Zero-lag interface. Framer Motion physics. IndexedDB offline caching. Telemetry active.</p>
         <button 
-          onClick={startTest}
-          className="bg-coral text-white px-8 py-3 rounded-full font-black uppercase tracking-widest shadow-[0_0_20px_rgba(255,107,0,0.4)] transition hover:scale-105"
+          onClick={startTest} 
+          className="bg-cyan-500 text-slate-950 px-10 py-4 rounded-2xl font-black text-lg shadow-[0_0_30px_rgba(6,182,212,0.5)] transition hover:scale-105"
         >
-          Initialize Engine
+          INITIALIZE ENGINE
         </button>
       </div>
     );
@@ -64,120 +63,162 @@ export default function CbtSimulator() {
   const currentQ = questions[currentIndex];
   if (!currentQ) return null;
 
-  const currentStatus = statuses[currentQ.id] || 'notAnswered';
+  const currentStatus = statuses[currentQ.id] || 'unseen';
   const currentAnswer = answers[currentQ.id];
 
+  const handleNext = () => { setSwipeDirection(1); nextQuestion(); };
+  const handlePrev = () => { setSwipeDirection(-1); prevQuestion(); };
+
+  // Helper for animated OLED status styling
   const getStatusColor = (status: QuestionStatus) => {
-    switch (status) {
-      case 'answered': return 'bg-emerald-500 border-emerald-500 text-white';
-      case 'notAnswered': return 'bg-rose-500 border-rose-500 text-white';
-      case 'review': return 'bg-amber-500 border-amber-500 text-white';
-      case 'answeredReview': return 'bg-indigo-500 border-indigo-500 text-white';
-      case 'unseen': default: return 'bg-slate-800 border-slate-700 text-slate-400';
+    switch(status) {
+      case 'answered': return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]';
+      case 'review': return 'bg-purple-500/20 text-purple-400 border-purple-500/50 shadow-[0_0_15px_rgba(168,85,247,0.3)]';
+      case 'answeredReview': return 'bg-indigo-500/20 text-indigo-400 border-indigo-500/50 shadow-[0_0_15px_rgba(99,102,241,0.3)]';
+      case 'notAnswered': return 'bg-rose-500/10 text-rose-400 border-rose-500/30';
+      default: return 'bg-slate-800 text-slate-400 border-slate-700';
     }
   };
 
+  const msToTime = (ms: number) => {
+    const s = Math.floor((ms / 1000) % 60);
+    const m = Math.floor((ms / (1000 * 60)) % 60);
+    const h = Math.floor((ms / (1000 * 60 * 60)) % 24);
+    return `${h > 0 ? h + ':' : ''}${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
   return (
-    <div className="relative h-full flex flex-col font-sans">
+    <div className="flex flex-col h-full bg-slate-950 text-slate-200 overflow-hidden relative">
+      {/* HUD Telemetry Bar */}
+      <header className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-cyan-500/20 bg-slate-900/80 backdrop-blur-md z-20">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center font-black text-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.5)]">
+            {currentIndex + 1}
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Physics</span>
+            <span className="text-xs font-bold">{currentQ.chapter || 'Assessment'}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          {infractions > 0 && (
+            <div className="flex items-center gap-1 text-rose-500 text-xs font-black animate-pulse">
+              <ShieldAlert size={14} /> WARN: {infractions}
+            </div>
+          )}
+          <div className="font-mono text-cyan-400 text-lg shadow-[0_0_10px_rgba(6,182,212,0.2)] bg-cyan-500/10 px-3 py-1 rounded border border-cyan-500/20">
+            {msToTime(timeSpentMs[currentQ.id] || 0)}
+          </div>
+        </div>
+      </header>
+
+      {/* OLED Liquid Container */}
+      <main className="flex-1 relative overflow-hidden flex flex-col p-4">
+        <AnimatePresence initial={false} custom={swipeDirection} mode="popLayout">
+          <motion.div
+            key={currentQ.id}
+            custom={swipeDirection}
+            initial={{ opacity: 0, x: swipeDirection > 0 ? 50 : -50, scale: 0.98 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: swipeDirection > 0 ? -50 : 50, scale: 0.98 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="flex-1 flex flex-col"
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.2}
+            onDragEnd={(e, { offset, velocity }) => {
+              if (offset.x < -50 || velocity.x < -500) handleNext();
+              else if (offset.x > 50 || velocity.x > 500) handlePrev();
+            }}
+          >
+            {/* Question Text */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 mb-4 shadow-lg text-[15px] leading-relaxed">
+              <Latex>{currentQ.question_latex}</Latex>
+            </div>
+            
+            {/* Options */}
+            <div className="flex-1 overflow-y-auto overscroll-y-contain pb-20 space-y-3">
+              {currentQ.options.map((opt, i) => {
+                const isSelected = currentAnswer === i;
+                return (
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    key={i}
+                    onClick={() => selectOption(currentQ.id, i)}
+                    className={`w-full text-left p-4 rounded-xl border transition-all duration-200 flex gap-4 items-center ${isSelected ? 'bg-cyan-500/10 border-cyan-500/50 shadow-[inset_0_0_20px_rgba(6,182,212,0.15)] text-cyan-300' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-800'}`}
+                  >
+                    <div className={`flex-shrink-0 w-8 h-8 rounded-full border flex items-center justify-center font-bold text-sm ${isSelected ? 'bg-cyan-500 border-cyan-500 text-slate-950 shadow-[0_0_10px_rgba(6,182,212,0.5)]' : 'border-slate-700 bg-slate-800'}`}>
+                      {String.fromCharCode(65 + i)}
+                    </div>
+                    <div className="flex-1">
+                      <Latex>{opt}</Latex>
+                    </div>
+                  </motion.button>
+                );
+              })}
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </main>
+
+      {/* Control Deck */}
+      <footer className="flex-shrink-0 grid grid-cols-4 gap-2 p-3 bg-slate-900 border-t border-slate-800 pb-[env(safe-area-inset-bottom)] z-20">
+        <button onClick={handlePrev} disabled={currentIndex === 0} className="flex flex-col items-center justify-center py-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg disabled:opacity-30 transition">
+          <ChevronLeft size={20} /> <span className="text-[10px] font-bold uppercase mt-1">Prev</span>
+        </button>
+        <button onClick={() => markReview(currentQ.id)} className={`flex flex-col items-center justify-center py-2 rounded-lg transition ${currentStatus.toLowerCase().includes('review') ? 'text-purple-400 bg-purple-500/10 shadow-[inset_0_0_10px_rgba(168,85,247,0.2)]' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+          <Bookmark size={20} fill={currentStatus.toLowerCase().includes('review') ? 'currentColor' : 'none'} /> <span className="text-[10px] font-bold uppercase mt-1">Mark</span>
+        </button>
+        <button onClick={() => clearResponse(currentQ.id)} disabled={currentAnswer === undefined} className="flex flex-col items-center justify-center py-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg disabled:opacity-30 transition">
+          <RotateCcw size={20} /> <span className="text-[10px] font-bold uppercase mt-1">Clear</span>
+        </button>
+        <button onClick={handleNext} disabled={currentIndex === questions.length - 1} className="flex flex-col items-center justify-center py-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg disabled:opacity-30 transition">
+          <ChevronRight size={20} /> <span className="text-[10px] font-bold uppercase mt-1">Next</span>
+        </button>
+      </footer>
       
-      {/* Top Action Bar */}
-      <div className="flex items-center justify-between bg-slate-900/80 backdrop-blur-md p-4 border-b border-slate-800 shrink-0">
-        <div className="font-bold text-slate-300">
-          Q. {currentIndex + 1} <span className="text-slate-600">/ {questions.length}</span>
-          {infractions > 0 && <span className="ml-4 text-[10px] font-bold text-rose-500 bg-rose-500/10 px-2 py-1 rounded animate-pulse">{infractions} Warnings</span>}
-        </div>
-        <div className="text-coral font-black animate-pulse flex items-center gap-2">
-          {Math.floor((timeSpentMs[currentQ.id] || 0) / 1000)}s spent here
-        </div>
-        <button onClick={() => setShowPalette(true)} className="text-sm font-black bg-slate-800 px-3 py-1.5 rounded-lg text-slate-300">
-          Palette
+      {/* Absolute Submit / Grid Button */}
+      <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+70px)] left-0 w-full px-4 flex justify-between pointer-events-none z-30">
+        <button onClick={() => setShowPalette(true)} className="pointer-events-auto bg-slate-800 border border-slate-700 text-white rounded-full px-4 py-2 text-xs font-bold uppercase shadow-lg backdrop-blur-md hover:bg-slate-700 flex gap-2 items-center">
+          <div className="flex gap-0.5">
+            <div className="w-1 h-1 bg-white rounded-full"></div>
+            <div className="w-1 h-1 bg-white rounded-full"></div>
+            <div className="w-1 h-1 bg-white rounded-full"></div>
+          </div>
+          Grid
+        </button>
+        <button onClick={submitTest} className="pointer-events-auto bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 rounded-full px-5 py-2 text-xs font-black uppercase shadow-[0_0_20px_rgba(16,185,129,0.4)] flex items-center gap-1.5 transition hover:scale-105">
+          <CheckCircle2 size={14} /> Submit
         </button>
       </div>
 
-      {/* Main Question Area (Scrollable) */}
-      <div className="flex-1 overflow-y-auto p-5 pb-32">
-        <div className="glass-panel bg-slate-900/40 border-slate-800 rounded-2xl p-6">
-          <div className="flex justify-between items-start mb-6">
-            <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">{currentQ.subject} • {currentQ.chapter}</span>
-            <span className={`text-[10px] uppercase font-black px-2 py-1 rounded ${currentQ.difficulty === 'hard' ? 'bg-rose-500/10 text-rose-500' : 'bg-amber-500/10 text-amber-500'}`}>
-              {currentQ.difficulty}
-            </span>
-          </div>
-
-          <div className="prose prose-invert max-w-none text-base sm:text-lg">
-            <Latex>{currentQ.question_latex}</Latex>
-          </div>
-
-          <div className="mt-8 space-y-3">
-            {currentQ.options.map((opt, idx) => {
-              const isSelected = currentAnswer === idx;
-              return (
-                <button
-                  key={idx}
-                  onClick={() => selectOption(currentQ.id, idx)}
-                  className={`w-full text-left p-4 rounded-xl border transition-all ${
-                    isSelected 
-                      ? 'bg-cyan-500/10 border-cyan-500 text-white' 
-                      : 'bg-slate-800/50 border-slate-700 text-slate-300 hover:border-slate-500'
-                  }`}
-                >
-                  <span className="font-bold text-slate-500 mr-3">{String.fromCharCode(65 + idx)}.</span>
-                  <Latex>{opt}</Latex>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Floating Action Bar (Bottom) */}
-      <div className="absolute bottom-0 left-0 right-0 bg-slate-950/90 backdrop-blur-xl border-t border-slate-800 p-4 safe-pb flex items-center justify-between shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
-        <div className="flex items-center gap-2">
-          <button onClick={() => markReview(currentQ.id)} className="p-3 rounded-full bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 transition">
-            <Bookmark size={20} />
-          </button>
-          <button onClick={() => clearResponse(currentQ.id)} className="p-3 rounded-full bg-slate-800 text-slate-400 hover:bg-slate-700 transition">
-            <RotateCcw size={20} />
-          </button>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button onClick={prevQuestion} disabled={currentIndex === 0} className="p-3 rounded-full bg-slate-800 text-white disabled:opacity-30">
-            <ChevronLeft size={20} />
-          </button>
-          <button onClick={nextQuestion} disabled={currentIndex === questions.length - 1} className="p-3 rounded-full bg-cyan-500 text-slate-900 font-black px-6 shadow-lg shadow-cyan-500/20 disabled:opacity-30">
-            SAVE & NEXT
-          </button>
-        </div>
-      </div>
-
-      {/* Question Palette Bottom Sheet */}
-      <BottomSheet isOpen={showPalette} onClose={() => setShowPalette(false)} >
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="font-black text-xl text-white">Question Palette</h3>
-            <button onClick={submitTest} className="flex items-center gap-2 bg-coral text-white px-4 py-2 rounded-xl font-bold text-sm shadow-lg shadow-coral/30">
-              <Send size={16} /> Submit Exam
-            </button>
-          </div>
-          <div className="grid grid-cols-5 gap-3 max-h-[60vh] overflow-y-auto pb-10">
-            {questions.map((q, i) => {
-              const status = statuses[q.id] || 'unseen';
-              const isCurrent = currentIndex === i;
-              return (
-                <button
-                  key={q.id}
-                  onClick={() => { jumpToQuestion(i); setShowPalette(false); }}
-                  className={`h-12 w-full rounded-xl flex items-center justify-center font-black border-2 transition ${getStatusColor(status)} ${isCurrent ? 'ring-2 ring-white scale-110 z-10' : ''}`}
-                >
-                  {i + 1}
-                </button>
-              );
-            })}
+      {/* OLED Grid Palette - Using CSS Containment for 120FPS scrolling */}
+      <BottomSheet isOpen={showPalette} onClose={() => setShowPalette(false)}>
+        <div className="p-5 max-h-[70vh] flex flex-col">
+          <h3 className="font-black text-lg mb-4 text-white uppercase tracking-wider">Nav Grid</h3>
+          <div className="flex-1 overflow-y-auto overscroll-y-contain pb-10" style={{ contain: 'strict' }}>
+            <div className="grid grid-cols-5 gap-3">
+              {questions.map((q, i) => {
+                const s = statuses[q.id] || 'unseen';
+                const isActive = i === currentIndex;
+                return (
+                  <button
+                    key={q.id}
+                    onClick={() => {
+                      setSwipeDirection(i > currentIndex ? 1 : -1);
+                      jumpToQuestion(i);
+                      setShowPalette(false);
+                    }}
+                    className={`h-12 w-full rounded-xl flex items-center justify-center font-black text-sm transition-all border ${getStatusColor(s)} ${isActive ? 'ring-2 ring-white scale-110 z-10' : ''}`}
+                  >
+                    {i + 1}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </BottomSheet>
-
     </div>
   );
 }

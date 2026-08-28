@@ -1,13 +1,13 @@
 import { Trophy, Swords, Zap, X, Gamepad2, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export default function ArenaHub({ onBack, onDuel, onCbt, onMiniTest }: { onBack: () => void, onDuel: () => void, onCbt: () => void, onMiniTest: () => void }) {
+export default function KurukshetraHub({ onBack, onDuel, onCbt, onMiniTest }: { onBack: () => void, onDuel: () => void, onCbt: () => void, onMiniTest: () => void }) {
   return (
     <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col font-sans text-white pb-[env(safe-area-inset-bottom)]">
       <header className="flex justify-between items-center p-6 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md">
         <button onClick={onBack} className="text-slate-400 hover:text-white transition"><X size={24} /></button>
         <div className="font-black text-lg tracking-widest text-coral uppercase flex items-center gap-2">
-          <Gamepad2 size={20} /> The Arena
+          <Gamepad2 size={20} /> Kurukshetra
         </div>
       </header>
       

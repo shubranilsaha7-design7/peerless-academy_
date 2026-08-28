@@ -1,4 +1,4 @@
-import { User, Shield, BrainCircuit, Target, Network, Settings, X, LogOut, Clock } from 'lucide-react';
+import { User, Shield, BrainCircuit, Target, Network, Settings, X, LogOut, Clock, Trophy } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -11,7 +11,7 @@ export default function ProfileDashboard({
 }) {
   const tools = [
     { id: 'focus', label: 'Focus Mode', icon: Target, color: 'text-rose-500' },
-    { id: 'flashcards', label: 'Flashcards', icon: BrainCircuit, color: 'text-amber-500' },
+    { id: 'error_notebook', label: 'Error Notebook', icon: BrainCircuit, color: 'text-amber-500' },
     { id: 'squads', label: 'Study Squads', icon: Shield, color: 'text-indigo-500' },
     { id: 'rank', label: 'Rank Simulator', icon: Trophy, color: 'text-emerald-500' },
     { id: 'roadmap', label: 'Concept Roadmap', icon: Network, color: 'text-fuchsia-500' },
@@ -65,4 +65,3 @@ export default function ProfileDashboard({
   );
 }
 // Fix Trophy import
-import { Trophy } from 'lucide-react';

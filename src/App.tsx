@@ -47,8 +47,10 @@ import CommandPalette from '@/components/CommandPalette';
 import Leaderboard from '@/components/Leaderboard';
 import BroadcastBanner from '@/components/BroadcastBanner';
 import AdvancedVideoPlayer from './components/Content/AdvancedVideoPlayer';
-import ArenaHub from './components/dashboard/ArenaHub';
+import KurukshetraHub from './components/dashboard/KurukshetraHub';
+import Kurukshetra from './components/Kurukshetra';
 import ProfileDashboard from './components/dashboard/ProfileDashboard';
+import ErrorNotebook from './components/dashboard/ErrorNotebook';
 import BottomTabBar from '@/components/layout/BottomTabBar';
 import { usePlatformState } from '@/hooks/usePlatformState';
 
@@ -126,7 +128,7 @@ function AppInner() {
 
   // ── Modal/panel state ────────────────────────────────────────
   const [isAuthOpen,   setIsAuthOpen]   = useState(false);
-  const [isArenaOpen,  setIsArenaOpen]  = useState(false);
+  const [isKurukshetraOpen,  setIsKurukshetraOpen]  = useState(false);
   const [isDoubtOpen,  setIsDoubtOpen]  = useState(false);
   const [aiQuestion, setAiQuestion] = useState<any>(null);
   const [isCmdOpen,    setIsCmdOpen]    = useState(false);
@@ -205,14 +207,14 @@ function AppInner() {
 
   const handleSignOut = async () => (supabase as any).auth.signOut();
 
-  const openArena = () => {
+  const openKurukshetra = () => {
     if (!user) { setIsAuthOpen(true); return; }
     setShowArenaConfig(true);
   };
 
   const startArena = () => {
     setShowArenaConfig(false);
-    setIsArenaOpen(true);
+    setIsKurukshetraOpen(true);
   };
 
   const handleLockedFeatureClick = (featureId: string) => {
@@ -401,9 +403,11 @@ function AppInner() {
   }
 
   
-    if (activeRoute === 'arena_hub') return <ArenaHub onBack={() => setActiveRoute('home')} onDuel={() => setIsArenaOpen(true)} onCbt={() => setActiveRoute('cbt')} onMiniTest={() => setActiveRoute('minitest')} />;
+    if (activeRoute === 'kurukshetra_hub') return <KurukshetraHub onBack={() => setActiveRoute('home')} onDuel={() => setIsKurukshetraOpen(true)} onCbt={() => setActiveRoute('cbt')} onMiniTest={() => setActiveRoute('minitest')} />;
     if (activeRoute === 'profile') return <ProfileDashboard onBack={() => setActiveRoute('home')} onNavigate={(r: string) => setActiveRoute(r)} onSignOut={handleSignOut} />;
     if (activeRoute === 'video') return <AdvancedVideoPlayer />;
+    if (activeRoute === 'error_notebook') return <ErrorNotebook onBack={() => setActiveRoute('profile')} />;
+
     
     return (
       <>
@@ -432,7 +436,7 @@ function AppInner() {
         onToggleTheme={toggleTheme}
         onSignIn={() => setIsAuthOpen(true)}
         onSignOut={handleSignOut}
-        onEnterArena={openArena}
+        onEnterArena={openKurukshetra}
         onOpenLeaderboard={() => setActiveRoute('leaderboard')}
         onOpenAdmin={() => setActiveRoute('admin')}
       />
@@ -457,7 +461,7 @@ function AppInner() {
                   Book a Free Demo <ArrowRight size={17} className="transition group-hover:translate-x-1" />
                 </a>
                 <button
-                  onClick={openArena}
+                  onClick={openKurukshetra}
                   className="flex items-center justify-center gap-3 rounded-full bg-gradient-to-r from-cyan-500 to-purple-600 px-7 py-4 text-sm font-black text-white shadow-[0_12px_35px_rgba(6,182,212,.3)] transition hover:-translate-y-1"
                 >
                   <Swords size={16} /> Enter the Arena
@@ -500,7 +504,7 @@ function AppInner() {
           <div className="mx-auto flex max-w-[1240px] flex-col justify-between gap-5 sm:flex-row sm:items-center">
             <div className="flex items-center gap-3 text-xs font-black uppercase tracking-[.15em] text-slate-400"><span className="h-2 w-2 rounded-full bg-coral" /> Built for the curious</div>
             <div className="flex flex-wrap gap-5 text-sm font-bold text-white/80 sm:gap-10"><span>01 / Deep concepts</span><span>02 / Daily practice</span><span>03 / Visible progress</span></div>
-            <button onClick={openArena} className="flex items-center gap-2 text-xs font-black uppercase tracking-[.15em] text-cyan-400 hover:text-cyan-300 transition">
+            <button onClick={openKurukshetra} className="flex items-center gap-2 text-xs font-black uppercase tracking-[.15em] text-cyan-400 hover:text-cyan-300 transition">
               Enter the arena <ArrowRight size={14} />
             </button>
           </div>
@@ -683,7 +687,7 @@ function AppInner() {
         <LearningPath />
 
         {/* ── ARENA SECTION ── */}
-        <section id="arena" className="relative overflow-hidden bg-ink px-5 py-24 lg:px-8 lg:py-32">
+        <section id="kurukshetra" className="relative overflow-hidden bg-ink px-5 py-24 lg:px-8 lg:py-32">
           <div className="arena-glow absolute -right-20 top-20 h-[420px] w-[420px] rounded-full bg-coral/20 blur-[120px]" />
           <div className="pointer-events-none absolute -left-20 bottom-10 h-64 w-64 rounded-full bg-cyan-500/10 blur-[100px]" />
           <div className="relative mx-auto max-w-[1240px]">
@@ -693,7 +697,7 @@ function AppInner() {
                 <h2 className="mt-4 max-w-[680px] text-4xl font-black tracking-[-.05em] sm:text-6xl">Learning is a<br /><span className="text-coral">competitive sport.</span></h2>
               </div>
               <button
-                onClick={openArena}
+                onClick={openKurukshetra}
                 className="flex w-fit items-center gap-3 rounded-2xl border border-cyan-500/30 bg-cyan-500/10 px-6 py-4 text-sm font-black text-cyan-300 transition hover:bg-cyan-500/20"
               >
                 <Swords size={18} className="text-cyan-400" /> Enter Arena Now
@@ -843,7 +847,7 @@ function AppInner() {
           dragElastic={0.2}
           onDragEnd={(e: any, { offset }: any) => {
             const swipe = offset.x;
-            const routes = ['home', 'arena_hub', 'video', 'profile'];
+            const routes = ['home', 'kurukshetra_hub', 'video', 'profile'];
             const i = routes.indexOf(activeRoute);
             if (swipe < -50 && i !== -1 && i < routes.length - 1) {
               setActiveRoute(routes[i + 1]);
@@ -869,7 +873,7 @@ function AppInner() {
       {/* ── MODALS & PANELS ── */}
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
 
-      {isArenaOpen && <Arena onBack={() => setIsArenaOpen(false)} />}
+      {isKurukshetraOpen && <Kurukshetra onBack={() => setIsKurukshetraOpen(false)} />}
 
       <AIDoubtSolver
         isOpen={isDoubtOpen}

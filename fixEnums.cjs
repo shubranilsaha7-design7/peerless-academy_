@@ -1,0 +1,10 @@
+const fs = require('fs');
+let cbt = fs.readFileSync('src/components/dashboard/CbtSimulator.tsx', 'utf-8');
+cbt = cbt.replace(/case 'not_answered_marked':/g, "case 'review':");
+cbt = cbt.replace(/case 'answered_marked':/g, "case 'answeredReview':");
+cbt = cbt.replace(/case 'not_answered':/g, "case 'notAnswered':");
+cbt = cbt.replace(/status === 'not_visited'/g, "status === 'unseen'");
+cbt = cbt.replace(/\|\| 'not_visited'/g, "|| 'unseen'");
+cbt = cbt.replace(/currentStatus.includes\('marked'\)/g, "currentStatus.toLowerCase().includes('review')");
+fs.writeFileSync('src/components/dashboard/CbtSimulator.tsx', cbt);
+console.log('Fixed CbtSimulator enums');
