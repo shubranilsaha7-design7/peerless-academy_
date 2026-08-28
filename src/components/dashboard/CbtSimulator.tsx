@@ -5,6 +5,7 @@ import 'katex/dist/katex.min.css';
 import { Bookmark, ChevronLeft, ChevronRight, CheckCircle2, RotateCcw, AlertTriangle, Send } from 'lucide-react';
 import { useCbtStore, QuestionStatus } from '@/store/cbtStore';
 import { useTestHydration } from '@/hooks/useTestHydration';
+import { useProctoring } from '@/hooks/useProctoring';
 import BottomSheet from '../ui/BottomSheet';
 import CbtDiagnostics from './CbtDiagnostics';
 
@@ -14,6 +15,9 @@ export default function CbtSimulator() {
   
   const { loading } = useTestHydration(examType, false);
   
+
+  
+    // Phase 4 Anti-Cheat Matrix
   const { 
     questions, currentQuestionId, currentIndex, 
     statuses, answers, timeSpentMs,
@@ -21,6 +25,9 @@ export default function CbtSimulator() {
     startTest, tickTimer, nextQuestion, prevQuestion, 
     jumpToQuestion, selectOption, markReview, clearResponse, submitTest 
   } = useCbtStore();
+  const { infractions } = useProctoring('temp-user-id', 'temp-session-id', isTestActive);
+  
+  // Phase 4 Anti-Cheat Matrix
 
   // The Timer Tick
   useEffect(() => {
@@ -77,6 +84,7 @@ export default function CbtSimulator() {
       <div className="flex items-center justify-between bg-slate-900/80 backdrop-blur-md p-4 border-b border-slate-800 shrink-0">
         <div className="font-bold text-slate-300">
           Q. {currentIndex + 1} <span className="text-slate-600">/ {questions.length}</span>
+          {infractions > 0 && <span className="ml-4 text-[10px] font-bold text-rose-500 bg-rose-500/10 px-2 py-1 rounded animate-pulse">{infractions} Warnings</span>}
         </div>
         <div className="text-coral font-black animate-pulse flex items-center gap-2">
           {Math.floor((timeSpentMs[currentQ.id] || 0) / 1000)}s spent here

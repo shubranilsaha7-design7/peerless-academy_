@@ -24,6 +24,8 @@ export default function AIDoubtSolver({ isOpen, onClose, q }: AIDoubtSolverProps
     { id: 'initial', sender: 'ai', text: 'Hello! I am your Elite Socratic AI Mentor. Ask me any conceptual doubt, paste a problem, or ask for a study strategy.' }
   ]);
   const [input, setInput] = useState('');
+  const [showCamera, setShowCamera] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [mode, setMode] = useState<'academic' | 'non-academic'>('academic');
   const [loading, setLoading] = useState(false);
   const { answers } = useCbtStore();
@@ -32,6 +34,19 @@ export default function AIDoubtSolver({ isOpen, onClose, q }: AIDoubtSolverProps
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
+
+  useEffect(() => {
+    if (showCamera && videoRef.current) {
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then(stream => { if (videoRef.current) videoRef.current.srcObject = stream; })
+        .catch(err => console.error('Camera access denied:', err));
+    } else {
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(t => t.stop());
+      }
+    }
+  }, [showCamera]);
 
   useEffect(() => {
     if (q && isOpen) {
@@ -207,11 +222,10 @@ export default function AIDoubtSolver({ isOpen, onClose, q }: AIDoubtSolverProps
             <button type="button" className="rounded-lg p-2 text-slate-400 transition hover:bg-white/5 hover:text-white">
               <Camera size={18} />
             </button>
+            <button onClick={() => setShowCamera(prev => !prev)} className="p-3 rounded-xl bg-slate-800 text-slate-400 hover:text-cyan-400 hover:bg-slate-700 transition">
+              <Camera size={20} />
+            </button>
             <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={mode === 'academic' ? "Ask a physics/math doubt..." : "Ask about strategy & time..."}
               className="flex-1 bg-transparent px-2 text-sm text-white focus:outline-none"
               disabled={loading}
             />
