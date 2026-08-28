@@ -10,7 +10,7 @@ import BottomSheet from '../ui/BottomSheet';
 import CbtDiagnostics from './CbtDiagnostics';
 
 export default function CbtSimulator() {
-  const [examType, setExamType] = useState<'JEE Main' | 'NEET'>('JEE Main');
+  const [examType, setExamType] = useState<'JEE_MAIN' | 'NEET'>('JEE_MAIN');
   const [showPalette, setShowPalette] = useState(false);
   const [swipeDirection, setSwipeDirection] = useState(0); // 1 for next, -1 for prev
   
