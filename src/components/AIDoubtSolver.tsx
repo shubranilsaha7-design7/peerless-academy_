@@ -4,6 +4,7 @@ import { Bot, X, Send, Sparkles, Zap, Brain, Camera, HelpCircle, FileSearch, Lig
 import Latex from 'react-latex-next';
 import 'katex/dist/katex.min.css';
 import { supabase } from '../integrations/supabase/client';
+import { useCbtStore } from '@/store/cbtStore';
 
 export interface AIDoubtSolverProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ export default function AIDoubtSolver({ isOpen, onClose, q }: AIDoubtSolverProps
   const [input, setInput] = useState('');
   const [mode, setMode] = useState<'academic' | 'non-academic'>('academic');
   const [loading, setLoading] = useState(false);
+  const { answers } = useCbtStore();
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

@@ -1,0 +1,62 @@
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { get, set } from 'idb-keyval';
+import { useCbtStore, CbtQuestion } from '@/store/cbtStore';
+
+export function useTestHydration(examType: string, isAdaptive: boolean = false) {
+  const [loading, setLoading] = useState(true);
+  const hydrateQuestions = useCbtStore((s) => s.hydrateQuestions);
+
+  useEffect(() => {
+    async function loadTest() {
+      setLoading(true);
+      try {
+        // Try fetching from Supabase first
+        const { data, error } = await (supabase as any)
+          .from('cbt_questions')
+          .select('*')
+          .eq('exam_type', examType)
+          .limit(30);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          // Cache payload in IndexedDB for offline resilience
+          await set(`cbt_cache_${examType}`, data);
+          hydrateQuestions(data as CbtQuestion[]);
+        } else {
+          // If no data, perhaps we mock it (useful for local dev)
+          loadMockFallback();
+        }
+      } catch (err) {
+        console.error('Supabase fetch failed, trying IndexedDB offline cache...', err);
+        const cached = await get(`cbt_cache_${examType}`);
+        if (cached) {
+          hydrateQuestions(cached as CbtQuestion[]);
+        } else {
+          loadMockFallback();
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function loadMockFallback() {
+      const mockQs: CbtQuestion[] = Array.from({ length: 15 }).map((_, i) => ({
+        id: `mock-q-${i}`,
+        question_latex: `This is mock question ${i + 1}. Find the derivative of $f(x) = x^2$.`,
+        options: ['$2x$', '$x^2/2$', '$x$', '$2$'],
+        correct_index: 0,
+        explanation_latex: 'The power rule states that $\\frac{d}{dx} x^n = nx^{n-1}$.',
+        subject: 'Mathematics',
+        chapter: 'Calculus',
+        difficulty: 'medium',
+      }));
+      hydrateQuestions(mockQs);
+    }
+
+    loadTest();
+  }, [examType, isAdaptive, hydrateQuestions]);
+
+  return { loading };
+}

@@ -1,515 +1,175 @@
-import { useEffect, useMemo, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Bookmark, CheckCircle2, ChevronLeft, ChevronRight, Clock, RotateCcw, Send, Share2, Target, BrainCircuit } from 'lucide-react';
-import {
-  buildPaper, PAPER_CONFIG,
-  type ExamPaper, type ExamQuestion, type ExamSubject,
-} from '@/data/examBank';
-import { shareOnWhatsApp } from '@/lib/whatsapp';
-
-type Status = 'unseen' | 'answered' | 'notAnswered' | 'review' | 'answeredReview';
-
-type Analysis = {
-  correct: number;
-  wrong: number;
-  skipped: number;
-  score: number;
-  maxScore: number;
-  accuracy: number;
-  bySubject: { subject: ExamSubject; correct: number; wrong: number; skipped: number; score: number; attempted: number }[];
-  weakTopics: string[];
-};
-
-const PAPERS: ExamPaper[] = ['JEE Main', 'JEE Advanced', 'NEET'];
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import Latex from 'react-latex-next';
+import 'katex/dist/katex.min.css';
+import { Bookmark, ChevronLeft, ChevronRight, CheckCircle2, RotateCcw, AlertTriangle, Send } from 'lucide-react';
+import { useCbtStore, QuestionStatus } from '@/store/cbtStore';
+import { useTestHydration } from '@/hooks/useTestHydration';
+import BottomSheet from '../ui/BottomSheet';
+import CbtDiagnostics from './CbtDiagnostics';
 
 export default function CbtSimulator() {
-  const [paper, setPaper] = useState<ExamPaper>('NEET');
-  const [seed, setSeed] = useState(0);
-  const cfg = PAPER_CONFIG[paper];
+  const [examType, setExamType] = useState<'JEE Main' | 'NEET'>('JEE Main');
+  const [showPalette, setShowPalette] = useState(false);
+  
+  const { loading } = useTestHydration(examType, false);
+  
+  const { 
+    questions, currentQuestionId, currentIndex, 
+    statuses, answers, timeSpentMs,
+    isTestActive, isTestSubmitted,
+    startTest, tickTimer, nextQuestion, prevQuestion, 
+    jumpToQuestion, selectOption, markReview, clearResponse, submitTest 
+  } = useCbtStore();
 
-  const [questions, setQuestions] = useState<ExamQuestion[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [subject, setSubject] = useState<ExamSubject>(cfg.subjects[0]);
-
+  // The Timer Tick
   useEffect(() => {
-    async function loadQuestions() {
-      setLoading(true);
-      try {
-        const { supabase } = await import('@/integrations/supabase/client');
-        const fetchedQuestions: ExamQuestion[] = [];
-        
-        for (const subj of cfg.subjects) {
-          const { data } = await (supabase as any)
-            .from('cbt_questions')
-            .select('*')
-            .eq('subject', subj)
-            .limit(cfg.perSubject);
-            
-          if (data && data.length > 0) {
-            fetchedQuestions.push(...data);
-          }
-        }
-        
-        if (fetchedQuestions.length >= cfg.subjects.length * cfg.perSubject) {
-          setQuestions(fetchedQuestions);
-          setLoading(false);
-          return;
-        }
-      } catch (e) {
-        console.warn('Supabase fetch failed, falling back to local JSON.', e);
-      }
+    if (!isTestActive) return;
+    const interval = setInterval(() => {
+      tickTimer();
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isTestActive, tickTimer]);
 
-      try {
-        // Dynamic import of the massive 10k dataset so it doesn't bloat the main bundle
-        const localData = (await import('@/data/cbt_questions_10k.json')).default as ExamQuestion[];
-        const localQuestions: ExamQuestion[] = [];
-        
-        for (const subj of cfg.subjects) {
-          const pool = localData.filter(q => q.subject === subj);
-          const shuffled = pool.sort(() => 0.5 - Math.random());
-          localQuestions.push(...shuffled.slice(0, cfg.perSubject));
-        }
-        setQuestions(localQuestions);
-      } catch {
-        // Ultimate fallback to hardcoded examBank if JSON is missing
-        setQuestions(buildPaper(paper));
-      }
-      setLoading(false);
-    }
-    loadQuestions();
-  }, [paper, seed, cfg]);
+  if (loading) {
+    return <div className="h-full w-full flex items-center justify-center text-slate-400">Hydrating Adaptive Payload...</div>;
+  }
 
-  const [current, setCurrent] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, number>>({});
-  const [status, setStatus] = useState<Record<string, Status>>({});
-  const [choice, setChoice] = useState<number | null>(null);
-  const [left, setLeft] = useState(cfg.minutes * 60);
-  const [result, setResult] = useState<Analysis | null>(null);
+  if (isTestSubmitted) {
+    return <CbtDiagnostics />;
+  }
 
-  const sectionQuestions = useMemo(
-    () => questions.filter((item) => item.subject === subject),
-    [questions, subject],
-  );
-  const q: ExamQuestion | undefined = sectionQuestions[current];
-
-  // reset when paper changes
-  useEffect(() => {
-    setSubject(PAPER_CONFIG[paper].subjects[0]);
-    setCurrent(0);
-    setAnswers({});
-    setStatus({});
-    setChoice(null);
-    setResult(null);
-    setLeft(PAPER_CONFIG[paper].minutes * 60);
-  }, [paper, seed]);
-
-  useEffect(() => {
-    setCurrent(0);
-  }, [subject]);
-
-  useEffect(() => {
-    if (!q) return;
-    setChoice(answers[q.id] ?? null);
-    setStatus((s) => (s[q.id] ? s : { ...s, [q.id]: 'notAnswered' }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q?.id]);
-
-  useEffect(() => {
-    if (result) return;
-    const t = setInterval(() => setLeft((v) => (v <= 1 ? 0 : v - 1)), 1000);
-    return () => clearInterval(t);
-  }, [result]);
-
-  const mm = String(Math.floor(left / 60)).padStart(2, '0');
-  const ss = String(left % 60).padStart(2, '0');
-
-  const analyse = (): Analysis => {
-    let correct = 0;
-    let wrong = 0;
-    let skipped = 0;
-    const weak: string[] = [];
-    const bySubject = cfg.subjects.map((s) => {
-      let c = 0;
-      let w = 0;
-      let sk = 0;
-      questions.filter((item) => item.subject === s).forEach((item) => {
-        const a = answers[item.id];
-        if (a === undefined) sk += 1;
-        else if (a === item.answer) c += 1;
-        else {
-          w += 1;
-          if (!weak.includes(item.topic)) weak.push(item.topic);
-        }
-      });
-      correct += c;
-      wrong += w;
-      skipped += sk;
-      return { subject: s, correct: c, wrong: w, skipped: sk, score: c * cfg.positive - w * cfg.negative, attempted: c + w };
-    });
-    const attempted = correct + wrong;
-    return {
-      correct,
-      wrong,
-      skipped,
-      score: correct * cfg.positive - wrong * cfg.negative,
-      maxScore: questions.length * cfg.positive,
-      accuracy: attempted ? Math.round((correct / attempted) * 100) : 0,
-      bySubject,
-      weakTopics: weak.slice(0, 6),
-    };
-  };
-
-  useEffect(() => {
-    if (left === 0 && !result) setResult(analyse());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [left]);
-
-  const mark = (st: Status) => {
-    if (!q) return;
-    setStatus((s) => ({ ...s, [q.id]: st }));
-  };
-
-  const saveAndNext = () => {
-    if (!q) return;
-    if (choice === null) mark('notAnswered');
-    else {
-      setAnswers((a) => ({ ...a, [q.id]: choice }));
-      mark('answered');
-    }
-    setCurrent((c) => Math.min(sectionQuestions.length - 1, c + 1));
-  };
-
-  const markReview = () => {
-    if (!q) return;
-    if (choice !== null) {
-      setAnswers((a) => ({ ...a, [q.id]: choice }));
-      mark('answeredReview');
-    } else mark('review');
-    setCurrent((c) => Math.min(sectionQuestions.length - 1, c + 1));
-  };
-
-  const clearResponse = () => {
-    if (!q) return;
-    setChoice(null);
-    setAnswers((a) => {
-      const next = { ...a };
-      delete next[q.id];
-      return next;
-    });
-    mark('notAnswered');
-  };
-
-  const reset = () => setSeed((s) => s + 1);
-
-  const paletteClass = (st: Status | undefined, isCurrent: boolean) => {
-    const ring = isCurrent ? 'ring-2 ring-amber-400 ring-offset-2 ring-offset-black' : '';
-    if (st === 'answered') return `bg-emerald-500 text-black ${ring}`;
-    if (st === 'review' || st === 'answeredReview') return `bg-purple-500 text-white ${ring}`;
-    if (st === 'notAnswered') return `bg-red-500/80 text-white ${ring}`;
-    return `bg-zinc-900 text-zinc-500 border border-zinc-800 ${ring}`;
-  };
-
-  const attemptedInSection = sectionQuestions.filter((item) => answers[item.id] !== undefined).length;
-
-  if (loading || questions.length === 0) {
+  if (!isTestActive) {
     return (
-      <div className="flex min-h-[400px] flex-col items-center justify-center rounded-3xl border border-zinc-800 bg-black p-5">
-        <Target className="h-12 w-12 animate-pulse text-amber-500 mb-4" />
-        <div className="text-sm font-bold uppercase tracking-widest text-zinc-400">Loading Exam Database...</div>
+      <div className="flex flex-col items-center justify-center h-full max-w-md mx-auto text-center space-y-6">
+        <h2 className="text-3xl font-black text-white">NTA CBT Simulator</h2>
+        <p className="text-slate-400 text-sm">Offline resilience enabled. Activity tracking active.</p>
+        <button 
+          onClick={startTest}
+          className="bg-coral text-white px-8 py-3 rounded-full font-black uppercase tracking-widest shadow-[0_0_20px_rgba(255,107,0,0.4)] transition hover:scale-105"
+        >
+          Initialize Engine
+        </button>
       </div>
     );
   }
 
+  const currentQ = questions[currentIndex];
+  if (!currentQ) return null;
+
+  const currentStatus = statuses[currentQ.id] || 'notAnswered';
+  const currentAnswer = answers[currentQ.id];
+
+  const getStatusColor = (status: QuestionStatus) => {
+    switch (status) {
+      case 'answered': return 'bg-emerald-500 border-emerald-500 text-white';
+      case 'notAnswered': return 'bg-rose-500 border-rose-500 text-white';
+      case 'review': return 'bg-amber-500 border-amber-500 text-white';
+      case 'answeredReview': return 'bg-indigo-500 border-indigo-500 text-white';
+      case 'unseen': default: return 'bg-slate-800 border-slate-700 text-slate-400';
+    }
+  };
+
   return (
-    <div className="rounded-3xl border border-zinc-800 bg-black p-5 sm:p-7">
-      {/* Header */}
-      <div className="flex flex-col gap-4 border-b border-zinc-800 pb-5 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-400">NTA CBT Exam Simulator</div>
-          <h3 className="mt-2 text-xl font-black text-white">{paper} · full paper mode</h3>
-          <p className="mt-1 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
-            {questions.length} questions · +{cfg.positive} / −{cfg.negative} · {cfg.minutes} min
-          </p>
+    <div className="relative h-full flex flex-col font-sans">
+      
+      {/* Top Action Bar */}
+      <div className="flex items-center justify-between bg-slate-900/80 backdrop-blur-md p-4 border-b border-slate-800 shrink-0">
+        <div className="font-bold text-slate-300">
+          Q. {currentIndex + 1} <span className="text-slate-600">/ {questions.length}</span>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex rounded-xl border border-zinc-800 bg-zinc-950 p-1">
-            {PAPERS.map((p) => (
-              <button
-                key={p}
-                onClick={() => setPaper(p)}
-                className={`rounded-lg px-3 py-2 text-[11px] font-black uppercase tracking-wider transition-all duration-300 ${
-                  paper === p ? 'bg-amber-400 text-black shadow-[0_0_20px_rgba(251,191,36,.35)]' : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                {p}
-              </button>
-            ))}
+        <div className="text-coral font-black animate-pulse flex items-center gap-2">
+          {Math.floor((timeSpentMs[currentQ.id] || 0) / 1000)}s spent here
+        </div>
+        <button onClick={() => setShowPalette(true)} className="text-sm font-black bg-slate-800 px-3 py-1.5 rounded-lg text-slate-300">
+          Palette
+        </button>
+      </div>
+
+      {/* Main Question Area (Scrollable) */}
+      <div className="flex-1 overflow-y-auto p-5 pb-32">
+        <div className="glass-panel bg-slate-900/40 border-slate-800 rounded-2xl p-6">
+          <div className="flex justify-between items-start mb-6">
+            <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">{currentQ.subject} • {currentQ.chapter}</span>
+            <span className={`text-[10px] uppercase font-black px-2 py-1 rounded ${currentQ.difficulty === 'hard' ? 'bg-rose-500/10 text-rose-500' : 'bg-amber-500/10 text-amber-500'}`}>
+              {currentQ.difficulty}
+            </span>
           </div>
-          <motion.div
-            animate={left < 60 ? { scale: [1, 1.05, 1] } : { scale: 1 }}
-            transition={{ repeat: left < 60 ? Infinity : 0, duration: 1 }}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-black tabular-nums ${
-              left < 60 ? 'bg-red-500/15 text-red-300' : 'bg-zinc-900 text-amber-300'
-            }`}
-          >
-            <Clock size={15} /> {mm}:{ss}
-          </motion.div>
+
+          <div className="prose prose-invert max-w-none text-base sm:text-lg">
+            <Latex>{currentQ.question_latex}</Latex>
+          </div>
+
+          <div className="mt-8 space-y-3">
+            {currentQ.options.map((opt, idx) => {
+              const isSelected = currentAnswer === idx;
+              return (
+                <button
+                  key={idx}
+                  onClick={() => selectOption(currentQ.id, idx)}
+                  className={`w-full text-left p-4 rounded-xl border transition-all ${
+                    isSelected 
+                      ? 'bg-cyan-500/10 border-cyan-500 text-white' 
+                      : 'bg-slate-800/50 border-slate-700 text-slate-300 hover:border-slate-500'
+                  }`}
+                >
+                  <span className="font-bold text-slate-500 mr-3">{String.fromCharCode(65 + idx)}.</span>
+                  <Latex>{opt}</Latex>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
-      <AnimatePresence mode="wait">
-        {result ? (
-          <motion.div key="result" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="py-8">
-            <div className="text-center">
-              <div className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-500">Score analysis · {paper}</div>
-              <motion.div initial={{ scale: 0.7 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 220 }} className="mt-3 text-6xl font-black text-amber-400">
-                {result.score}
-                <span className="text-2xl text-zinc-600"> / {result.maxScore}</span>
-              </motion.div>
-              <div className="mt-4 flex flex-wrap justify-center gap-3 text-[11px] font-black uppercase tracking-wider">
-                <span className="rounded-full bg-emerald-500/15 px-4 py-2 text-emerald-300">{result.correct} correct</span>
-                <span className="rounded-full bg-red-500/15 px-4 py-2 text-red-300">{result.wrong} wrong</span>
-                <span className="rounded-full bg-zinc-900 px-4 py-2 text-zinc-400">{result.skipped} skipped</span>
-                <span className="rounded-full bg-amber-400/15 px-4 py-2 text-amber-300">{result.accuracy}% accuracy</span>
-              </div>
-            </div>
+      {/* Floating Action Bar (Bottom) */}
+      <div className="absolute bottom-0 left-0 right-0 bg-slate-950/90 backdrop-blur-xl border-t border-slate-800 p-4 safe-pb flex items-center justify-between shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+        <div className="flex items-center gap-2">
+          <button onClick={() => markReview(currentQ.id)} className="p-3 rounded-full bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 transition">
+            <Bookmark size={20} />
+          </button>
+          <button onClick={() => clearResponse(currentQ.id)} className="p-3 rounded-full bg-slate-800 text-slate-400 hover:bg-slate-700 transition">
+            <RotateCcw size={20} />
+          </button>
+        </div>
 
-            <div className="mt-8 grid gap-4 sm:grid-cols-3">
-              {result.bySubject.map((s, i) => {
-                const max = questions.filter((item) => item.subject === s.subject).length * cfg.positive;
-                const pct = max ? Math.max(0, Math.round((s.score / max) * 100)) : 0;
-                return (
-                  <motion.div
-                    key={s.subject}
-                    initial={{ opacity: 0, y: 14 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.08 }}
-                    className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-black text-white">{s.subject}</span>
-                      <span className="text-sm font-black text-amber-400">{s.score}</span>
-                    </div>
-                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-900">
-                      <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.8, delay: 0.2 + i * 0.08 }} className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500" />
-                    </div>
-                    <div className="mt-3 flex gap-3 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-                      <span className="text-emerald-400">{s.correct}C</span>
-                      <span className="text-red-400">{s.wrong}W</span>
-                      <span>{s.skipped}S</span>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
+        <div className="flex items-center gap-2">
+          <button onClick={prevQuestion} disabled={currentIndex === 0} className="p-3 rounded-full bg-slate-800 text-white disabled:opacity-30">
+            <ChevronLeft size={20} />
+          </button>
+          <button onClick={nextQuestion} disabled={currentIndex === questions.length - 1} className="p-3 rounded-full bg-cyan-500 text-slate-900 font-black px-6 shadow-lg shadow-cyan-500/20 disabled:opacity-30">
+            SAVE & NEXT
+          </button>
+        </div>
+      </div>
 
-            {result.weakTopics.length > 0 && (
-              <div className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5">
-                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-red-400">
-                  <Target size={14} /> Revise these topics first
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {result.weakTopics.map((t) => (
-                    <span key={t} className="rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-[11px] font-bold text-red-300">{t}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5">
-              <div className="text-[10px] font-black uppercase tracking-wider text-zinc-500">Solutions</div>
-              <div className="mt-4 space-y-4">
-                {questions.map((item, i) => {
-                  const a = answers[item.id];
-                  const ok = a === item.answer;
-                  return (
-                    <div key={item.id} className="rounded-xl border border-zinc-800 bg-black p-4">
-                      <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-zinc-500">
-                        <span>{item.subject} · {item.topic}</span>
-                        <span className={a === undefined ? 'text-zinc-500' : ok ? 'text-emerald-400' : 'text-red-400'}>
-                          {a === undefined ? 'Skipped' : ok ? 'Correct' : 'Wrong'}
-                        </span>
-                      </div>
-                      <p className="mt-2 text-sm font-bold text-white">Q{i + 1}. {item.question}</p>
-                      <p className="mt-2 text-xs text-emerald-300">Answer: {String.fromCharCode(65 + item.answer)}) {item.options[item.answer]}</p>
-                      <p className="mt-1 text-xs leading-5 text-zinc-400">{item.solution}</p>
-                      <button
-                        onClick={() => window.dispatchEvent(new CustomEvent('open-ai-tutor', { detail: item }))}
-                        className="mt-3 flex items-center gap-1.5 rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-indigo-400 transition hover:bg-indigo-500/20"
-                      >
-                        <BrainCircuit size={12} /> Ask AI Tutor
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <button onClick={reset} className="flex items-center gap-2 rounded-xl bg-amber-400 px-6 py-3 text-[11px] font-black uppercase tracking-wider text-black transition hover:brightness-110">
-                <RotateCcw size={14} /> Retake with new set
-              </button>
-              <button
-                onClick={() =>
-                  shareOnWhatsApp(
-                    `*Peerless Academy · ${paper} Mock Result*\nScore: ${result.score}/${result.maxScore}\nAccuracy: ${result.accuracy}%\nCorrect: ${result.correct} · Wrong: ${result.wrong} · Skipped: ${result.skipped}\n\n${result.bySubject
-                      .map((s) => `${s.subject}: ${s.score}`)
-                      .join('\n')}\n\nPeerless Academy · Indranagar, Agartala`,
-                  )
-                }
-                className="flex items-center gap-2 rounded-xl border border-zinc-700 px-6 py-3 text-[11px] font-black uppercase tracking-wider text-zinc-300 transition hover:text-white"
-              >
-                <Share2 size={14} /> Share result
-              </button>
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div key="exam" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid gap-6 pt-6 lg:grid-cols-[1fr_280px]">
-            <div>
-              {/* section tabs */}
-              <div className="mb-4 flex flex-wrap gap-2">
-                {cfg.subjects.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setSubject(s)}
-                    className={`rounded-xl px-4 py-2 text-[11px] font-black uppercase tracking-wider transition-all duration-300 ${
-                      subject === s ? 'bg-white text-black' : 'border border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-white'
-                    }`}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={q?.id}
-                  initial={{ opacity: 0, x: 24 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -24 }}
-                  transition={{ duration: 0.22 }}
-                  className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5 sm:p-6"
+      {/* Question Palette Bottom Sheet */}
+      <BottomSheet isOpen={showPalette} onClose={() => setShowPalette(false)} >
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="font-black text-xl text-white">Question Palette</h3>
+            <button onClick={submitTest} className="flex items-center gap-2 bg-coral text-white px-4 py-2 rounded-xl font-bold text-sm shadow-lg shadow-coral/30">
+              <Send size={16} /> Submit Exam
+            </button>
+          </div>
+          <div className="grid grid-cols-5 gap-3 max-h-[60vh] overflow-y-auto pb-10">
+            {questions.map((q, i) => {
+              const status = statuses[q.id] || 'unseen';
+              const isCurrent = currentIndex === i;
+              return (
+                <button
+                  key={q.id}
+                  onClick={() => { jumpToQuestion(i); setShowPalette(false); }}
+                  className={`h-12 w-full rounded-xl flex items-center justify-center font-black border-2 transition ${getStatusColor(status)} ${isCurrent ? 'ring-2 ring-white scale-110 z-10' : ''}`}
                 >
-                  <div className="flex flex-col gap-3 mb-2">
-                    <div className="flex flex-wrap items-center justify-between gap-3 text-[10px] font-black uppercase tracking-wider text-zinc-500">
-                      <span className="flex items-center gap-2">
-                        <span className="flex h-5 items-center justify-center rounded bg-zinc-800 px-2 text-white">Q {current + 1}</span> 
-                        of {sectionQuestions.length}
-                      </span>
-                      
-                      <div className="flex items-center gap-2">
-                        <span className="flex items-center gap-1 rounded bg-indigo-500/10 px-2 py-1 text-indigo-400 border border-indigo-500/20 shadow-[0_0_12px_rgba(99,102,241,0.15)]">
-                          <Target size={12} />
-                          PYQ {paper === 'NEET' ? 'NEET' : 'JEE'} {2023 - ((q?.id?.length || 0) % 6)}
-                        </span>
-                        <span className={`flex items-center gap-1 rounded px-2 py-1 border shadow-sm ${
-                          q?.difficulty === 'Hard' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
-                          q?.difficulty === 'Moderate' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                          'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                        }`}>
-                          Lvl: {q?.difficulty}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-[11px] font-bold text-amber-400">{q?.topic}</div>
-                  </div>
-                  <h4 className="mt-2 text-lg font-bold leading-relaxed text-white">{q?.question}</h4>
-                  <div className="mt-5 space-y-3">
-                    {q?.options.map((opt, i) => (
-                      <motion.button
-                        key={opt}
-                        whileHover={{ x: 4 }}
-                        whileTap={{ scale: 0.99 }}
-                        onClick={() => setChoice(i)}
-                        className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3.5 text-left text-sm transition ${
-                          choice === i ? 'border-amber-400 bg-amber-400/10 text-white' : 'border-zinc-800 bg-black text-zinc-300 hover:border-zinc-600'
-                        }`}
-                      >
-                        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-black ${choice === i ? 'bg-amber-400 text-black' : 'border border-zinc-700 text-zinc-400'}`}>
-                          {String.fromCharCode(65 + i)}
-                        </span>
-                        {opt}
-                      </motion.button>
-                    ))}
-                  </div>
+                  {i + 1}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </BottomSheet>
 
-                  <div className="mt-6 flex flex-wrap gap-3">
-                    <button onClick={saveAndNext} className="rounded-xl bg-amber-400 px-5 py-3 text-[11px] font-black uppercase tracking-wider text-black transition hover:brightness-110">
-                      Save &amp; Next
-                    </button>
-                    <button onClick={markReview} className="flex items-center gap-2 rounded-xl border border-purple-500/60 bg-purple-500/10 px-5 py-3 text-[11px] font-black uppercase tracking-wider text-purple-300 transition hover:bg-purple-500/20">
-                      <Bookmark size={13} /> Mark for Review
-                    </button>
-                    <button onClick={clearResponse} className="rounded-xl border border-zinc-700 px-5 py-3 text-[11px] font-black uppercase tracking-wider text-zinc-400 transition hover:text-white">
-                      Clear
-                    </button>
-                    <button onClick={() => setResult(analyse())} className="flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-[11px] font-black uppercase tracking-wider text-black transition hover:brightness-110">
-                      <Send size={13} /> Submit Test
-                    </button>
-                  </div>
-
-                  <div className="mt-4 flex items-center justify-between border-t border-zinc-800 pt-4">
-                    <button
-                      onClick={() => setCurrent((c) => Math.max(0, c - 1))}
-                      className="flex items-center gap-1 text-[11px] font-black uppercase tracking-wider text-zinc-500 transition hover:text-white"
-                    >
-                      <ChevronLeft size={14} /> Previous
-                    </button>
-                    <button
-                      onClick={() => setCurrent((c) => Math.min(sectionQuestions.length - 1, c + 1))}
-                      className="flex items-center gap-1 text-[11px] font-black uppercase tracking-wider text-zinc-500 transition hover:text-white"
-                    >
-                      Next <ChevronRight size={14} />
-                    </button>
-                  </div>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-
-            <aside className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5">
-              <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-zinc-500">
-                <span>{subject} palette</span>
-                <span className="text-emerald-400">{attemptedInSection}/{sectionQuestions.length}</span>
-              </div>
-              <div className="mt-4 grid grid-cols-5 gap-2">
-                {sectionQuestions.map((item, i) => (
-                  <motion.button
-                    key={item.id}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => setCurrent(i)}
-                    className={`h-9 rounded-lg text-[11px] font-black transition ${paletteClass(status[item.id], i === current)}`}
-                  >
-                    {i + 1}
-                  </motion.button>
-                ))}
-              </div>
-              <ul className="mt-5 space-y-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-                <li className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded bg-emerald-500" /> Answered</li>
-                <li className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded bg-red-500/80" /> Not answered</li>
-                <li className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded bg-purple-500" /> Marked for review</li>
-                <li className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded border border-zinc-700 bg-zinc-900" /> Not visited</li>
-              </ul>
-
-              <div className="mt-5 space-y-2">
-                {cfg.subjects.map((s) => {
-                  const list = questions.filter((item) => item.subject === s);
-                  const done = list.filter((item) => answers[item.id] !== undefined).length;
-                  return (
-                    <div key={s} className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-                      <CheckCircle2 size={12} className={done === list.length ? 'text-emerald-400' : 'text-zinc-700'} />
-                      {s} {done}/{list.length}
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="mt-5 rounded-xl border border-zinc-800 bg-black p-3 text-[10px] leading-5 text-zinc-500">
-                Marking scheme: <b className="text-emerald-400">+{cfg.positive}</b> correct, <b className="text-red-400">−{cfg.negative}</b> wrong, 0 unattempted.
-              </div>
-            </aside>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
