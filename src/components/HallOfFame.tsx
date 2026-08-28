@@ -41,7 +41,7 @@ export default function HallOfFame() {
             </h2>
           </div>
           <p className="max-w-[360px] text-sm leading-6 text-slate-500">
-            Perfect 100s in Mathematics and board toppers across Agartala schools — published exactly as on our result board.
+            Perfect 100s in Mathematics and board toppers across Agartala schools - published exactly as on our result board.
           </p>
         </div>
 
