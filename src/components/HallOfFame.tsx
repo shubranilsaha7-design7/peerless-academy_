@@ -13,8 +13,8 @@ const toppers: Topper[] = [
   { name: 'Shivam Das', score: '98/100', detail: 'Mathematics', group: 'maths' },
   { name: 'Karnajit Saha', score: '99%', detail: 'Ramkrishna Mission School', group: 'boards' },
   { name: 'Dhrubajit Saha', score: '97%', detail: 'Sri Sri Ravishankar Vidya Mandir', group: 'boards' },
-  { name: 'Debajit Dey', score: '98%', detail: 'Shishu Niketan H.S. School', group: 'boards' },
-  { name: 'Subhranil Saha', score: '98%', detail: 'Shishu Niketan H.S. School', group: 'boards' },
+  { name: 'Debajit Dey', score: '98%', detail: 'SHIKSHA NIKETAN HS SCHOOL', group: 'boards' },
+  { name: 'Shubranil Saha', score: '98%', detail: 'SHIKSHA NIKETAN HS SCHOOL', group: 'boards' },
   { name: 'Bibek Baidya', score: '94%', detail: 'Henry Derozio Academy', group: 'boards' },
   { name: 'Snigdha Majumder', score: '92%', detail: 'Sri Krishna Mission School', group: 'boards' },
 ];
