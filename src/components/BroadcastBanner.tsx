@@ -100,16 +100,20 @@ export default function BroadcastBanner() {
               </span>
             )}
   
-            <div className={`flex-1 ${banner.marqueeEnabled ? 'overflow-hidden' : ''}`}>
-              <p 
-                className={`font-semibold tracking-wide ${banner.marqueeEnabled ? 'animate-marquee cursor-default' : 'truncate'}`}
-                style={{ 
-                  animationDuration: banner.marqueeSpeed || '20s',
-                  paddingLeft: banner.marqueeEnabled ? '100%' : '0'
-                }}
-              >
-                {banner.message}
-              </p>
+            <div className="flex-1 overflow-hidden">
+              {banner.marqueeEnabled ? (
+                <div 
+                  className="animate-marquee-infinite cursor-default font-semibold tracking-wide"
+                  style={{ animationDuration: banner.marqueeSpeed || '25s' }}
+                >
+                  <span className="pr-12">{banner.message}</span>
+                  <span className="pr-12">{banner.message}</span>
+                </div>
+              ) : (
+                <p className="truncate font-semibold tracking-wide cursor-default">
+                  {banner.message}
+                </p>
+              )}
             </div>
           </div>
   

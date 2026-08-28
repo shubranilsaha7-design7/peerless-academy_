@@ -395,7 +395,7 @@ function AppInner() {
   }
 
   return (
-    <div className={`relative w-full ${isAppMode ? 'h-[100dvh] overflow-hidden flex flex-col' : 'min-h-screen overflow-x-hidden'} transition-colors duration-300 ${isDark ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
+    <div className="flex flex-col h-[100dvh] w-full overflow-hidden bg-black text-white">
 
       {/* ── COMMAND PALETTE ── */}
       <CommandPalette 
@@ -824,6 +824,7 @@ function AppInner() {
 
       {isArenaOpen && <Arena onBack={() => setIsArenaOpen(false)} />}
 
+      <BottomTabBar activeRoute={activeRoute} setActiveRoute={setActiveRoute} openAiDoubt={() => setIsDoubtOpen(true)} />
       <AIDoubtSolver
         isOpen={isDoubtOpen}
         onClose={() => setIsDoubtOpen(false)}
