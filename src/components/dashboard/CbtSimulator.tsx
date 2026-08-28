@@ -115,21 +115,17 @@ export default function CbtSimulator() {
       {/* OLED Liquid Container */}
       <main className="flex-1 relative overflow-hidden flex flex-col p-4">
         <AnimatePresence initial={false} custom={swipeDirection} mode="popLayout">
-          <motion.div
-            key={currentQ.id}
+          <motion.div key={currentQ.id}
             custom={swipeDirection}
             initial={{ opacity: 0, x: swipeDirection > 0 ? 50 : -50, scale: 0.98 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: swipeDirection > 0 ? -50 : 50, scale: 0.98 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             className="flex-1 flex flex-col"
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.2}
-            onDragEnd={(e, { offset, velocity }) => {
-              if (offset.x < -50 || velocity.x < -500) handleNext();
-              else if (offset.x > 50 || velocity.x > 500) handlePrev();
-            }}
+            
+            
+            
+            
           >
             {/* Question Text */}
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 mb-4 shadow-lg text-[15px] leading-relaxed">

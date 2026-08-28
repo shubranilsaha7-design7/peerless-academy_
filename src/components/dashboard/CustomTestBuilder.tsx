@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Target, Clock, BookOpen, Layers, X, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { supabase } from '@/integrations/supabase/client';
+import { useCbtStore } from '@/store/cbtStore';
+import { Loader2 } from 'lucide-react';
 
 export default function CustomTestBuilder({ onBack, onStart }: { onBack: () => void, onStart: () => void }) {
   const [subjects, setSubjects] = useState<string[]>(['Physics']);
@@ -8,10 +11,40 @@ export default function CustomTestBuilder({ onBack, onStart }: { onBack: () => v
   const [questionCount, setQuestionCount] = useState(30);
   const [timeLimit, setTimeLimit] = useState(60);
 
+  const [loading, setLoading] = useState(false);
   const toggleSubject = (s: string) => {
     setSubjects(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
   };
 
+  
+  const handleGenerate = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await (supabase as any).from('cbt_questions')
+        .select('*')
+        .in('subject', subjects)
+        .limit(questionCount);
+        
+      if (data && data.length > 0) {
+        // Map to format
+        const mapped = data.map((d: any) => ({
+          ...d,
+          question_latex: d.question_text,
+          correct_index: d.options.findIndex((o: string) => o === d.correct_answer) === -1 ? 0 : d.options.findIndex((o: string) => o === d.correct_answer),
+          explanation_latex: d.explanation
+        }));
+        useCbtStore.getState().hydrateQuestions(mapped);
+        onStart();
+      } else {
+        alert("No questions found for criteria.");
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   return (
     <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col font-sans text-white pb-[env(safe-area-inset-bottom)]">
       <header className="flex justify-between items-center p-6 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md">
@@ -83,11 +116,11 @@ export default function CustomTestBuilder({ onBack, onStart }: { onBack: () => v
 
       <footer className="p-6 bg-slate-900 border-t border-slate-800">
         <button 
-          onClick={onStart} 
+          onClick={handleGenerate} 
           disabled={subjects.length === 0}
           className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 font-black text-lg py-4 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-[1.02] transition disabled:opacity-50"
         >
-          GENERATE DRILL <ChevronRight size={20} />
+          {loading ? <Loader2 className="animate-spin" /> : <>GENERATE DRILL <ChevronRight size={20} /></>}
         </button>
       </footer>
     </div>

@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, X, Send, Sparkles, Zap, Brain, Camera, HelpCircle, FileSearch, Lightbulb, Loader2 } from 'lucide-react';
+import { Brain, X, Send, Zap, Loader2 } from 'lucide-react';
 import Latex from 'react-latex-next';
 import 'katex/dist/katex.min.css';
 import { supabase } from '../integrations/supabase/client';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export interface AIDoubtSolverProps {
   isOpen: boolean;
@@ -15,7 +16,6 @@ type Message = {
   id: string;
   sender: 'ai' | 'user';
   text: string;
-  isStreaming?: boolean;
 };
 
 export default function AIDoubtSolver({ isOpen, onClose, q }: AIDoubtSolverProps) {
@@ -26,7 +26,7 @@ export default function AIDoubtSolver({ isOpen, onClose, q }: AIDoubtSolverProps
   
   // Dynamic AI Settings
   const [aiName, setAiName] = useState('Elite AI Mentor');
-  const [systemPrompt, setSystemPrompt] = useState('');
+  const [systemPrompt, setSystemPrompt] = useState('You are a helpful AI tutor.');
   const [modelTier, setModelTier] = useState('gemini-1.5-pro');
 
   useEffect(() => {
@@ -64,27 +64,19 @@ export default function AIDoubtSolver({ isOpen, onClose, q }: AIDoubtSolverProps
     setLoading(true);
 
     try {
-      // Connect to Gemini API natively
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY || 'AQ.Ab8RN6IMIMPGsZDc_dKFiz8-pQP_DX-yzAwu2x1XdobUYwf-ng'; 
-      // Fallback key provided by user for instant execution if env is missing
-      
-      const payload = {
-        system_instruction: {
-          parts: [{ text: systemPrompt || 'You are a helpful AI tutor.' }]
-        },
-        contents: [
-          { role: 'user', parts: [{ text: userMsg }] }
-        ]
-      };
-
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelTier}:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.GEMINI_API_KEY || 'AQ.Ab8RN6IMIMPGsZDc_dKFiz8-pQP_DX-yzAwu2x1XdobUYwf-ng'; 
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ 
+        model: modelTier,
+        systemInstruction: systemPrompt 
       });
 
-      const data = await res.json();
-      const aiResponse = data?.candidates?.[0]?.content?.parts?.[0]?.text || "I'm having trouble processing that right now.";
+      // Pass context if called from a question
+      const contextText = q ? `Context: Question: ${q.question_latex}` : '';
+      const prompt = `${contextText}\nUser: ${userMsg}`;
+
+      const result = await model.generateContent(prompt);
+      const aiResponse = result.response.text();
       
       setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'ai', text: aiResponse }]);
     } catch (err) {
@@ -123,25 +115,25 @@ export default function AIDoubtSolver({ isOpen, onClose, q }: AIDoubtSolverProps
             </button>
           </div>
 
-          {/* Chat Area */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-fixed" style={{ backgroundBlendMode: 'overlay' }}>
-            {messages.map((msg, idx) => (
+          {/* Chat Area - Fixed Flexbox */}
+          <div className="flex-1 flex flex-col gap-3 p-4 overflow-y-auto bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-fixed" style={{ backgroundBlendMode: 'overlay' }}>
+            {messages.map((msg) => (
               <motion.div 
                 key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed ${
+                  msg.sender === 'user' 
+                    ? 'self-end bg-blue-600 text-white rounded-br-none shadow-lg' 
+                    : 'self-start bg-gray-800 text-slate-200 border border-slate-700 rounded-bl-none shadow-md'
+                }`}
               >
-                <div className={`max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed ${msg.sender === 'user' ? 'bg-indigo-500 text-white rounded-br-none shadow-lg' : 'bg-slate-800 text-slate-200 border border-slate-700 rounded-bl-none shadow-md'}`}>
-                  <Latex>{msg.text}</Latex>
-                </div>
+                <Latex>{msg.text}</Latex>
               </motion.div>
             ))}
             {loading && (
-              <div className="flex justify-start">
-                <div className="bg-slate-800 border border-slate-700 p-4 rounded-2xl rounded-bl-none flex gap-2">
-                  <div className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" />
-                  <div className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '0.2s' }} />
-                  <div className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '0.4s' }} />
-                </div>
+              <div className="self-start bg-gray-800 border border-slate-700 p-4 rounded-2xl rounded-bl-none flex gap-2">
+                <div className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" />
+                <div className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '0.2s' }} />
+                <div className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '0.4s' }} />
               </div>
             )}
             <div ref={endRef} />

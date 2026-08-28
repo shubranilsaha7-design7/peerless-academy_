@@ -41,6 +41,14 @@ export default function BroadcastBanner() {
           if (parsedData.message) {
             setBanner(parsedData);
           }
+        } else {
+          // Fallback if none in DB
+          setBanner({
+            message: "NEW: The Kurukshetra Engine is LIVE. 1v1 Ranked Duels active. ELO matching enabled.",
+            badge: "LIVE",
+            theme: "gold",
+            marqueeEnabled: true
+          });
         }
       } catch (err) {
         console.error('Error loading broadcast banner:', err);
@@ -48,98 +56,78 @@ export default function BroadcastBanner() {
     };
 
     fetchBanner();
+
+    const channel = supabase
+      .channel('public:site_media_banner')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'site_media', filter: "type=eq.announcement_banner" }, () => {
+        fetchBanner();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
-  if (!banner || dismissed || !banner.message) return null;
+  if (!banner || dismissed) return null;
 
-  const getThemeClasses = () => {
-    switch (banner.theme) {
-      case 'cyan':
-        return {
-          bg: 'bg-gradient-to-r from-cyan-950 via-slate-900 to-blue-950 border-cyan-500/30 text-cyan-200',
-          badge: 'bg-cyan-500/20 text-cyan-300 border-cyan-400/40',
-          btn: 'bg-cyan-500 text-slate-950 hover:bg-cyan-400',
-        };
-      case 'emerald':
-        return {
-          bg: 'bg-gradient-to-r from-emerald-950 via-slate-900 to-teal-950 border-emerald-500/30 text-emerald-200',
-          badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40',
-          btn: 'bg-emerald-500 text-slate-950 hover:bg-emerald-400',
-        };
-      case 'gold':
-        return {
-          bg: 'bg-gradient-to-r from-amber-950 via-slate-900 to-yellow-950 border-yellow-500/30 text-amber-200',
-          badge: 'bg-yellow-500/20 text-yellow-300 border-yellow-400/40',
-          btn: 'bg-yellow-400 text-slate-950 hover:bg-yellow-300',
-        };
-      case 'coral':
-      default:
-        return {
-          bg: 'bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 border-orange-400 text-white shadow-[0_4px_20px_rgba(249,115,22,0.4)]',
-          badge: 'bg-orange-500/20 text-orange-300 border-orange-400/40',
-          btn: 'bg-orange-500 text-white hover:bg-orange-600',
-        };
-    }
-  };
-
-  const themeStyles = getThemeClasses();
+  const content = (
+    <>
+      {banner.badge && (
+        <span className="bg-white/20 px-2 py-0.5 rounded text-[10px] uppercase font-black tracking-widest text-white shadow-sm flex-shrink-0 flex items-center gap-1">
+          <Sparkles size={10} className="text-amber-200" /> {banner.badge}
+        </span>
+      )}
+      <span className="font-bold text-sm text-white tracking-wide flex items-center gap-2">
+        {banner.message}
+      </span>
+      {banner.linkText && (
+        <span className="flex items-center gap-1 text-xs font-black uppercase tracking-wider text-white bg-black/20 px-3 py-1 rounded-full hover:bg-black/30 transition-colors ml-2 flex-shrink-0">
+          {banner.linkText} <ArrowRight size={14} />
+        </span>
+      )}
+    </>
+  );
 
   return (
-      <div className={`relative z-40 w-full border-b px-4 py-3.5 md:py-4 min-h-[56px] md:min-h-[64px] shadow-lg backdrop-blur-md transition-all ${themeStyles.bg}`}>
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 text-xs sm:text-sm">
-          
-          <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-white/10 relative z-10">
-            <Sparkles size={13} className="animate-pulse" />
-          </div>
-
-          <div className="flex flex-1 items-center gap-2.5 overflow-hidden relative" style={{ maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)' }}>
-            
-            {banner.badge && (
-              <span className={`hidden sm:inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider relative z-10 ${themeStyles.badge}`}>
-                {banner.badge}
-              </span>
-            )}
-  
-            <div className="flex-1 overflow-hidden">
-              {banner.marqueeEnabled ? (
-                <div 
-                  className="animate-marquee-track cursor-default text-sm md:text-base font-extrabold tracking-wider"
-                  style={{ animationDuration: banner.marqueeSpeed || '25s' }}
-                >
-                  <span className="pr-12 whitespace-nowrap flex-shrink-0">{banner.message}</span>
-                  <span className="pr-12 whitespace-nowrap flex-shrink-0">{banner.message}</span>
-                  <span className="pr-12 whitespace-nowrap flex-shrink-0">{banner.message}</span>
-                  <span className="pr-12 whitespace-nowrap flex-shrink-0">{banner.message}</span>
-                </div>
-              ) : (
-                <p className="truncate cursor-default text-sm md:text-base font-extrabold tracking-wider">
-                  {banner.message}
-                </p>
-              )}
+    <>
+      <style>{`
+        @keyframes scroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+          display: flex;
+          width: 200%;
+          animation: scroll 15s linear infinite;
+        }
+      `}</style>
+      <div className="relative w-full overflow-hidden bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 border-b border-orange-400/50 shadow-md">
+        <button 
+          onClick={() => setDismissed(true)}
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-20 text-white/80 hover:text-white bg-black/10 hover:bg-black/20 rounded-full p-1.5 transition-colors"
+        >
+          <X size={16} />
+        </button>
+        
+        <div className="flex h-12 w-full max-w-full overflow-hidden relative z-10 items-center pl-4 pr-12">
+          {banner.marqueeEnabled ? (
+            <div className="overflow-hidden w-full flex items-center">
+              <div className="animate-marquee items-center gap-8 whitespace-nowrap">
+                {/* Duplicate spans for seamless loop */}
+                <div className="flex items-center gap-8 shrink-0">{content}</div>
+                <div className="flex items-center gap-8 shrink-0">{content}</div>
+                <div className="flex items-center gap-8 shrink-0">{content}</div>
+                <div className="flex items-center gap-8 shrink-0">{content}</div>
+              </div>
             </div>
-          </div>
-  
-          <div className="flex items-center gap-2 flex-shrink-0 relative z-10 bg-slate-900/50 backdrop-blur pl-2 rounded-l-2xl">
-            {banner.linkUrl && (
-              <a
-                href={banner.linkUrl}
-                className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-black shadow-sm transition hover:scale-105 ${themeStyles.btn}`}
-              >
-                {banner.linkText || 'Learn More'}
-                <ArrowRight size={12} />
-              </a>
-            )}
-  
-            <button
-              onClick={() => setDismissed(true)}
-              className="rounded-lg p-1 text-slate-400 transition hover:bg-white/10 hover:text-white"
-              aria-label="Dismiss banner"
-            >
-              <X size={15} />
-            </button>
-          </div>
-  
+          ) : (
+            <div className="flex items-center justify-center w-full gap-3">
+              {content}
+            </div>
+          )}
         </div>
       </div>
-    );
-  }
+    </>
+  );
+}
