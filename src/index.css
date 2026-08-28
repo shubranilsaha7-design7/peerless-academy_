@@ -88,3 +88,46 @@ html.app-mode, .app-mode body {
   .safe-pr { padding-right: env(safe-area-inset-right); }
 }
 
+
+/* Glassmorphism 2.0 & SVG Noise */
+.bg-noise {
+  position: relative;
+}
+.bg-noise::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.15;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  background-image: url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E');
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Fluid Typography */
+html {
+  font-size: clamp(14px, 1vw + 10px, 18px);
+}
+h1, .text-fluid-h1 { font-size: clamp(2.5rem, 5vw + 1rem, 4.5rem); line-height: 1.1; }
+h2, .text-fluid-h2 { font-size: clamp(2rem, 4vw + 1rem, 3.5rem); line-height: 1.2; }
+h3, .text-fluid-h3 { font-size: clamp(1.5rem, 3vw + 0.5rem, 2.5rem); }
+
+/* Animated Ambient Glows */
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
+}
+.ambient-glow {
+  animation: pulse-slow 8s infinite ease-in-out;
+  mix-blend-mode: screen;
+  filter: blur(80px);
+}
+

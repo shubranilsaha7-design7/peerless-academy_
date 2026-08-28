@@ -1,6 +1,20 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { motion } from 'framer-motion';
 import { Trophy, Medal, ChevronLeft, Shield, Zap } from 'lucide-react';
+
+
+const containerVariants: import("framer-motion").Variants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1, 
+    transition: { staggerChildren: 0.1 } 
+  }
+};
+const itemVariants: import("framer-motion").Variants = {
+  hidden: { x: -20, opacity: 0 },
+  visible: { x: 0, opacity: 1, transition: { type: "spring", damping: 20, stiffness: 200 } }
+};
 
 export default function Leaderboard({ onBack }: { onBack: () => void }) {
   const [leaders, setLeaders] = useState<any[]>([]);
@@ -47,7 +61,10 @@ export default function Leaderboard({ onBack }: { onBack: () => void }) {
         </h1>
       </header>
 
-      <main className="flex-1 max-w-4xl mx-auto w-full p-6 lg:p-12">
+      <main className="flex-1 max-w-4xl mx-auto w-full p-6 lg:p-12 relative">
+        {/* Ambient Lights */}
+        <div className="absolute top-10 left-10 w-96 h-96 bg-cyan-500/10 rounded-full ambient-glow pointer-events-none" />
+        <div className="absolute bottom-20 right-10 w-72 h-72 bg-purple-500/10 rounded-full ambient-glow pointer-events-none" style={{ animationDelay: '1s' }} />
         <div className="text-center mb-12">
           <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-amber-400 to-orange-500 inline-flex items-center gap-3">
             Hall of Legends
@@ -58,7 +75,7 @@ export default function Leaderboard({ onBack }: { onBack: () => void }) {
         {loading ? (
           <div className="flex justify-center p-12 text-slate-500">Loading rankings...</div>
         ) : (
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-2 sm:p-6 shadow-2xl">
+          <div className="glass-panel bg-noise bg-slate-900/60 rounded-3xl p-2 sm:p-6 shadow-2xl">
             <div className="flex flex-col gap-3">
               {leaders.map((student, idx) => {
                 const rankColorClass = getRankColor(idx);
