@@ -91,17 +91,7 @@ export default function BroadcastBanner() {
 
   return (
     <>
-      <style>{`
-        @keyframes scroll {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        .animate-marquee {
-          display: flex;
-          width: 200%;
-          animation: scroll 15s linear infinite;
-        }
-      `}</style>
+      
       <div className="relative w-full overflow-hidden bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 border-b border-orange-400/50 shadow-md">
         <button 
           onClick={() => setDismissed(true)}

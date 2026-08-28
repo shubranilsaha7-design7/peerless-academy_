@@ -16,7 +16,6 @@ export default class ErrorBoundary extends Component<Props, State> {
   };
 
   public static getDerivedStateFromError(error: Error): State {
-    // Update state so the next render will show the fallback UI.
     return { hasError: true, error };
   }
 
@@ -40,8 +39,14 @@ export default class ErrorBoundary extends Component<Props, State> {
             </svg>
           </div>
           <h1 className="mb-2 text-2xl font-black">Oops, something went wrong.</h1>
-          <p className="mb-6 max-w-md text-sm text-slate-400">
+          <p className="mb-6 max-w-2xl text-sm text-slate-400">
             A rendering error occurred in this section of the app.
+            <br/><br/>
+            <code className="block text-left bg-black text-red-400 p-4 overflow-auto max-h-64 rounded whitespace-pre-wrap text-xs">
+              {this.state.error?.message}
+              <br/><br/>
+              {this.state.error?.stack}
+            </code>
           </p>
           <button
             onClick={() => window.location.reload()}
