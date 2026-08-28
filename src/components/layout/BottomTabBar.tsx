@@ -10,7 +10,7 @@ interface BottomTabBarProps {
 export default function BottomTabBar({ activeRoute, setActiveRoute, openAiDoubt }: BottomTabBarProps) {
   const tabs = [
     { id: 'home', label: 'Home', icon: Home, route: 'home' },
-    { id: 'arena', label: 'Arena', icon: Swords, route: 'cbt' },
+    { id: 'arena', label: 'Arena', icon: Swords, route: 'arena_hub' },
     { id: 'batches', label: 'Batches', icon: PlaySquare, route: 'video' },
     { id: 'ask_ai', label: 'Ask AI', icon: BrainCircuit, action: openAiDoubt },
     { id: 'profile', label: 'Profile', icon: User, route: 'profile' },
