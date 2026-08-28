@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react';
 import { useCbtStore } from '@/store/cbtStore';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Target, Clock, Zap, FileSearch, ArrowRight, BrainCircuit } from 'lucide-react';
+import { Target, Clock, Zap, FileSearch, ArrowRight, BrainCircuit, Tag } from 'lucide-react';
 import Latex from 'react-latex-next';
 import AIDoubtSolver from '../AIDoubtSolver';
 
 export default function CbtDiagnostics() {
   const { questions, answers, timeSpentMs, endSession } = useCbtStore();
   const [reviewQ, setReviewQ] = useState<any>(null);
+  const [tags, setTags] = useState<Record<string, string>>({});
 
   const stats = useMemo(() => {
     let correct = 0;
@@ -161,12 +162,25 @@ export default function CbtDiagnostics() {
                       Your answer: <span className="font-bold text-rose-400"><Latex>{q.options[ans]}</Latex></span> <br/>
                       Correct: <span className="font-bold text-emerald-400"><Latex>{q.options[q.correct_index]}</Latex></span>
                     </div>
-                    <button 
-                      onClick={() => handleAnalyzeMistake(q)}
-                      className="shrink-0 flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition"
-                    >
-                      <BrainCircuit size={16} className="text-cyan-400" /> Analyze Mistake
-                    </button>
+                    <div className="flex flex-col sm:flex-row gap-4 items-end">
+                      <div className="flex flex-wrap gap-2">
+                        {['Calculation', 'Concept', 'Panic'].map(t => (
+                          <button 
+                            key={t}
+                            onClick={() => setTags(prev => ({ ...prev, [q.id]: t }))}
+                            className={`text-[10px] px-2 py-1 rounded-md font-bold transition ${tags[q.id] === t ? 'bg-indigo-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                          >
+                            {t}
+                          </button>
+                        ))}
+                      </div>
+                      <button 
+                        onClick={() => handleAnalyzeMistake(q)}
+                        className="shrink-0 flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition"
+                      >
+                        <BrainCircuit size={16} className="text-cyan-400" /> Analyze Mistake
+                      </button>
+                    </div>
                   </div>
                 </div>
               );

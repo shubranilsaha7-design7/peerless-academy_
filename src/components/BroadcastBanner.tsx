@@ -8,6 +8,8 @@ interface BannerData {
   linkText?: string;
   linkUrl?: string;
   theme?: 'coral' | 'cyan' | 'emerald' | 'gold';
+  marqueeEnabled?: boolean;
+  marqueeSpeed?: string;
 }
 
 export default function BroadcastBanner() {
@@ -83,46 +85,55 @@ export default function BroadcastBanner() {
   const themeStyles = getThemeClasses();
 
   return (
-    <div className={`relative z-40 w-full border-b px-4 py-2.5 shadow-md backdrop-blur-md transition-all ${themeStyles.bg}`}>
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 text-xs sm:text-sm">
-        
-        <div className="flex flex-1 items-center gap-2.5 overflow-hidden">
-          <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-white/10">
+      <div className={`relative z-40 w-full border-b px-4 py-3.5 min-h-[48px] shadow-md backdrop-blur-md transition-all ${themeStyles.bg}`}>
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 text-xs sm:text-sm">
+          
+          <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-white/10 relative z-10">
             <Sparkles size={13} className="animate-pulse" />
-          </span>
+          </div>
 
-          {banner.badge && (
-            <span className={`hidden sm:inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${themeStyles.badge}`}>
-              {banner.badge}
-            </span>
-          )}
-
-          <p className="truncate font-semibold tracking-wide">
-            {banner.message}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {banner.linkUrl && (
-            <a
-              href={banner.linkUrl}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-black shadow-sm transition hover:scale-105 ${themeStyles.btn}`}
+          <div className="flex flex-1 items-center gap-2.5 overflow-hidden relative" style={{ maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)' }}>
+            
+            {banner.badge && (
+              <span className={`hidden sm:inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider relative z-10 ${themeStyles.badge}`}>
+                {banner.badge}
+              </span>
+            )}
+  
+            <div className={`flex-1 ${banner.marqueeEnabled ? 'overflow-hidden' : ''}`}>
+              <p 
+                className={`font-semibold tracking-wide ${banner.marqueeEnabled ? 'animate-marquee cursor-default' : 'truncate'}`}
+                style={{ 
+                  animationDuration: banner.marqueeSpeed || '20s',
+                  paddingLeft: banner.marqueeEnabled ? '100%' : '0'
+                }}
+              >
+                {banner.message}
+              </p>
+            </div>
+          </div>
+  
+          <div className="flex items-center gap-2 flex-shrink-0 relative z-10 bg-slate-900/50 backdrop-blur pl-2 rounded-l-2xl">
+            {banner.linkUrl && (
+              <a
+                href={banner.linkUrl}
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-black shadow-sm transition hover:scale-105 ${themeStyles.btn}`}
+              >
+                {banner.linkText || 'Learn More'}
+                <ArrowRight size={12} />
+              </a>
+            )}
+  
+            <button
+              onClick={() => setDismissed(true)}
+              className="rounded-lg p-1 text-slate-400 transition hover:bg-white/10 hover:text-white"
+              aria-label="Dismiss banner"
             >
-              {banner.linkText || 'Learn More'}
-              <ArrowRight size={12} />
-            </a>
-          )}
-
-          <button
-            onClick={() => setDismissed(true)}
-            className="rounded-lg p-1 text-slate-400 transition hover:bg-white/10 hover:text-white"
-            aria-label="Dismiss banner"
-          >
-            <X size={15} />
-          </button>
+              <X size={15} />
+            </button>
+          </div>
+  
         </div>
-
       </div>
-    </div>
-  );
-}
+    );
+  }

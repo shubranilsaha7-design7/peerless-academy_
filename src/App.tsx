@@ -822,14 +822,7 @@ function AppInner() {
       {/* ── MODALS & PANELS ── */}
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
 
-      <Arena
-        isOpen={isArenaOpen}
-        onClose={() => setIsArenaOpen(false)}
-        user={user}
-        subject={arenaSubject}
-        classLevel={arenaClass}
-        examType={arenaExamType}
-      />
+      {isArenaOpen && <Arena onBack={() => setIsArenaOpen(false)} />}
 
       <AIDoubtSolver
         isOpen={isDoubtOpen}
