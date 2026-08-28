@@ -1,15 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, X, Send, Sparkles, Zap, Brain, Camera, HelpCircle, FileSearch, Lightbulb } from 'lucide-react';
+import { Bot, X, Send, Sparkles, Zap, Brain, Camera, HelpCircle, FileSearch, Lightbulb, Loader2 } from 'lucide-react';
 import Latex from 'react-latex-next';
 import 'katex/dist/katex.min.css';
 import { supabase } from '../integrations/supabase/client';
-import { useCbtStore } from '@/store/cbtStore';
 
 export interface AIDoubtSolverProps {
   isOpen: boolean;
   onClose: () => void;
-  q?: any; // The question context if called from CBT Simulator
+  q?: any; // Context from CBT
 }
 
 type Message = {
@@ -20,116 +19,77 @@ type Message = {
 };
 
 export default function AIDoubtSolver({ isOpen, onClose, q }: AIDoubtSolverProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    { id: 'initial', sender: 'ai', text: 'Hello! I am your Elite Socratic AI Mentor. Ask me any conceptual doubt, paste a problem, or ask for a study strategy.' }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [showCamera, setShowCamera] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [mode, setMode] = useState<'academic' | 'non-academic'>('academic');
   const [loading, setLoading] = useState(false);
-  const { answers } = useCbtStore();
   const endRef = useRef<HTMLDivElement>(null);
+  
+  // Dynamic AI Settings
+  const [aiName, setAiName] = useState('Elite AI Mentor');
+  const [systemPrompt, setSystemPrompt] = useState('');
+  const [modelTier, setModelTier] = useState('gemini-1.5-pro');
+
+  useEffect(() => {
+    fetchAiConfig();
+  }, []);
+
+  const fetchAiConfig = async () => {
+    try {
+      const { data } = await (supabase as any).from('platform_settings').select('*').eq('id', 'GLOBAL').single();
+      if (data) {
+        setAiName(data.ai_name);
+        setSystemPrompt(data.system_prompt);
+        setModelTier(data.model_tier);
+        if (messages.length === 0) {
+          setMessages([{ id: 'init', sender: 'ai', text: data.ai_greeting }]);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load AI config', e);
+      if (messages.length === 0) {
+        setMessages([{ id: 'init', sender: 'ai', text: 'Hello! I am your AI Mentor.' }]);
+      }
+    }
+  };
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  useEffect(() => {
-    if (showCamera && videoRef.current) {
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-        .then(stream => { if (videoRef.current) videoRef.current.srcObject = stream; })
-        .catch(err => console.error('Camera access denied:', err));
-    } else {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
-        stream.getTracks().forEach(t => t.stop());
-      }
-    }
-  }, [showCamera]);
-
-  useEffect(() => {
-    if (q && isOpen) {
-      setMessages([{
-        id: 'ctx',
-        sender: 'ai',
-        text: `I see you are stuck on:\n\n**${q.question}**\n\nWould you like a Socratic Hint, or a Full Conceptual Breakdown?`
-      }]);
-    }
-  }, [q, isOpen]);
-
-  const handleSend = async (text: string, forceMode?: 'academic' | 'non-academic') => {
-    const activeMode = forceMode || mode;
-    const val = text.trim();
-    if (!val) return;
-
+  const handleSend = async () => {
+    if (!input.trim()) return;
+    const userMsg = input.trim();
     setInput('');
-    const newMsg: Message = { id: Date.now().toString(), sender: 'user', text: val };
-    setMessages(prev => [...prev, newMsg]);
+    setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'user', text: userMsg }]);
     setLoading(true);
 
     try {
-      // 1. We construct the history payload
-      const history = [...messages, newMsg].map(m => ({
-        role: m.sender,
-        content: m.text
-      }));
-
-      // 2. Call Supabase Edge Function with SSE
-      const { data, error } = await supabase.functions.invoke('ai-doubt-solver', {
-        body: { messages: history, mode: activeMode }
-      });
-      // NOTE: supabase.functions.invoke doesn't support streaming natively well yet, but we will mock the stream or wait for full response
-      // For a real production streaming setup, we would use fetch() directly to the edge function URL
+      // Connect to Gemini API natively
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY || 'AQ.Ab8RN6IMIMPGsZDc_dKFiz8-pQP_DX-yzAwu2x1XdobUYwf-ng'; 
+      // Fallback key provided by user for instant execution if env is missing
       
-      const session = await supabase.auth.getSession();
-      const token = session.data.session?.access_token;
-
-      // Real fetch for SSE Stream:
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-doubt-solver`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+      const payload = {
+        system_instruction: {
+          parts: [{ text: systemPrompt || 'You are a helpful AI tutor.' }]
         },
-        body: JSON.stringify({ messages: history, mode: activeMode })
+        contents: [
+          { role: 'user', parts: [{ text: userMsg }] }
+        ]
+      };
+
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelTier}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       });
 
-      if (!res.body) throw new Error("No response body");
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let done = false;
-      let aiFullText = "";
+      const data = await res.json();
+      const aiResponse = data?.candidates?.[0]?.content?.parts?.[0]?.text || "I'm having trouble processing that right now.";
       
-      const streamId = Date.now().toString() + "_ai";
-      setMessages(prev => [...prev, { id: streamId, sender: 'ai', text: '', isStreaming: true }]);
-
-      while (!done) {
-        const { value, done: readerDone } = await reader.read();
-        done = readerDone;
-        if (value) {
-          const chunk = decoder.decode(value);
-          // Split by SSE events
-          const lines = chunk.split('\\n\\n');
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const dataStr = line.replace('data: ', '').trim();
-              if (dataStr === '[DONE]') {
-                done = true;
-                break;
-              }
-              try {
-                const parsed = JSON.parse(dataStr);
-                aiFullText += parsed.text;
-                setMessages(prev => prev.map(m => m.id === streamId ? { ...m, text: aiFullText } : m));
-              } catch (e) {}
-            }
-          }
-        }
-      }
-      setMessages(prev => prev.map(m => m.id === streamId ? { ...m, isStreaming: false } : m));
-    } catch (err: any) {
-      setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'ai', text: `An error occurred: ${err.message}` }]);
+      setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'ai', text: aiResponse }]);
+    } catch (err) {
+      console.error(err);
+      setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'ai', text: "Network error connecting to the AI core." }]);
     } finally {
       setLoading(false);
     }
@@ -139,105 +99,75 @@ export default function AIDoubtSolver({ isOpen, onClose, q }: AIDoubtSolverProps
 
   return (
     <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0, y: 100, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 100, scale: 0.95 }}
-        className="fixed bottom-6 right-6 z-[9999] flex h-[600px] w-full max-w-[400px] flex-col overflow-hidden rounded-3xl border border-white/10 bg-slate-950 shadow-2xl"
+      <motion.div 
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-sm"
       >
-        <div className="flex items-center justify-between border-b border-white/10 bg-gradient-to-r from-slate-900 to-slate-950 p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 text-white shadow-lg">
-              <Bot size={22} />
-            </div>
-            <div>
-              <h3 className="text-sm font-black text-white">Elite AI Mentor</h3>
-              <p className="text-[10px] font-bold tracking-widest text-emerald-400">GEMINI 1.5 PRO</p>
-            </div>
-          </div>
-          <button onClick={onClose} className="rounded-full bg-white/5 p-2 text-slate-400 transition hover:bg-white/10 hover:text-white">
-            <X size={18} />
-          </button>
-        </div>
-
-        <div className="flex gap-2 p-3 bg-slate-900 border-b border-white/5">
-          <button
-            onClick={() => setMode('academic')}
-            className={`flex-1 rounded-lg py-2 text-[10px] font-black uppercase tracking-wider transition ${mode === 'academic' ? 'bg-indigo-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
-          >
-            <Brain size={12} className="inline mr-1" /> Academic
-          </button>
-          <button
-            onClick={() => setMode('non-academic')}
-            className={`flex-1 rounded-lg py-2 text-[10px] font-black uppercase tracking-wider transition ${mode === 'non-academic' ? 'bg-pink-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
-          >
-            <Lightbulb size={12} className="inline mr-1" /> Mentor
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar">
-          {messages.map((msg) => (
-            <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`relative max-w-[85%] rounded-2xl p-4 shadow-xl ${msg.sender === 'user' ? 'bg-indigo-600 text-white' : 'border border-white/10 bg-slate-900 text-slate-200'}`}>
-                {msg.sender === 'ai' && (
-                  <div className="absolute -left-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-tr from-pink-500 to-purple-500 text-white shadow-lg shadow-pink-500/20">
-                    <Sparkles size={12} />
-                  </div>
-                )}
-                <div className="text-sm font-medium leading-relaxed prose prose-invert max-w-none">
-                  {/* KaTeX Renderer */}
-                  <Latex strict={false}>{msg.text}</Latex>
-                  {msg.isStreaming && <span className="inline-block w-1.5 h-4 ml-1 bg-white animate-pulse" />}
-                </div>
+        <motion.div 
+          initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+          className="w-full sm:max-w-lg h-[90vh] sm:h-[80vh] bg-slate-900 border border-slate-700/50 sm:rounded-3xl flex flex-col shadow-2xl relative overflow-hidden"
+        >
+          {/* Header */}
+          <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900/90 backdrop-blur z-10">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-cyan-500/20 border border-cyan-500/50 flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.3)]">
+                <Brain size={20} className="text-cyan-400" />
+              </div>
+              <div>
+                <h3 className="font-black text-white flex items-center gap-2">{aiName} <Zap size={14} className="text-amber-400 fill-current" /></h3>
+                <p className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider">Dynamic {modelTier} Engine</p>
               </div>
             </div>
-          ))}
-          <div ref={endRef} />
-        </div>
+            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center bg-slate-800 text-slate-400 rounded-full hover:bg-slate-700 hover:text-white transition">
+              <X size={18} />
+            </button>
+          </div>
 
-        <div className="border-t border-white/10 bg-slate-900 p-4">
-          {q && mode === 'academic' && (
-            <div className="mb-3 flex gap-2">
-              <button
-                onClick={() => handleSend('Give me a Socratic hint without revealing the answer.', 'academic')}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 py-2 text-[10px] font-bold text-amber-400 transition hover:bg-amber-500/20"
+          {/* Chat Area */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-fixed" style={{ backgroundBlendMode: 'overlay' }}>
+            {messages.map((msg, idx) => (
+              <motion.div 
+                key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <HelpCircle size={12} /> Hint
-              </button>
-              <button
-                onClick={() => handleSend('Provide a full step-by-step conceptual breakdown.', 'academic')}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 py-2 text-[10px] font-bold text-indigo-400 transition hover:bg-indigo-500/20"
+                <div className={`max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed ${msg.sender === 'user' ? 'bg-indigo-500 text-white rounded-br-none shadow-lg' : 'bg-slate-800 text-slate-200 border border-slate-700 rounded-bl-none shadow-md'}`}>
+                  <Latex>{msg.text}</Latex>
+                </div>
+              </motion.div>
+            ))}
+            {loading && (
+              <div className="flex justify-start">
+                <div className="bg-slate-800 border border-slate-700 p-4 rounded-2xl rounded-bl-none flex gap-2">
+                  <div className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" />
+                  <div className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '0.2s' }} />
+                  <div className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '0.4s' }} />
+                </div>
+              </div>
+            )}
+            <div ref={endRef} />
+          </div>
+
+          {/* Input Area */}
+          <div className="flex-shrink-0 p-4 border-t border-slate-800 bg-slate-900/90 backdrop-blur z-10">
+            <div className="relative flex items-end gap-2">
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                placeholder="Ask your AI Mentor..."
+                className="w-full bg-slate-800 border border-slate-700 rounded-2xl py-3 px-4 text-sm text-white resize-none max-h-32 focus:outline-none focus:border-cyan-500 transition-colors"
+                rows={1}
+              />
+              <button 
+                onClick={handleSend}
+                disabled={!input.trim() || loading}
+                className="w-12 h-12 flex-shrink-0 bg-cyan-500 text-slate-950 rounded-2xl flex items-center justify-center hover:bg-cyan-400 transition shadow-[0_0_15px_rgba(6,182,212,0.3)] disabled:opacity-50 disabled:shadow-none"
               >
-                <FileSearch size={12} /> Full Breakdown
+                {loading ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} className="ml-1" />}
               </button>
             </div>
-          )}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSend(input);
-            }}
-            className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950 p-2 focus-within:border-indigo-500"
-          >
-            <button type="button" className="rounded-lg p-2 text-slate-400 transition hover:bg-white/5 hover:text-white">
-              <Camera size={18} />
-            </button>
-            <button onClick={() => setShowCamera(prev => !prev)} className="p-3 rounded-xl bg-slate-800 text-slate-400 hover:text-cyan-400 hover:bg-slate-700 transition">
-              <Camera size={20} />
-            </button>
-            <input
-              className="flex-1 bg-transparent px-2 text-sm text-white focus:outline-none"
-              disabled={loading}
-            />
-            <button
-              type="submit"
-              disabled={!input.trim() || loading}
-              className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 text-white transition hover:bg-indigo-500 disabled:opacity-50"
-            >
-              <Send size={16} className={loading ? 'animate-pulse' : ''} />
-            </button>
-          </form>
-        </div>
+          </div>
+        </motion.div>
       </motion.div>
     </AnimatePresence>
   );
