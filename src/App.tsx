@@ -793,6 +793,38 @@ function AppInner() {
           </div>
         </section>
             </main>
+      {/* ── FOOTER ── */}
+      <footer className={`border-t px-5 py-12 lg:px-8 ${isDark ? 'border-white/10 bg-slate-950' : 'border-slate-200 bg-slate-900'}`}>
+        <div className="mx-auto flex max-w-[1240px] flex-col justify-between gap-10 md:flex-row md:items-end">
+          <div>
+            <a href="#home" className="flex items-center gap-3">
+              <div className="h-10 w-10 overflow-hidden rounded-xl bg-white"><img src={logoImage} alt="Peerless Academy" className="h-full w-full object-cover" /></div>
+              <div className="leading-none"><span className="block text-sm font-black tracking-[.15em] text-white">PEERLESS</span><span className="mt-1 block text-[8px] font-semibold tracking-[.32em] text-coral">ACADEMY</span></div>
+            </a>
+            <p className="mt-6 max-w-[290px] text-xs leading-5 text-slate-500">Choose us, be a step ahead. Building better minds and brighter futures in Agartala.</p>
+          </div>
+          <div className="grid gap-8 text-xs text-slate-400 sm:grid-cols-3">
+            <div><div className="mb-3 font-black uppercase tracking-wider text-white">Visit</div><div>Indranagar, Agartala</div><div>Tripura, India</div></div>
+            <div><div className="mb-3 font-black uppercase tracking-wider text-white">Connect</div><a href="tel:+918794130855" className="block hover:text-coral">+91 87941 30855</a><a href="mailto:hello@peerlessacademy.in" className="mt-1 block hover:text-coral">hello@peerlessacademy.in</a></div>
+            <div><div className="mb-3 font-black uppercase tracking-wider text-white">Follow</div><a href="https://instagram.com/peerlessacademyofficial" target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:text-coral"><Instagram size={14} /> Instagram</a></div>
+          </div>
+        </div>
+        <div className="mx-auto mt-10 max-w-[1240px] border-t border-white/10 pt-5 text-[10px] uppercase tracking-wider text-slate-600 flex justify-between items-center">
+          <span>© 2026 Peerless Academy. Made for the next breakthrough.</span>
+          <div className="flex items-center gap-4">
+            <button onClick={() => {
+              window.history.pushState({}, '', '/privacy');
+              setActiveRoute('privacy');
+            }} className="hover:text-white transition">Privacy</button>
+            <button onClick={() => {
+              window.history.pushState({}, '', '/terms');
+              setActiveRoute('terms');
+            }} className="hover:text-white transition">Terms</button>
+            <button onClick={() => setActiveRoute('admin')} className="text-coral font-bold hover:text-white transition">Enquiries</button>
+            <button onClick={() => setActiveRoute('admin_upload')} className="hover:text-white transition">Admin Upload</button>
+          </div>
+        </div>
+      </footer>
       </>
     );
   };
@@ -832,38 +864,7 @@ function AppInner() {
 
       <WhatsAppWidget />
 
-      {/* ── FOOTER ── */}
-      <footer className={`border-t px-5 py-12 lg:px-8 ${isDark ? 'border-white/10 bg-slate-950' : 'border-slate-200 bg-slate-900'}`}>
-        <div className="mx-auto flex max-w-[1240px] flex-col justify-between gap-10 md:flex-row md:items-end">
-          <div>
-            <a href="#home" className="flex items-center gap-3">
-              <div className="h-10 w-10 overflow-hidden rounded-xl bg-white"><img src={logoImage} alt="Peerless Academy" className="h-full w-full object-cover" /></div>
-              <div className="leading-none"><span className="block text-sm font-black tracking-[.15em] text-white">PEERLESS</span><span className="mt-1 block text-[8px] font-semibold tracking-[.32em] text-coral">ACADEMY</span></div>
-            </a>
-            <p className="mt-6 max-w-[290px] text-xs leading-5 text-slate-500">Choose us, be a step ahead. Building better minds and brighter futures in Agartala.</p>
-          </div>
-          <div className="grid gap-8 text-xs text-slate-400 sm:grid-cols-3">
-            <div><div className="mb-3 font-black uppercase tracking-wider text-white">Visit</div><div>Indranagar, Agartala</div><div>Tripura, India</div></div>
-            <div><div className="mb-3 font-black uppercase tracking-wider text-white">Connect</div><a href="tel:+918794130855" className="block hover:text-coral">+91 87941 30855</a><a href="mailto:hello@peerlessacademy.in" className="mt-1 block hover:text-coral">hello@peerlessacademy.in</a></div>
-            <div><div className="mb-3 font-black uppercase tracking-wider text-white">Follow</div><a href="https://instagram.com/peerlessacademyofficial" target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:text-coral"><Instagram size={14} /> Instagram</a></div>
-          </div>
-        </div>
-        <div className="mx-auto mt-10 max-w-[1240px] border-t border-white/10 pt-5 text-[10px] uppercase tracking-wider text-slate-600 flex justify-between items-center">
-          <span>© 2026 Peerless Academy. Made for the next breakthrough.</span>
-          <div className="flex items-center gap-4">
-            <button onClick={() => {
-              window.history.pushState({}, '', '/privacy');
-              setActiveRoute('privacy');
-            }} className="hover:text-white transition">Privacy</button>
-            <button onClick={() => {
-              window.history.pushState({}, '', '/terms');
-              setActiveRoute('terms');
-            }} className="hover:text-white transition">Terms</button>
-            <button onClick={() => setActiveRoute('admin')} className="text-coral font-bold hover:text-white transition">Enquiries</button>
-            <button onClick={() => setActiveRoute('admin_upload')} className="hover:text-white transition">Admin Upload</button>
-          </div>
-        </div>
-      </footer>
+      
 
       {/* ── MODALS & PANELS ── */}
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />

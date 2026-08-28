@@ -75,7 +75,7 @@ export default function BroadcastBanner() {
       case 'coral':
       default:
         return {
-          bg: 'bg-gradient-to-r from-orange-950 via-slate-900 to-red-950 border-orange-500/30 text-orange-200',
+          bg: 'bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 border-orange-400 text-white shadow-[0_4px_20px_rgba(249,115,22,0.4)]',
           badge: 'bg-orange-500/20 text-orange-300 border-orange-400/40',
           btn: 'bg-orange-500 text-white hover:bg-orange-600',
         };
@@ -85,7 +85,7 @@ export default function BroadcastBanner() {
   const themeStyles = getThemeClasses();
 
   return (
-      <div className={`relative z-40 w-full border-b px-4 py-3.5 min-h-[48px] shadow-md backdrop-blur-md transition-all ${themeStyles.bg}`}>
+      <div className={`relative z-40 w-full border-b px-4 py-3.5 md:py-4 min-h-[56px] md:min-h-[64px] shadow-lg backdrop-blur-md transition-all ${themeStyles.bg}`}>
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 text-xs sm:text-sm">
           
           <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-white/10 relative z-10">
@@ -103,14 +103,14 @@ export default function BroadcastBanner() {
             <div className="flex-1 overflow-hidden">
               {banner.marqueeEnabled ? (
                 <div 
-                  className="animate-marquee-infinite cursor-default font-semibold tracking-wide"
+                  className="animate-marquee-track cursor-default text-sm md:text-base font-extrabold tracking-wider"
                   style={{ animationDuration: banner.marqueeSpeed || '25s' }}
                 >
                   <span className="pr-12">{banner.message}</span>
                   <span className="pr-12">{banner.message}</span>
                 </div>
               ) : (
-                <p className="truncate font-semibold tracking-wide cursor-default">
+                <p className="truncate cursor-default text-sm md:text-base font-extrabold tracking-wider">
                   {banner.message}
                 </p>
               )}

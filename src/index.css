@@ -108,16 +108,18 @@ h3, .text-fluid-h3 { font-size: clamp(1.5rem, 3vw + 0.5rem, 2.5rem); }
 }
 
 
-@keyframes banner-marquee {
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes marquee-scroll {
   0% { transform: translateX(0%); }
   100% { transform: translateX(-50%); }
 }
-.animate-marquee-infinite {
+.animate-marquee-track {
   display: flex;
   width: max-content;
-  animation: banner-marquee 25s linear infinite;
-  will-change: transform;
+  animation: marquee-scroll 25s linear infinite;
 }
-.animate-marquee-infinite:hover {
+.animate-marquee-track:hover {
   animation-play-state: paused;
 }
