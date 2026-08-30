@@ -814,7 +814,10 @@ function AppInner() {
           </div>
         </div>
         <div className="mx-auto mt-10 max-w-[1240px] border-t border-white/10 pt-5 text-[10px] uppercase tracking-wider text-slate-600 flex justify-between items-center">
-          <span>© 2026 Peerless Academy. Made for the next breakthrough.</span>
+          <div className="flex flex-col gap-1 text-center md:text-left">
+            <span>© 2026 Peerless Academy. Made for the next breakthrough.</span>
+            <span className="text-[9px] text-emerald-500/70 font-bold tracking-widest uppercase mt-0.5">Lead Architect: Shubranil Saha</span>
+          </div>
           <div className="flex items-center gap-4">
             <button onClick={() => {
               window.history.pushState({}, '', '/privacy');
