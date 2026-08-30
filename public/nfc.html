@@ -12,8 +12,8 @@
       --bg: #07090e;
       --primary: #f97316;
       --primary-glow: rgba(249, 115, 22, 0.4);
-      --glass: rgba(255, 255, 255, 0.03);
-      --glass-border: rgba(255, 255, 255, 0.08);
+      --glass: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
       --text: #f8fafc;
       --text-muted: #94a3b8;
     }
@@ -26,9 +26,17 @@
       min-height: 100vh;
       display: flex;
       justify-content: center;
-      background-image: 
-        radial-gradient(circle at 15% 50%, rgba(249, 115, 22, 0.08), transparent 25%),
-        radial-gradient(circle at 85% 30%, rgba(249, 115, 22, 0.08), transparent 25%);
+      overflow-x: hidden;
+      /* Dynamic Animated Background */
+      background: linear-gradient(-45deg, #07090e, #1a0b02, #07090e, #0f172a);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
     
     .container {
@@ -37,6 +45,21 @@
       padding: 24px 20px 100px 20px;
       position: relative;
     }
+
+    /* Staggered Entrance Animations */
+    .animate-up {
+      opacity: 0;
+      transform: translateY(30px);
+      animation: slideUpFade 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    .delay-4 { animation-delay: 0.4s; }
+
+    @keyframes slideUpFade {
+      to { opacity: 1; transform: translateY(0); }
+    }
     
     /* Status Badge */
     .status-badge {
@@ -44,102 +67,114 @@
       align-items: center;
       gap: 8px;
       background: rgba(16, 185, 129, 0.1);
-      border: 1px solid rgba(16, 185, 129, 0.2);
+      border: 1px solid rgba(16, 185, 129, 0.25);
       color: #10b981;
-      padding: 6px 12px;
+      padding: 6px 14px;
       border-radius: 100px;
       font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 1px;
       margin-bottom: 24px;
-      box-shadow: 0 0 15px rgba(16, 185, 129, 0.1);
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
+      backdrop-filter: blur(4px);
     }
     .status-dot {
       width: 6px;
       height: 6px;
       background: #10b981;
       border-radius: 50%;
-      animation: pulse 2s infinite;
+      animation: pulseGreen 2s infinite;
     }
-    @keyframes pulse {
+    @keyframes pulseGreen {
       0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-      70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+      70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
       100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
     }
     
-    /* Header */
-    .header { text-align: center; margin-bottom: 32px; }
-    .logo-glow {
-      width: 80px;
-      height: 80px;
-      background: linear-gradient(135deg, #111, #222);
-      border: 1px solid var(--glass-border);
-      border-radius: 24px;
+    /* Header & Logo */
+    .header { text-align: center; margin-bottom: 32px; perspective: 1000px; }
+    .official-logo {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--primary);
       margin: 0 auto 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 32px;
-      font-weight: 700;
-      color: var(--primary);
-      box-shadow: 0 0 30px var(--primary-glow);
+      display: block;
+      box-shadow: 0 0 30px var(--primary-glow), inset 0 0 20px rgba(0,0,0,0.5);
+      background: #fff;
+      animation: floatLogo 6s ease-in-out infinite;
     }
-    h1 { font-size: 28px; margin-bottom: 4px; }
+    @keyframes floatLogo {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-8px) rotate(2deg); box-shadow: 0 10px 40px var(--primary-glow); }
+    }
+    
+    h1 { font-size: 30px; margin-bottom: 6px; font-weight: 700; background: linear-gradient(to right, #fff, #f97316); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .location { color: var(--text-muted); font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 4px; }
     
-    /* Glass Card */
+    /* Glass Card with 3D Hover Effect */
     .glass-card {
       background: var(--glass);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border: 1px solid var(--glass-border);
-      border-radius: 20px;
-      padding: 20px;
+      border-radius: 24px;
+      padding: 24px;
       margin-bottom: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s ease, border-color 0.3s ease;
     }
+    .glass-card:active { transform: scale(0.98); }
     
     /* Quick Actions */
     .quick-actions {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
     }
     .action-btn {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       text-decoration: none;
       color: var(--text);
       cursor: pointer;
       background: none;
       border: none;
+      flex: 1;
     }
     .action-icon {
-      width: 50px;
-      height: 50px;
-      border-radius: 16px;
-      background: rgba(255, 255, 255, 0.05);
+      width: 54px;
+      height: 54px;
+      border-radius: 18px;
+      background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
       border: 1px solid var(--glass-border);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
-      transition: all 0.3s ease;
+      font-size: 22px;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+      overflow: hidden;
+    }
+    .action-icon::before {
+      content: ''; position: absolute; inset: 0; background: var(--primary); opacity: 0; transition: opacity 0.3s; z-index: -1;
     }
     .action-btn:hover .action-icon {
-      background: var(--primary);
+      transform: translateY(-5px) scale(1.05);
       border-color: var(--primary);
-      color: #000;
-      box-shadow: 0 0 20px var(--primary-glow);
+      box-shadow: 0 10px 20px var(--primary-glow);
     }
-    .action-label { font-size: 11px; font-weight: 600; color: var(--text-muted); }
+    .action-btn:hover .action-icon::before { opacity: 0.1; }
+    .action-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
     
     /* Course Selector */
     .course-selector {
       display: flex;
-      gap: 8px;
+      gap: 10px;
       overflow-x: auto;
       padding-bottom: 8px;
       scrollbar-width: none;
@@ -147,52 +182,60 @@
     .course-selector::-webkit-scrollbar { display: none; }
     .course-badge {
       flex: 0 0 auto;
-      background: rgba(255, 255, 255, 0.05);
+      background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.08));
       border: 1px solid var(--glass-border);
-      padding: 8px 16px;
+      padding: 10px 20px;
       border-radius: 100px;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 600;
       color: var(--text);
       text-decoration: none;
       white-space: nowrap;
+      transition: all 0.3s;
     }
-    .course-badge:hover { background: rgba(255, 255, 255, 0.1); }
+    .course-badge:hover { background: var(--primary); color: #000; box-shadow: 0 0 15px var(--primary-glow); border-color: var(--primary); transform: translateY(-2px); }
     
     /* List Links */
     .list-link {
       display: flex;
       align-items: center;
-      padding: 16px;
-      background: rgba(255, 255, 255, 0.02);
+      padding: 18px;
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.03), transparent);
       border: 1px solid var(--glass-border);
-      border-radius: 16px;
+      border-radius: 20px;
       text-decoration: none;
       color: var(--text);
-      margin-bottom: 12px;
-      transition: all 0.2s;
+      margin-bottom: 14px;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
     }
-    .list-link:hover { background: rgba(255, 255, 255, 0.05); transform: translateY(-2px); border-color: rgba(255, 255, 255, 0.15); }
-    .list-icon { margin-right: 16px; font-size: 20px; width: 24px; text-align: center; }
-    .list-text { flex-grow: 1; font-weight: 600; font-size: 15px; }
-    .list-sub { display: block; font-size: 11px; color: var(--text-muted); margin-top: 4px; font-weight: 400; }
+    .list-link::after {
+      content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+      background: linear-gradient(to right, transparent, rgba(255,255,255,0.05), transparent);
+      transform: skewX(-20deg); transition: 0.5s;
+    }
+    .list-link:hover::after { left: 150%; }
+    .list-link:hover { transform: translateY(-3px) scale(1.02); border-color: rgba(255, 255, 255, 0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
     
-    .list-link.highlight { border-color: var(--primary); background: rgba(249, 115, 22, 0.05); }
+    .list-icon { margin-right: 18px; font-size: 22px; width: 30px; text-align: center; }
+    .list-text { flex-grow: 1; font-weight: 700; font-size: 16px; letter-spacing: 0.3px; }
+    .list-sub { display: block; font-size: 12px; color: var(--text-muted); margin-top: 4px; font-weight: 400; }
+    
+    .list-link.highlight { border-color: var(--primary); background: linear-gradient(145deg, rgba(249, 115, 22, 0.1), transparent); }
+    .list-link.highlight .list-text { color: var(--primary); }
+
+    .instagram-gradient {
+      background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
     
     /* Review System */
-    .review-stars {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      margin: 16px 0;
-    }
-    .star {
-      font-size: 32px;
-      color: rgba(255,255,255,0.2);
-      cursor: pointer;
-      transition: color 0.2s;
-    }
-    .star.active { color: #fbbf24; }
+    .review-stars { display: flex; justify-content: center; gap: 14px; margin: 20px 0 10px; }
+    .star { font-size: 38px; color: rgba(255,255,255,0.1); cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); text-shadow: 0 0 10px rgba(0,0,0,0.5); }
+    .star:hover { transform: scale(1.2); }
+    .star.active { color: #fbbf24; text-shadow: 0 0 20px rgba(251, 191, 36, 0.5); transform: scale(1.1); }
     
     /* Drawers / Modals */
     .drawer {
@@ -200,114 +243,138 @@
       bottom: -100%;
       left: 0;
       width: 100%;
-      background: #0d1117;
+      background: rgba(13, 17, 23, 0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border-top: 1px solid var(--glass-border);
-      border-radius: 24px 24px 0 0;
-      padding: 24px;
-      transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 32px 32px 0 0;
+      padding: 32px 24px;
+      transition: bottom 0.5s cubic-bezier(0.16, 1, 0.3, 1);
       z-index: 1000;
-      box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+      box-shadow: 0 -10px 50px rgba(0,0,0,0.8);
     }
     .drawer.open { bottom: 0; }
     .drawer-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.6);
-      backdrop-filter: blur(4px);
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(6px);
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.3s;
+      transition: opacity 0.4s;
       z-index: 999;
     }
     .drawer-overlay.open { opacity: 1; pointer-events: auto; }
     
     .close-drawer {
       position: absolute;
-      top: 20px;
-      right: 20px;
+      top: 24px;
+      right: 24px;
       background: rgba(255,255,255,0.1);
       border: none;
       color: white;
-      width: 30px;
-      height: 30px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       font-size: 16px;
       cursor: pointer;
+      transition: background 0.2s;
     }
+    .close-drawer:hover { background: rgba(255,255,255,0.2); }
     
     .input-field {
       width: 100%;
       background: rgba(255,255,255,0.05);
       border: 1px solid var(--glass-border);
-      padding: 14px;
-      border-radius: 12px;
+      padding: 16px;
+      border-radius: 16px;
       color: white;
       margin-bottom: 16px;
-      font-size: 14px;
+      font-size: 15px;
       outline: none;
+      transition: border-color 0.3s, box-shadow 0.3s;
     }
-    .input-field:focus { border-color: var(--primary); }
-    textarea.input-field { min-height: 100px; resize: none; }
+    .input-field:focus { border-color: var(--primary); box-shadow: 0 0 15px rgba(249, 115, 22, 0.2); }
+    textarea.input-field { min-height: 120px; resize: none; }
     
     .btn-submit {
       width: 100%;
-      background: var(--primary);
-      color: #000;
+      background: linear-gradient(135deg, var(--primary), #ea580c);
+      color: #fff;
       border: none;
-      padding: 16px;
-      border-radius: 12px;
-      font-weight: 700;
-      font-size: 15px;
+      padding: 18px;
+      border-radius: 16px;
+      font-weight: 800;
+      font-size: 16px;
       cursor: pointer;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
+    .btn-submit:active { transform: scale(0.97); }
+    .btn-submit:hover { box-shadow: 0 10px 25px var(--primary-glow); }
     
+    /* Payment Drawer Specifics */
+    .upi-box {
+      background: rgba(0,0,0,0.3);
+      border: 1px dashed var(--glass-border);
+      padding: 20px;
+      border-radius: 16px;
+      text-align: center;
+      margin: 20px 0;
+    }
+    .upi-id { font-family: monospace; font-size: 22px; font-weight: 700; color: #10b981; letter-spacing: 1px; margin-bottom: 12px; }
+    .copy-btn { background: rgba(255,255,255,0.1); border: none; color: #fff; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .copy-btn:hover { background: rgba(255,255,255,0.2); }
+
     /* AI FAB */
     .ai-fab {
       position: fixed;
-      bottom: 24px;
-      right: 24px;
-      width: 60px;
-      height: 60px;
-      border-radius: 30px;
+      bottom: 30px;
+      right: 30px;
+      width: 65px;
+      height: 65px;
+      border-radius: 50%;
       background: var(--bg);
-      border: 1px solid var(--primary);
-      box-shadow: 0 0 20px var(--primary-glow);
+      border: 2px solid var(--primary);
+      box-shadow: 0 0 30px var(--primary-glow);
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       z-index: 900;
       color: var(--primary);
-      font-size: 24px;
-      transition: transform 0.2s;
+      font-size: 28px;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      animation: floatLogo 4s ease-in-out infinite reverse;
     }
-    .ai-fab:active { transform: scale(0.95); }
+    .ai-fab:active { transform: scale(0.9); }
+    .ai-fab:hover { transform: scale(1.1); box-shadow: 0 0 40px var(--primary-glow); }
     
     #aiChatLog {
-      max-height: 300px;
+      max-height: 350px;
       overflow-y: auto;
       margin-bottom: 16px;
       display: flex;
       flex-direction: column;
       gap: 12px;
+      padding-right: 5px;
     }
-    .chat-msg { padding: 12px; border-radius: 12px; font-size: 14px; line-height: 1.4; }
-    .chat-msg.ai { background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.2); align-self: flex-start; border-bottom-left-radius: 4px; }
-    .chat-msg.user { background: rgba(255, 255, 255, 0.1); align-self: flex-end; border-bottom-right-radius: 4px; }
+    .chat-msg { padding: 14px 18px; border-radius: 18px; font-size: 14px; line-height: 1.5; font-weight: 500; }
+    .chat-msg.ai { background: linear-gradient(145deg, rgba(249, 115, 22, 0.15), rgba(249, 115, 22, 0.05)); border: 1px solid rgba(249, 115, 22, 0.3); align-self: flex-start; border-bottom-left-radius: 6px; color: #fff; }
+    .chat-msg.user { background: rgba(255, 255, 255, 0.1); align-self: flex-end; border-bottom-right-radius: 6px; border: 1px solid rgba(255,255,255,0.05); }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <div class="header">
+    <div class="header animate-up">
       <div class="status-badge">
         <div class="status-dot"></div>
         Systems Online & Verified
       </div>
-      <div class="logo-glow">P</div>
+      <!-- Official Logo injected here -->
+      <img src="/peerless-logo.jpg" alt="Peerless Academy" class="official-logo">
       <h1>Peerless Academy</h1>
       <div class="location">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
@@ -316,7 +383,7 @@
     </div>
 
     <!-- Quick Actions -->
-    <div class="glass-card">
+    <div class="glass-card animate-up delay-1">
       <div class="quick-actions">
         <a href="tel:+918794130855" class="action-btn">
           <div class="action-icon">&#128222;</div>
@@ -338,8 +405,8 @@
     </div>
 
     <!-- Course Selector -->
-    <div class="glass-card">
-      <h3 style="font-size: 13px; margin-bottom: 12px; color: var(--text-muted);">Explore Curriculum</h3>
+    <div class="glass-card animate-up delay-2">
+      <h3 style="font-size: 14px; margin-bottom: 14px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Explore Curriculum</h3>
       <div class="course-selector">
         <a href="/" class="course-badge">NEET-UG</a>
         <a href="/" class="course-badge">JEE Main/Adv</a>
@@ -349,7 +416,7 @@
     </div>
 
     <!-- Main Links -->
-    <div class="links-section">
+    <div class="links-section animate-up delay-3">
       <a href="https://peerlessacademy.in" class="list-link highlight">
         <div class="list-icon">&#127760;</div>
         <div>
@@ -357,6 +424,16 @@
           <span class="list-sub">peerlessacademy.in</span>
         </div>
       </a>
+
+      <!-- Added Instagram Link -->
+      <a href="https://instagram.com/peerlessacademy" target="_blank" class="list-link">
+        <div class="list-icon instagram-gradient">IG</div>
+        <div>
+          <div class="list-text instagram-gradient">Follow on Instagram</div>
+          <span class="list-sub">Daily updates, results & student life</span>
+        </div>
+      </a>
+
       <a href="/cbt" class="list-link">
         <div class="list-icon">&#128187;</div>
         <div>
@@ -364,33 +441,37 @@
           <span class="list-sub">Access Simulator & Dashboard</span>
         </div>
       </a>
+      
+      <!-- Enhanced Payment Trigger opens the robust Payment Drawer -->
+      <button onclick="toggleDrawer('paymentDrawer')" class="list-link" style="width: 100%; text-align: left; cursor: pointer; border-radius: 20px;">
+        <div class="list-icon" style="color: #10b981;">&#8377;</div>
+        <div>
+          <div class="list-text" style="color: #10b981;">Fast UPI Payment</div>
+          <span class="list-sub">Secure fee transfer portal</span>
+        </div>
+      </button>
+
       <a href="https://wa.me/918794130855?text=Hello%20Peerless%20Academy,%20I%20would%20like%20to%20know%20more%20about%20admissions." class="list-link">
-        <div class="list-icon">&#128172;</div>
+        <div class="list-icon" style="color: #25D366;">&#128172;</div>
         <div>
           <div class="list-text">WhatsApp Chat</div>
           <span class="list-sub">Direct chat with management</span>
         </div>
       </a>
-      <a href="upi://pay?pa=peerlessacademy@upi&pn=Peerless%20Academy&cu=INR" class="list-link">
-        <div class="list-icon">&#8377;</div>
-        <div>
-          <div class="list-text">Fast UPI Payment</div>
-          <span class="list-sub">Secure fee transfer</span>
-        </div>
-      </a>
-      <button onclick="downloadVCard()" class="list-link" style="width: 100%; text-align: left; cursor: pointer; border-radius: 16px;">
+      
+      <button onclick="downloadVCard()" class="list-link" style="width: 100%; text-align: left; cursor: pointer; border-radius: 20px;">
         <div class="list-icon">&#128100;</div>
         <div>
           <div class="list-text">Save Contact Card</div>
-          <span class="list-sub">Download official .vcf</span>
+          <span class="list-sub">Download official .vcf to phone</span>
         </div>
       </button>
     </div>
 
     <!-- Smart Review -->
-    <div class="glass-card" style="text-align: center; margin-top: 24px;">
-      <h3 style="font-size: 14px;">Rate Your Experience</h3>
-      <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Tap to route your feedback</p>
+    <div class="glass-card animate-up delay-4" style="text-align: center; margin-top: 32px;">
+      <h3 style="font-size: 16px; font-weight: 700;">Rate Your Experience</h3>
+      <p style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">Tap a star to route your feedback</p>
       <div class="review-stars" id="starsContainer">
         <div class="star" data-val="1">&#9733;</div>
         <div class="star" data-val="2">&#9733;</div>
@@ -402,15 +483,31 @@
   </div>
 
   <!-- AI Mentor FAB -->
-  <div class="ai-fab" onclick="toggleDrawer('aiDrawer')">&#129302;</div>
+  <div class="ai-fab animate-up delay-4" onclick="toggleDrawer('aiDrawer')">&#129302;</div>
 
   <!-- Overlay -->
   <div class="drawer-overlay" id="drawerOverlay" onclick="closeAllDrawers()"></div>
 
+  <!-- Payment Drawer (NEW ADVANCED FEATURE) -->
+  <div class="drawer" id="paymentDrawer">
+    <button class="close-drawer" onclick="toggleDrawer('paymentDrawer')">&#10005;</button>
+    <h2 style="margin-bottom: 8px; font-size: 22px;">Secure Fee Payment</h2>
+    <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">Tap the button below to auto-open GPay, PhonePe, or Paytm. If that fails, simply copy the UPI ID below.</p>
+    
+    <div class="upi-box">
+      <div class="upi-id" id="upiIdText">peerlessacademy@upi</div>
+      <button class="copy-btn" onclick="copyUPI()">&#128203; Copy UPI ID</button>
+    </div>
+
+    <a href="upi://pay?pa=peerlessacademy@upi&pn=Peerless%20Academy&cu=INR" class="btn-submit" style="text-decoration: none; text-align: center; display: block;">
+      Open UPI App Now
+    </a>
+  </div>
+
   <!-- Inquiry Drawer -->
   <div class="drawer" id="inquiryDrawer">
     <button class="close-drawer" onclick="toggleDrawer('inquiryDrawer')">&#10005;</button>
-    <h2 style="margin-bottom: 24px; font-size: 20px;">Submit Inquiry</h2>
+    <h2 style="margin-bottom: 24px; font-size: 22px;">Submit Inquiry</h2>
     <form id="leadForm" onsubmit="handleInquiry(event)">
       <input type="text" id="leadName" class="input-field" placeholder="Full Name" required>
       <input type="tel" id="leadPhone" class="input-field" placeholder="Phone Number" required>
@@ -422,13 +519,15 @@
   <!-- AI Drawer -->
   <div class="drawer" id="aiDrawer">
     <button class="close-drawer" onclick="toggleDrawer('aiDrawer')">&#10005;</button>
-    <h2 style="margin-bottom: 24px; font-size: 20px; color: var(--primary);">&#129302; AI Mentor</h2>
+    <h2 style="margin-bottom: 24px; font-size: 22px; color: var(--primary); display: flex; align-items: center; gap: 8px;">
+      &#129302; AI Mentor
+    </h2>
     <div id="aiChatLog">
       <div class="chat-msg ai">Hello! I'm the Peerless Academy AI. Ask me about courses, fees, or academics!</div>
     </div>
-    <div style="display: flex; gap: 8px;">
+    <div style="display: flex; gap: 10px; margin-top: 10px;">
       <input type="text" id="aiInput" class="input-field" style="margin: 0;" placeholder="Type your question..." onkeypress="if(event.key==='Enter') sendAiMsg()">
-      <button onclick="sendAiMsg()" class="btn-submit" style="width: auto; padding: 0 20px;">&#10148;</button>
+      <button onclick="sendAiMsg()" class="btn-submit" style="width: auto; padding: 0 24px; font-size: 20px;">&#10148;</button>
     </div>
   </div>
 
@@ -458,6 +557,18 @@
     }
     
     function openInquiry() { toggleDrawer('inquiryDrawer'); }
+
+    function copyUPI() {
+      navigator.clipboard.writeText('peerlessacademy@upi').then(() => {
+        const btn = document.querySelector('.copy-btn');
+        btn.innerHTML = '&#10004; Copied!';
+        btn.style.background = '#10b981';
+        setTimeout(() => {
+          btn.innerHTML = '&#128203; Copy UPI ID';
+          btn.style.background = 'rgba(255,255,255,0.1)';
+        }, 2000);
+      });
+    }
     
     // Smart Review Routing
     const stars = document.querySelectorAll('.star');
@@ -478,7 +589,7 @@
             window.open(\`https://wa.me/918794130855?text=\${msg}\`, '_blank');
           }
           stars.forEach(s => s.classList.remove('active'));
-        }, 400);
+        }, 450);
       });
     });
     
@@ -488,12 +599,12 @@
         try {
           await navigator.share({
             title: 'Peerless Academy',
-            text: 'Check out Peerless Academy NFC Smart Hub',
+            text: 'Check out the official Peerless Academy Digital Hub!',
             url: window.location.href,
           });
         } catch (err) { console.log('Share failed', err); }
       } else {
-        alert('Share API not supported on this device. Copy link instead.');
+        alert('Share API not supported on this device. Copy link from your browser instead.');
       }
     }
     
@@ -522,26 +633,19 @@
       const phone = document.getElementById('leadPhone').value;
       const query = document.getElementById('leadQuery').value;
       
-      // Email construct
       const subject = encodeURIComponent(\`NFC Inquiry: \${name}\`);
       const body = encodeURIComponent(\`Name: \${name}\\nPhone: \${phone}\\n\\nQuery:\\n\${query}\`);
       const mailto = \`mailto:xprasenjit1992@gmail.com?cc=support.peerlessacademy.in@gmail.com&subject=\${subject}&body=\${body}\`;
       
       try {
-        await supabase.from('leads').insert([{ 
-          name, 
-          phone, 
-          query, 
-          source: 'NFC_Hub' 
-        }]);
-        console.log("Lead saved to DB: ", name, phone);
+        await supabase.from('leads').insert([{ name, phone, query, source: 'NFC_Hub' }]);
       } catch (e) {
         console.error('Supabase Error:', e);
       }
 
       setTimeout(() => {
         window.location.href = mailto;
-        btn.innerText = 'Sent!';
+        btn.innerText = 'Sent Successfully!';
         setTimeout(() => {
           closeAllDrawers();
           btn.innerText = 'Send Request';
@@ -550,7 +654,7 @@
       }, 500);
     }
     
-    // Simple AI Chat Logic
+    // AI Chat Logic
     async function sendAiMsg() {
       const input = document.getElementById('aiInput');
       const text = input.value.trim();
@@ -572,9 +676,9 @@
       log.scrollTop = log.scrollHeight;
       
       setTimeout(() => {
-        typing.innerText = 'For deep academic questions, please visit the CBT Student Portal! I am currently operating in lightweight NFC mode. Is there anything else you need help finding?';
+        typing.innerText = 'For deep academic questions or personalized mentoring, please visit the CBT Student Portal on our main website! I am currently operating in lightweight NFC mode. Is there anything else you need help finding?';
         log.scrollTop = log.scrollHeight;
-      }, 1200);
+      }, 1500);
     }
   </script>
 </body>
