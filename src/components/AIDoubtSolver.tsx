@@ -64,7 +64,7 @@ export default function AIDoubtSolver({ isOpen, onClose, q }: AIDoubtSolverProps
     setLoading(true);
 
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.GEMINI_API_KEY || 'AQ.Ab8RN6IMIMPGsZDc_dKFiz8-pQP_DX-yzAwu2x1XdobUYwf-ng'; 
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.GEMINI_API_KEY || 'AQ.Ab8RN6KN_ayImsvGXWeSM4tsdi74yhwL_tcrmP3IBb4vg6Ue3w'; 
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ 
         model: modelTier,

@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Peerless Academy | Smart Hub</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap');
+    
+    :root {
+      --bg: #07090e;
+      --primary: #f97316;
+      --primary-glow: rgba(249, 115, 22, 0.4);
+      --glass: rgba(255, 255, 255, 0.03);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Space Grotesk', sans-serif; -webkit-tap-highlight-color: transparent; }
+    
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      background-image: 
+        radial-gradient(circle at 15% 50%, rgba(249, 115, 22, 0.08), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(249, 115, 22, 0.08), transparent 25%);
+    }
+    
+    .container {
+      width: 100%;
+      max-width: 480px;
+      padding: 24px 20px 100px 20px;
+      position: relative;
+    }
+    
+    /* Status Badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      color: #10b981;
+      padding: 6px 12px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 24px;
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.1);
+    }
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      background: #10b981;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    
+    /* Header */
+    .header { text-align: center; margin-bottom: 32px; }
+    .logo-glow {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #111, #222);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      margin: 0 auto 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--primary);
+      box-shadow: 0 0 30px var(--primary-glow);
+    }
+    h1 { font-size: 28px; margin-bottom: 4px; }
+    .location { color: var(--text-muted); font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 4px; }
+    
+    /* Glass Card */
+    .glass-card {
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    
+    /* Quick Actions */
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .action-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: var(--text);
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
+    .action-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      transition: all 0.3s ease;
+    }
+    .action-btn:hover .action-icon {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #000;
+      box-shadow: 0 0 20px var(--primary-glow);
+    }
+    .action-label { font-size: 11px; font-weight: 600; color: var(--text-muted); }
+    
+    /* Course Selector */
+    .course-selector {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      scrollbar-width: none;
+    }
+    .course-selector::-webkit-scrollbar { display: none; }
+    .course-badge {
+      flex: 0 0 auto;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--glass-border);
+      padding: 8px 16px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .course-badge:hover { background: rgba(255, 255, 255, 0.1); }
+    
+    /* List Links */
+    .list-link {
+      display: flex;
+      align-items: center;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      text-decoration: none;
+      color: var(--text);
+      margin-bottom: 12px;
+      transition: all 0.2s;
+    }
+    .list-link:hover { background: rgba(255, 255, 255, 0.05); transform: translateY(-2px); border-color: rgba(255, 255, 255, 0.15); }
+    .list-icon { margin-right: 16px; font-size: 20px; width: 24px; text-align: center; }
+    .list-text { flex-grow: 1; font-weight: 600; font-size: 15px; }
+    .list-sub { display: block; font-size: 11px; color: var(--text-muted); margin-top: 4px; font-weight: 400; }
+    
+    .list-link.highlight { border-color: var(--primary); background: rgba(249, 115, 22, 0.05); }
+    
+    /* Review System */
+    .review-stars {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin: 16px 0;
+    }
+    .star {
+      font-size: 32px;
+      color: rgba(255,255,255,0.2);
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .star.active { color: #fbbf24; }
+    
+    /* Drawers / Modals */
+    .drawer {
+      position: fixed;
+      bottom: -100%;
+      left: 0;
+      width: 100%;
+      background: #0d1117;
+      border-top: 1px solid var(--glass-border);
+      border-radius: 24px 24px 0 0;
+      padding: 24px;
+      transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 1000;
+      box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+    }
+    .drawer.open { bottom: 0; }
+    .drawer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      z-index: 999;
+    }
+    .drawer-overlay.open { opacity: 1; pointer-events: auto; }
+    
+    .close-drawer {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: white;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    
+    .input-field {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--glass-border);
+      padding: 14px;
+      border-radius: 12px;
+      color: white;
+      margin-bottom: 16px;
+      font-size: 14px;
+      outline: none;
+    }
+    .input-field:focus { border-color: var(--primary); }
+    textarea.input-field { min-height: 100px; resize: none; }
+    
+    .btn-submit {
+      width: 100%;
+      background: var(--primary);
+      color: #000;
+      border: none;
+      padding: 16px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    /* AI FAB */
+    .ai-fab {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 60px;
+      height: 60px;
+      border-radius: 30px;
+      background: var(--bg);
+      border: 1px solid var(--primary);
+      box-shadow: 0 0 20px var(--primary-glow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 900;
+      color: var(--primary);
+      font-size: 24px;
+      transition: transform 0.2s;
+    }
+    .ai-fab:active { transform: scale(0.95); }
+    
+    #aiChatLog {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .chat-msg { padding: 12px; border-radius: 12px; font-size: 14px; line-height: 1.4; }
+    .chat-msg.ai { background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.2); align-self: flex-start; border-bottom-left-radius: 4px; }
+    .chat-msg.user { background: rgba(255, 255, 255, 0.1); align-self: flex-end; border-bottom-right-radius: 4px; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <div class="status-badge">
+        <div class="status-dot"></div>
+        Systems Online & Verified
+      </div>
+      <div class="logo-glow">P</div>
+      <h1>Peerless Academy</h1>
+      <div class="location">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+        Indranagar, Agartala
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="glass-card">
+      <div class="quick-actions">
+        <a href="tel:+918794130855" class="action-btn">
+          <div class="action-icon">&#128222;</div>
+          <span class="action-label">Call</span>
+        </a>
+        <button onclick="openInquiry()" class="action-btn">
+          <div class="action-icon">&#9993;</div>
+          <span class="action-label">Email</span>
+        </button>
+        <a href="https://maps.google.com/?q=Peerless+Academy,Indranagar,Agartala" target="_blank" class="action-btn">
+          <div class="action-icon">&#128205;</div>
+          <span class="action-label">Map</span>
+        </a>
+        <button onclick="shareHub()" class="action-btn">
+          <div class="action-icon">&#10150;</div>
+          <span class="action-label">Share</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Course Selector -->
+    <div class="glass-card">
+      <h3 style="font-size: 13px; margin-bottom: 12px; color: var(--text-muted);">Explore Curriculum</h3>
+      <div class="course-selector">
+        <a href="/" class="course-badge">NEET-UG</a>
+        <a href="/" class="course-badge">JEE Main/Adv</a>
+        <a href="/" class="course-badge">CBSE Class 11-12</a>
+        <a href="/" class="course-badge">Foundation 6-10</a>
+      </div>
+    </div>
+
+    <!-- Main Links -->
+    <div class="links-section">
+      <a href="https://peerlessacademy.in" class="list-link highlight">
+        <div class="list-icon">&#127760;</div>
+        <div>
+          <div class="list-text">Official Website</div>
+          <span class="list-sub">peerlessacademy.in</span>
+        </div>
+      </a>
+      <a href="/cbt" class="list-link">
+        <div class="list-icon">&#128187;</div>
+        <div>
+          <div class="list-text">CBT Student Portal</div>
+          <span class="list-sub">Access Simulator & Dashboard</span>
+        </div>
+      </a>
+      <a href="https://wa.me/918794130855?text=Hello%20Peerless%20Academy,%20I%20would%20like%20to%20know%20more%20about%20admissions." class="list-link">
+        <div class="list-icon">&#128172;</div>
+        <div>
+          <div class="list-text">WhatsApp Chat</div>
+          <span class="list-sub">Direct chat with management</span>
+        </div>
+      </a>
+      <a href="upi://pay?pa=peerlessacademy@upi&pn=Peerless%20Academy&cu=INR" class="list-link">
+        <div class="list-icon">&#8377;</div>
+        <div>
+          <div class="list-text">Fast UPI Payment</div>
+          <span class="list-sub">Secure fee transfer</span>
+        </div>
+      </a>
+      <button onclick="downloadVCard()" class="list-link" style="width: 100%; text-align: left; cursor: pointer; border-radius: 16px;">
+        <div class="list-icon">&#128100;</div>
+        <div>
+          <div class="list-text">Save Contact Card</div>
+          <span class="list-sub">Download official .vcf</span>
+        </div>
+      </button>
+    </div>
+
+    <!-- Smart Review -->
+    <div class="glass-card" style="text-align: center; margin-top: 24px;">
+      <h3 style="font-size: 14px;">Rate Your Experience</h3>
+      <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Tap to route your feedback</p>
+      <div class="review-stars" id="starsContainer">
+        <div class="star" data-val="1">&#9733;</div>
+        <div class="star" data-val="2">&#9733;</div>
+        <div class="star" data-val="3">&#9733;</div>
+        <div class="star" data-val="4">&#9733;</div>
+        <div class="star" data-val="5">&#9733;</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Mentor FAB -->
+  <div class="ai-fab" onclick="toggleDrawer('aiDrawer')">&#129302;</div>
+
+  <!-- Overlay -->
+  <div class="drawer-overlay" id="drawerOverlay" onclick="closeAllDrawers()"></div>
+
+  <!-- Inquiry Drawer -->
+  <div class="drawer" id="inquiryDrawer">
+    <button class="close-drawer" onclick="toggleDrawer('inquiryDrawer')">&#10005;</button>
+    <h2 style="margin-bottom: 24px; font-size: 20px;">Submit Inquiry</h2>
+    <form id="leadForm" onsubmit="handleInquiry(event)">
+      <input type="text" id="leadName" class="input-field" placeholder="Full Name" required>
+      <input type="tel" id="leadPhone" class="input-field" placeholder="Phone Number" required>
+      <textarea id="leadQuery" class="input-field" placeholder="How can we help you?" required></textarea>
+      <button type="submit" class="btn-submit" id="submitBtn">Send Request</button>
+    </form>
+  </div>
+
+  <!-- AI Drawer -->
+  <div class="drawer" id="aiDrawer">
+    <button class="close-drawer" onclick="toggleDrawer('aiDrawer')">&#10005;</button>
+    <h2 style="margin-bottom: 24px; font-size: 20px; color: var(--primary);">&#129302; AI Mentor</h2>
+    <div id="aiChatLog">
+      <div class="chat-msg ai">Hello! I'm the Peerless Academy AI. Ask me about courses, fees, or academics!</div>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <input type="text" id="aiInput" class="input-field" style="margin: 0;" placeholder="Type your question..." onkeypress="if(event.key==='Enter') sendAiMsg()">
+      <button onclick="sendAiMsg()" class="btn-submit" style="width: auto; padding: 0 20px;">&#10148;</button>
+    </div>
+  </div>
+
+  <script>
+    // Supabase Initialization
+    const SUPABASE_URL = 'https://xfvkesgkfehffavfulde.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhmdmtlc2drZmVoZmZhdmZ1bGRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzQ1NzIsImV4cCI6MjEwMjcxMDU3Mn0.uzZQ6zrBRuluKqTSFLUrBVq02cQh09p3duhV_okg0GQ';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+    // UI Interactions
+    function toggleDrawer(id) {
+      const drawer = document.getElementById(id);
+      const overlay = document.getElementById('drawerOverlay');
+      const isOpen = drawer.classList.contains('open');
+      
+      closeAllDrawers();
+      
+      if (!isOpen) {
+        drawer.classList.add('open');
+        overlay.classList.add('open');
+      }
+    }
+    
+    function closeAllDrawers() {
+      document.querySelectorAll('.drawer').forEach(d => d.classList.remove('open'));
+      document.getElementById('drawerOverlay').classList.remove('open');
+    }
+    
+    function openInquiry() { toggleDrawer('inquiryDrawer'); }
+    
+    // Smart Review Routing
+    const stars = document.querySelectorAll('.star');
+    stars.forEach(star => {
+      star.addEventListener('click', (e) => {
+        const val = parseInt(e.target.getAttribute('data-val'));
+        
+        stars.forEach(s => {
+          if (parseInt(s.getAttribute('data-val')) <= val) s.classList.add('active');
+          else s.classList.remove('active');
+        });
+        
+        setTimeout(() => {
+          if (val >= 4) {
+            window.open('https://maps.google.com/?q=Peerless+Academy,Indranagar,Agartala', '_blank');
+          } else {
+            const msg = encodeURIComponent(\`Hi Management, I recently visited and gave a \${val}-star rating. I wanted to share some feedback...\`);
+            window.open(\`https://wa.me/918794130855?text=\${msg}\`, '_blank');
+          }
+          stars.forEach(s => s.classList.remove('active'));
+        }, 400);
+      });
+    });
+    
+    // Share API
+    async function shareHub() {
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'Peerless Academy',
+            text: 'Check out Peerless Academy NFC Smart Hub',
+            url: window.location.href,
+          });
+        } catch (err) { console.log('Share failed', err); }
+      } else {
+        alert('Share API not supported on this device. Copy link instead.');
+      }
+    }
+    
+    // vCard Generation
+    function downloadVCard() {
+      const vcard = \`BEGIN:VCARD\\nVERSION:3.0\\nFN:Peerless Academy\\nORG:Peerless Academy - JEE/NEET\\nTEL;TYPE=WORK,VOICE:+918794130855\\nEMAIL:xprasenjit1992@gmail.com\\nURL:https://peerlessacademy.in\\nADR;TYPE=WORK:;;Indranagar;Agartala;Tripura;;India\\nEND:VCARD\`;
+      
+      const blob = new Blob([vcard], { type: 'text/vcard' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'PeerlessAcademy.vcf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+    
+    // Inquiry Form (Mailto + Supabase)
+    async function handleInquiry(e) {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      btn.innerText = 'Sending...';
+      
+      const name = document.getElementById('leadName').value;
+      const phone = document.getElementById('leadPhone').value;
+      const query = document.getElementById('leadQuery').value;
+      
+      // Email construct
+      const subject = encodeURIComponent(\`NFC Inquiry: \${name}\`);
+      const body = encodeURIComponent(\`Name: \${name}\\nPhone: \${phone}\\n\\nQuery:\\n\${query}\`);
+      const mailto = \`mailto:xprasenjit1992@gmail.com?cc=support.peerlessacademy.in@gmail.com&subject=\${subject}&body=\${body}\`;
+      
+      try {
+        await supabase.from('leads').insert([{ 
+          name, 
+          phone, 
+          query, 
+          source: 'NFC_Hub' 
+        }]);
+        console.log("Lead saved to DB: ", name, phone);
+      } catch (e) {
+        console.error('Supabase Error:', e);
+      }
+
+      setTimeout(() => {
+        window.location.href = mailto;
+        btn.innerText = 'Sent!';
+        setTimeout(() => {
+          closeAllDrawers();
+          btn.innerText = 'Send Request';
+          document.getElementById('leadForm').reset();
+        }, 1500);
+      }, 500);
+    }
+    
+    // Simple AI Chat Logic
+    async function sendAiMsg() {
+      const input = document.getElementById('aiInput');
+      const text = input.value.trim();
+      if (!text) return;
+      
+      const log = document.getElementById('aiChatLog');
+      
+      const uMsg = document.createElement('div');
+      uMsg.className = 'chat-msg user';
+      uMsg.innerText = text;
+      log.appendChild(uMsg);
+      input.value = '';
+      log.scrollTop = log.scrollHeight;
+      
+      const typing = document.createElement('div');
+      typing.className = 'chat-msg ai';
+      typing.innerText = '...';
+      log.appendChild(typing);
+      log.scrollTop = log.scrollHeight;
+      
+      setTimeout(() => {
+        typing.innerText = 'For deep academic questions, please visit the CBT Student Portal! I am currently operating in lightweight NFC mode. Is there anything else you need help finding?';
+        log.scrollTop = log.scrollHeight;
+      }, 1200);
+    }
+  </script>
+</body>
+</html>
