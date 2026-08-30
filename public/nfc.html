@@ -670,7 +670,7 @@
           <div class="qa-icon">✉️</div>
           <span class="qa-label">Email</span>
         </a>
-        <a href="https://maps.app.goo.gl/Peerless+Academy+Agartala" target="_blank" class="qa-btn">
+        <a href="https://www.google.com/maps/search/?api=1&query=Peerless+Academy+Indranagar+Agartala" target="_blank" class="qa-btn">
           <div class="qa-icon">📍</div>
           <span class="qa-label">Map</span>
         </a>
@@ -788,27 +788,29 @@
   <!-- ══ OVERLAY ══ -->
   <div class="overlay" id="overlay" onclick="closeAll()"></div>
 
+  
   <!-- ══ PAYMENT DRAWER ══ -->
   <div class="drawer" id="paymentDrawer">
     <div class="drawer-handle"></div>
     <button class="close-btn" onclick="closeAll()">✕</button>
     <div class="drawer-title">💳 Secure Fee Payment</div>
-    <div class="drawer-sub">Choose any method below. Your UPI app will launch automatically.</div>
+    <div class="drawer-sub">Tap below to open UPI apps, or scan the QR code if you are on a desktop.</div>
 
-    <div class="upi-box">
-      <div class="upi-id" id="upiIdText">8794130855@ybl</div>
-      <button class="copy-btn" onclick="copyUPI()">📋 Copy UPI ID</button>
-    </div>
-
-    <!-- Primary deep-link: phone number@paytm format is most universally supported -->
-    <a href="upi://pay?pa=8794130855@ybl&pn=PeerlessAcademy&cu=INR" class="btn-primary" style="margin-bottom:14px;">
+    <a href="upi://pay?pa=8794130855@ybl&pn=Peerless%20Academy&cu=INR" class="btn-primary" style="margin-bottom:20px;">
       🚀 Open UPI App (GPay / PhonePe / Paytm)
     </a>
 
-    <div style="text-align:center;font-size:11px;color:var(--text-muted);margin-top:6px;">
-      If the app doesn't open, tap "Copy UPI ID" and pay manually inside your payment app.
+    <div style="text-align:center; margin-bottom: 10px; color: var(--text-muted); font-size: 13px;">Or scan with any UPI app:</div>
+    <div style="background:#fff; padding:16px; border-radius:16px; display:inline-block; margin: 0 auto; width: 220px; height: 220px;">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=upi://pay?pa=8794130855@ybl&pn=Peerless%20Academy&cu=INR" alt="UPI QR Code" style="width:100%; height:100%;">
+    </div>
+    
+    <div class="upi-box" style="margin-top:20px;">
+      <div class="upi-id" id="upiIdText">8794130855@ybl</div>
+      <button class="copy-btn" onclick="copyUPI()">📋 Copy UPI ID</button>
     </div>
   </div>
+
 
   <!-- ══ INQUIRY DRAWER ══ -->
   <div class="drawer" id="inquiryDrawer">
@@ -870,7 +872,8 @@
 
     // ── vCard ──
     function downloadVCard() {
-      const v = `BEGIN:VCARD\nVERSION:3.0\nFN:Prasenjit Chakraborty\nORG:Peerless Academy\nTITLE:Founder & Director\nTEL;TYPE=WORK,VOICE:+918794130855\nEMAIL:xprasenjit1992@gmail.com\nURL:https://peerlessacademy.in\nADR;TYPE=WORK:;;Indranagar;Agartala;Tripura;799005;India\nEND:VCARD`;
+      const v = `BEGIN:VCARD\nVERSION:3.0\nFN:Prasenjit Chakraborty
+N:Chakraborty;Prasenjit;;;\nORG:Peerless Academy\nTITLE:Founder & Director\nTEL;TYPE=WORK,VOICE:+918794130855\nEMAIL:xprasenjit1992@gmail.com\nURL:https://peerlessacademy.in\nADR;TYPE=WORK:;;Indranagar;Agartala;Tripura;799005;India\nEND:VCARD`;
       const blob = new Blob([v], { type:'text/vcard' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -939,28 +942,30 @@
     }
   </script>
 
+  
   <!-- ══ BATCH DRAWER (ANTI-GRAVITY) ══ -->
-  <div class="drawer" id="batchDrawer" style="background: transparent; box-shadow: none; padding: 0;">
-    <div style="position: relative; border-radius: 32px 32px 0 0; padding: 4px; background: conic-gradient(#FF9933, #ffffff, #138808, #ffffff, #FF9933); animation: tricolorSpin 5s linear infinite; box-shadow: 0 -10px 40px rgba(255,153,51,0.3);">
-      <div style="background: rgba(9,12,18,0.97); border-radius: 28px 28px 0 0; padding: 36px 24px 48px; animation: modalFloat 4s ease-in-out infinite;">
+  <div class="drawer" id="batchDrawer" style="background: transparent; box-shadow: none; padding: 0; pointer-events: none;">
+    <div style="pointer-events: auto; position: relative; border-radius: 32px 32px 0 0; padding: 4px; background: conic-gradient(#FF9933, #ffffff, #138808, #ffffff, #FF9933); animation: tricolorSpin 5s linear infinite; box-shadow: 0 -10px 40px rgba(255,153,51,0.3); max-height: 85vh; display: flex; flex-direction: column;">
+      <div style="background: #07090e; border-radius: 28px 28px 0 0; padding: 36px 24px 48px; animation: modalFloat 4s ease-in-out infinite; overflow-y: auto; flex: 1;">
         <div class="drawer-handle"></div>
         <button class="close-btn" onclick="closeAll()">✕</button>
         <div class="drawer-title" style="color: #fff;">📅 Batch Timings</div>
         <div class="drawer-sub">Official Class Schedule</div>
         
         <div style="display:flex; flex-direction:column; gap:12px; margin-top:20px;">
-          <div style="background: rgba(255,255,255,0.05); padding: 12px 16px; border-radius: 12px;"><strong style="color:#FF9933;">[Class 5]</strong><br><span style="font-size:13px; color:#ccc;">Thu 7-8:30 AM, Sun 10-11:30 AM, Mon 6:30-8 AM</span></div>
-          <div style="background: rgba(255,255,255,0.05); padding: 12px 16px; border-radius: 12px;"><strong style="color:#FF9933;">[Class 6]</strong><br><span style="font-size:13px; color:#ccc;">Thu 7 AM, Sun 10 AM, Sat 3:30 PM</span></div>
-          <div style="background: rgba(255,255,255,0.05); padding: 12px 16px; border-radius: 12px;"><strong style="color:#fff;">[Class 7]</strong><br><span style="font-size:13px; color:#ccc;">Mon 7-8:30 AM, Wed 7-8:30 AM, Sat 3:30-5 PM</span></div>
-          <div style="background: rgba(255,255,255,0.05); padding: 12px 16px; border-radius: 12px;"><strong style="color:#fff;">[Class 8]</strong><br><span style="font-size:13px; color:#ccc;">Sun 8:30-10 AM, Tue 6:45-8:30 AM, Thu 5:45-7:15 PM</span></div>
-          <div style="background: rgba(255,255,255,0.05); padding: 12px 16px; border-radius: 12px;"><strong style="color:#138808;">[Class 9]</strong><br><span style="font-size:13px; color:#ccc;">Math: Sun 7-8:30 AM, Thu 7:15-8:45 PM<br>Phy/Chem: Mon 5:30-7:15 PM (Chem), Tue 5:30-7 PM (Phy)<br>Bio: Sun 8:30-10 AM, Sat 6-7:30 PM</span></div>
-          <div style="background: rgba(255,255,255,0.05); padding: 12px 16px; border-radius: 12px;"><strong style="color:#138808;">[Class 10]</strong><br><span style="font-size:13px; color:#ccc;">Math: Wed 5:30-7 PM, Fri 7:30-9 PM, Sat 7-8:30 AM<br>Phy/Chem: Mon 7-8:30 PM (Chem), Sat 8:40-10 AM (Phy)<br>Bio: Sun 7-8:30 AM, Sat 4-5:30 PM</span></div>
+          <div style="background: rgba(255,255,255,0.05); padding: 12px 16px; border-radius: 12px;"><strong style="color:#FF9933;">Class V</strong><br><span style="font-size:13px; color:#ccc;">Thu (7-8:30 AM), Sun (10-11:30 AM), Mon (6:30-8 AM)</span></div>
+          <div style="background: rgba(255,255,255,0.05); padding: 12px 16px; border-radius: 12px;"><strong style="color:#FF9933;">Class VI</strong><br><span style="font-size:13px; color:#ccc;">Thu (7 AM), Sun (10 AM), Sat (3:30 PM)</span></div>
+          <div style="background: rgba(255,255,255,0.05); padding: 12px 16px; border-radius: 12px;"><strong style="color:#fff;">Class VII</strong><br><span style="font-size:13px; color:#ccc;">Mon (7-8:30 AM), Wed (7-8:30 AM), Sat (3:30-5 PM)</span></div>
+          <div style="background: rgba(255,255,255,0.05); padding: 12px 16px; border-radius: 12px;"><strong style="color:#fff;">Class VIII</strong><br><span style="font-size:13px; color:#ccc;">Sun (8:30-10 AM), Tue (6:45-8:30 AM), Thu (5:45-7:15 PM)</span></div>
+          <div style="background: rgba(255,255,255,0.05); padding: 12px 16px; border-radius: 12px;"><strong style="color:#138808;">Class IX</strong><br><span style="font-size:13px; color:#ccc;">Math: Sun 7-8:30 AM, Thu 7:15-8:45 PM<br>Phy/Chem: Mon 5:30-7:15 PM (Chem), Tue 5:30-7 PM (Phy)<br>Bio: Sun 8:30-10 AM, Sat 6-7:30 PM</span></div>
+          <div style="background: rgba(255,255,255,0.05); padding: 12px 16px; border-radius: 12px;"><strong style="color:#138808;">Class X</strong><br><span style="font-size:13px; color:#ccc;">Math: Wed 5:30-7 PM, Fri 7:30-9 PM, Sat 7-8:30 AM<br>Phy/Chem: Mon 7-8:30 PM (Chem), Sat 8:40-10 AM (Phy)<br>Bio: Sun 7-8:30 AM, Sat 4-5:30 PM</span></div>
         </div>
       </div>
     </div>
   </div>
 
-  <style>
+
+<style>
     @keyframes modalFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
   </style>
 
