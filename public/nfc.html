@@ -706,12 +706,12 @@
     <div class="drawer-sub">Choose any method below. Your UPI app will launch automatically.</div>
 
     <div class="upi-box">
-      <div class="upi-id" id="upiIdText">8794130855@paytm</div>
+      <div class="upi-id" id="upiIdText">8794130855@ybl</div>
       <button class="copy-btn" onclick="copyUPI()">📋 Copy UPI ID</button>
     </div>
 
     <!-- Primary deep-link: phone number@paytm format is most universally supported -->
-    <a href="upi://pay?pa=8794130855@paytm&pn=PeerlessAcademy&cu=INR" class="btn-primary" style="margin-bottom:14px;">
+    <a href="upi://pay?pa=8794130855@ybl&pn=PeerlessAcademy&cu=INR" class="btn-primary" style="margin-bottom:14px;">
       🚀 Open UPI App (GPay / PhonePe / Paytm)
     </a>
 
@@ -790,7 +790,7 @@
 
     // ── Copy UPI ──
     function copyUPI() {
-      navigator.clipboard.writeText('8794130855@paytm').then(() => {
+      navigator.clipboard.writeText('8794130855@ybl').then(() => {
         const btn = document.querySelector('.copy-btn');
         const orig = btn.innerHTML;
         btn.innerHTML = '✅ Copied!';
