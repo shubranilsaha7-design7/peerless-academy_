@@ -583,13 +583,13 @@
         
         setTimeout(() => {
           if (val >= 4) {
-            window.open('https://maps.google.com/?q=Peerless+Academy,Indranagar,Agartala', '_blank');
+            window.location.href = 'https://www.google.com/maps/search/?api=1&query=Peerless+Academy+Indranagar+Agartala';
           } else {
-            const msg = encodeURIComponent(\`Hi Management, I recently visited and gave a \${val}-star rating. I wanted to share some feedback...\`);
-            window.open(\`https://wa.me/918794130855?text=\${msg}\`, '_blank');
+            const msg = encodeURIComponent(`Hi Management, I recently visited and gave a ${val}-star rating. I wanted to share some feedback...`);
+            window.location.href = `https://wa.me/918794130855?text=${msg}`;
           }
           stars.forEach(s => s.classList.remove('active'));
-        }, 450);
+        }, 300);
       });
     });
     
