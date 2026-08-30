@@ -20,10 +20,13 @@ export default function CustomTestBuilder({ onBack, onStart }: { onBack: () => v
   const handleGenerate = async () => {
     setLoading(true);
     try {
+      // Fetch a random chunk based on questionCount
+      const maxOffset = 2000;
+      const randomOffset = Math.floor(Math.random() * maxOffset);
       const { data, error } = await (supabase as any).from('cbt_questions')
         .select('*')
         .in('subject', subjects)
-        .limit(questionCount);
+        .range(randomOffset, randomOffset + questionCount - 1);
         
       if (data && data.length > 0) {
         // Map to format

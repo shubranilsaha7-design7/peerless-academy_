@@ -12,11 +12,15 @@ export function useTestHydration(examType: string, isAdaptive: boolean = false) 
       setLoading(true);
       try {
         // Try fetching from Supabase first
+        // Generate a random offset to fetch different chunks from the massive question bank
+        const maxOffset = 5000; 
+        const randomOffset = Math.floor(Math.random() * maxOffset);
+        
         const { data, error } = await (supabase as any)
           .from('cbt_questions')
           .select('*')
           .eq('exam_target', examType)
-          .limit(30);
+          .range(randomOffset, randomOffset + 89);
 
         if (error) throw error;
 
