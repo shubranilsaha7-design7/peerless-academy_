@@ -4,7 +4,6 @@ import { Brain, X, Send, Zap, Loader2 } from 'lucide-react';
 import Latex from 'react-latex-next';
 import 'katex/dist/katex.min.css';
 import { supabase } from '../integrations/supabase/client';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export interface AIDoubtSolverProps {
   isOpen: boolean;
@@ -60,28 +59,39 @@ export default function AIDoubtSolver({ isOpen, onClose, q }: AIDoubtSolverProps
     if (!input.trim()) return;
     const userMsg = input.trim();
     setInput('');
-    setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'user', text: userMsg }]);
+    const newMessages = [...messages, { id: Date.now().toString(), sender: 'user' as const, text: userMsg }];
+    setMessages(newMessages);
     setLoading(true);
 
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.GEMINI_API_KEY || 'AQ.Ab8RN6KN_ayImsvGXWeSM4tsdi74yhwL_tcrmP3IBb4vg6Ue3w'; 
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ 
-        model: modelTier,
-        systemInstruction: systemPrompt 
+      const contextText = q ? `Context: Question: ${q.question_latex}` : '';
+      const prompt = contextText ? `${contextText}\nUser: ${userMsg}` : userMsg;
+
+      const apiMessages = newMessages.map(m => ({
+        role: m.sender === 'ai' ? 'model' : 'user',
+        content: m.id === newMessages[newMessages.length - 1].id ? prompt : m.text
+      }));
+
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: apiMessages,
+          systemPrompt,
+          modelTier
+        })
       });
 
-      // Pass context if called from a question
-      const contextText = q ? `Context: Question: ${q.question_latex}` : '';
-      const prompt = `${contextText}\nUser: ${userMsg}`;
-
-      const result = await model.generateContent(prompt);
-      const aiResponse = result.response.text();
+      const data = await response.json();
       
-      setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'ai', text: aiResponse }]);
-    } catch (err) {
-      console.error(err);
-      setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'ai', text: "Network error connecting to the AI core." }]);
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch AI response');
+      }
+
+      setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'ai', text: data.reply }]);
+    } catch (err: any) {
+      console.error("AI API Error:", err);
+      setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'ai', text: `Error: ${err.message || 'Network error connecting to the AI core.'}` }]);
     } finally {
       setLoading(false);
     }
