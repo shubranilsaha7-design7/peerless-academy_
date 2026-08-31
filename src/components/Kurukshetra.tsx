@@ -2,6 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Swords, Trophy, Users, Shield, Zap, X, Crosshair, BrainCircuit, Flame } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useCbtStore } from '@/store/cbtStore';
+import { useTestHydration } from '@/hooks/useTestHydration';
+import Latex from 'react-latex-next';
+import 'katex/dist/katex.min.css';
 
 export default function Kurukshetra({ onBack }: { onBack: () => void }) {
   const [status, setStatus] = useState<'idle' | 'seeking' | 'matched' | 'active'>('idle');
@@ -9,6 +13,10 @@ export default function Kurukshetra({ onBack }: { onBack: () => void }) {
   const [countdown, setCountdown] = useState(10);
   const [streak, setStreak] = useState(0);
   const [shieldActive, setShieldActive] = useState(false);
+
+  const storeQs = useCbtStore(s => s.questions);
+  const { loading } = useTestHydration('JEE_MAIN', false, storeQs.length > 0);
+  const currentQ = storeQs.length > 0 ? storeQs[0] : null;
 
   useEffect(() => {
     let timer: ReturnType<typeof setInterval>;
@@ -141,21 +149,36 @@ export default function Kurukshetra({ onBack }: { onBack: () => void }) {
                 </button>
               </div>
 
-              <div className="flex-1 bg-slate-900/50 rounded-3xl border border-slate-800 p-8 flex flex-col">
-                <div className="flex justify-between items-center mb-6">
-                  <span className="bg-amber-500/20 text-amber-500 text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full">Q1 • Physics</span>
-                  <span className="font-mono text-xl text-slate-300">00:45</span>
+                <div className="flex-1 bg-slate-900/50 rounded-3xl border border-slate-800 p-8 flex flex-col">
+                  <div className="flex justify-between items-center mb-6">
+                    <span className="bg-amber-500/20 text-amber-500 text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full">Q1 • {currentQ?.subject || 'Combat'}</span>
+                    <span className="font-mono text-xl text-slate-300">00:45</span>
+                  </div>
+                  <div className="text-lg mb-10 leading-relaxed overflow-y-auto max-h-[150px]">
+                    <Latex>{currentQ?.question_latex || 'Synchronizing with Kurukshetra Engine...'}</Latex>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-auto">
+                    {(currentQ?.options || []).map((opt, i) => (
+                      <button 
+                        key={i} 
+                        onClick={() => {
+                          if (i === currentQ?.correct_index) {
+                            setStreak(s => s + 1);
+                            alert('You answered correctly! Duel won.');
+                            onBack();
+                          } else {
+                            setStreak(0);
+                            alert('Incorrect! The opponent scored a hit.');
+                          }
+                        }}
+                        className={`p-4 rounded-xl border border-slate-700 bg-slate-800/50 hover:bg-slate-700 hover:border-slate-500 transition text-left font-semibold ${shieldActive && currentQ && i !== currentQ.correct_index && i !== ((currentQ.correct_index + 1) % 4) ? 'opacity-20 pointer-events-none' : ''}`}
+                      >
+                        <Latex>{opt}</Latex>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <p className="text-lg mb-10 leading-relaxed">A particle moves along the x-axis with velocity v = 4t - t² m/s. Calculate the total distance covered before it comes to rest.</p>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-auto">
-                  {['16/3 m', '32/3 m', '16 m', '64/3 m'].map((opt, i) => (
-                    <button key={i} className={`p-4 rounded-xl border border-slate-700 bg-slate-800/50 hover:bg-slate-700 hover:border-slate-500 transition text-left font-semibold ${shieldActive && (i === 0 || i === 2) ? 'opacity-20 pointer-events-none' : ''}`}>
-                      {opt}
-                    </button>
-                  ))}
-                </div>
-              </div>
 
               {/* Opponent Progress Bar */}
               <div className="mt-6 flex flex-col gap-2">

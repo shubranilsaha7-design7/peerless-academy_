@@ -3,11 +3,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { get, set } from 'idb-keyval';
 import { useCbtStore, CbtQuestion } from '@/store/cbtStore';
 
-export function useTestHydration(examType: string, isAdaptive: boolean = false) {
-  const [loading, setLoading] = useState(true);
+export function useTestHydration(examType: string, isAdaptive: boolean = false, skip: boolean = false) {
+  const [loading, setLoading] = useState(!skip);
   const hydrateQuestions = useCbtStore((s) => s.hydrateQuestions);
 
   useEffect(() => {
+    if (skip) {
+      setLoading(false);
+      return;
+    }
     async function loadTest() {
       setLoading(true);
       try {

@@ -1,7 +1,13 @@
 import { Trophy, Swords, Zap, X, Gamepad2, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useCbtStore } from '@/store/cbtStore';
 
 export default function KurukshetraHub({ onBack, onDuel, onCbt, onMiniTest }: { onBack: () => void, onDuel: () => void, onCbt: () => void, onMiniTest: () => void }) {
+  const handleCbtClick = () => {
+    useCbtStore.getState().hydrateQuestions([]);
+    onCbt();
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col font-sans text-white pb-[env(safe-area-inset-bottom)]">
       <header className="flex justify-between items-center p-6 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md">
@@ -21,7 +27,7 @@ export default function KurukshetraHub({ onBack, onDuel, onCbt, onMiniTest }: { 
           <p className="text-slate-400 text-sm">Wager your ELO. Race against real opponents to solve PYQs. Winner takes all.</p>
         </button>
 
-        <button onClick={onCbt} className="w-full relative overflow-hidden group p-6 rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-slate-900 to-slate-950 text-left">
+        <button onClick={handleCbtClick} className="w-full relative overflow-hidden group p-6 rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-slate-900 to-slate-950 text-left">
           <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition" />
           <FileText size={32} className="text-emerald-400 mb-4" />
           <h3 className="text-xl font-bold mb-2">Full NTA CBT Exam</h3>

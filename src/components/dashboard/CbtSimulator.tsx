@@ -14,7 +14,9 @@ export default function CbtSimulator() {
   const [showPalette, setShowPalette] = useState(false);
   const [swipeDirection, setSwipeDirection] = useState(0); // 1 for next, -1 for prev
   
-  const { loading } = useTestHydration(examType, false);
+  const storeQs = useCbtStore(s => s.questions);
+  const [shouldSkip] = useState(storeQs.length > 0);
+  const { loading } = useTestHydration(examType, false, shouldSkip);
   
   const { 
     questions, currentQuestionId, currentIndex, 

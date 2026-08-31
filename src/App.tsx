@@ -48,6 +48,7 @@ import Leaderboard from '@/components/Leaderboard';
 import BroadcastBanner from '@/components/BroadcastBanner';
 import AdvancedVideoPlayer from './components/Content/AdvancedVideoPlayer';
 import KurukshetraHub from './components/dashboard/KurukshetraHub';
+import CustomTestBuilder from './components/dashboard/CustomTestBuilder';
 import Kurukshetra from './components/Kurukshetra';
 import ProfileDashboard from './components/dashboard/ProfileDashboard';
 import ErrorNotebook from './components/dashboard/ErrorNotebook';
@@ -404,6 +405,7 @@ function AppInner() {
 
   
     if (activeRoute === 'kurukshetra_hub') return <KurukshetraHub onBack={() => setActiveRoute('home')} onDuel={() => setIsKurukshetraOpen(true)} onCbt={() => setActiveRoute('cbt')} onMiniTest={() => setActiveRoute('minitest')} />;
+    if (activeRoute === 'minitest') return <CustomTestBuilder onBack={() => setActiveRoute('kurukshetra_hub')} onStart={() => setActiveRoute('cbt')} />;
     if (activeRoute === 'profile') return <ProfileDashboard onBack={() => setActiveRoute('home')} onNavigate={(r: string) => setActiveRoute(r)} onSignOut={handleSignOut} />;
     if (activeRoute === 'video') return <AdvancedVideoPlayer />;
     if (activeRoute === 'error_notebook') return <ErrorNotebook onBack={() => setActiveRoute('profile')} />;
