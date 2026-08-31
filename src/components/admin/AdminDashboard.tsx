@@ -8,8 +8,11 @@ import {
   CalendarDays, Clock3, Layers, Bot
 } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
+import { useAdmin } from '@/hooks/useAdmin';
 import SmartMediaEmbed from '@/components/SmartMediaEmbed';
 import BatchQuestionGenerator from './BatchQuestionGenerator';
+import RBACPanel from './RBACPanel';
+import QuestionIngestionEngine from './QuestionIngestionEngine';
 
 interface AdminDashboardProps {
   user: User;
@@ -17,7 +20,7 @@ interface AdminDashboardProps {
 }
 
 export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'enquiries' | 'lectures' | 'batches' | 'codes' | 'media' | 'students' | 'banner' | 'stats' | 'sql' | 'ai_ingest' | 'cms_video' | 'ai_settings'>('enquiries');
+  const [activeTab, setActiveTab] = useState<'enquiries' | 'lectures' | 'batches' | 'codes' | 'media' | 'students' | 'banner' | 'stats' | 'sql' | 'ai_ingest' | 'cms_video' | 'ai_settings' | 'rbac'>('enquiries');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
@@ -95,7 +98,7 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
     is_active: true
   });
 
-  const isAdmin = user?.email === 'admin@peerlessacademy.com' || user?.email === 'shubranilsaha7@gmail.com' || user?.email === 'xprasenjit1992@gmail.com';
+  const { isAdmin, loading: adminLoading } = useAdmin();
 
   const showToast = (text: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToastMessage({ text, type });
@@ -624,6 +627,14 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
     }
   };
 
+  if (adminLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-white">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-cyan-500/20 border-t-cyan-500"></div>
+      </div>
+    );
+  }
+
   if (!isAdmin) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4 text-center text-white">
@@ -764,6 +775,12 @@ CREATE POLICY "Allow public all profiles" ON public.profiles FOR ALL TO public, 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-300">
       
+      {/* GLOBAL ADMIN BANNER */}
+      <div className="sticky top-0 z-[100] w-full bg-rose-600/90 backdrop-blur-md border-b border-rose-500 text-white px-4 py-1.5 flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(225,29,72,0.3)]">
+        <Shield size={14} className="animate-pulse" />
+        <span className="text-[10px] sm:text-xs font-black tracking-widest uppercase">Administrator Privileges Active</span>
+      </div>
+      
       {/* Toast Notification */}
       {toastMessage && (
         <div className={`fixed top-6 right-6 z-[9999] flex items-center gap-3 rounded-2xl border px-5 py-3.5 text-sm font-bold text-white shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-4 ${
@@ -821,6 +838,7 @@ CREATE POLICY "Allow public all profiles" ON public.profiles FOR ALL TO public, 
         <div className="mx-auto flex max-w-7xl overflow-x-auto px-4 pb-2 pt-1 gap-2 sm:px-6 lg:px-8 no-scrollbar">
           {[
             { id: 'enquiries', label: 'Enquiries & CRM', icon: MessageSquare, badge: inquiries.length },
+            { id: 'rbac', label: 'Access Control (RBAC)', icon: Key },
             { id: 'lectures', label: 'Lectures Hub', icon: Video, badge: lectures.length },
             { id: 'batches', label: 'Batches & Timings', icon: CalendarDays, badge: batches.length },
             { id: 'codes', label: 'Access Codes', icon: Key, badge: codes.length },
@@ -2064,18 +2082,15 @@ CREATE POLICY "Allow public all profiles" ON public.profiles FOR ALL TO public, 
           </div>
         )}
 
-        {activeTab === 'ai_ingest' && (
+        {activeTab === 'rbac' && (
+          <div className="max-w-6xl mx-auto">
+            <RBACPanel />
+          </div>
+        )}
 
-          <div className="max-w-4xl mx-auto space-y-6">
-            <div>
-              <h2 className="text-2xl font-black text-white flex items-center gap-2">
-                <Bot size={24} className="text-indigo-400" /> Autonomous GenAI Question Engine
-              </h2>
-              <p className="text-xs text-slate-400">
-                Trigger Deno Edge functions to dynamically generate mathematically rigorous PYQs via Gemini 1.5 Pro and ingest them instantly.
-              </p>
-            </div>
-            <BatchQuestionGenerator />
+        {activeTab === 'ai_ingest' && (
+          <div className="max-w-6xl mx-auto">
+            <QuestionIngestionEngine />
           </div>
         )}
 

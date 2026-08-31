@@ -1,22 +1,14 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Video, Upload, ShieldAlert, CheckCircle2, ChevronLeft } from 'lucide-react';
-
-const ADMIN_EMAILS = ['shubranilsaha7@gmail.com', 'xprasenjit1992@gmail.com'];
+import { useAdmin } from '@/hooks/useAdmin';
 
 export default function AdminVideoUpload({ user, onBack }) {
-  const [isAuthorized, setIsAuthorized] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const { isAdmin, loading } = useAdmin();
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState(null);
 
-  // Authorization check
-  useEffect(() => {
-    if (user && user.email && ADMIN_EMAILS.includes(user.email)) {
-      setIsAuthorized(true);
-    }
-    setLoading(false);
-  }, [user]);
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -48,7 +40,7 @@ export default function AdminVideoUpload({ user, onBack }) {
 
   if (loading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">Loading...</div>;
 
-  if (!isAuthorized) {
+  if (!isAdmin) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white p-4">
         <ShieldAlert size={64} className="text-red-500 mb-4" />

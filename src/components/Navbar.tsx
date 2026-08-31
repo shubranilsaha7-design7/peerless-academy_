@@ -4,6 +4,7 @@ import {
   ChevronDown, LogOut, Menu, Moon, Phone,
   Sun, Swords, Zap, Flame, X, Shield
 } from 'lucide-react';
+import { useAdmin } from '@/hooks/useAdmin';
 
 const logoImage = '/images/WhatsApp_Image_2026-08-17_at_21.04.26.jpeg';
 
@@ -57,7 +58,7 @@ export default function Navbar({
 
   const displayName = user ? getDisplayName(user) : null;
   const avatarUrl   = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
-  const isAdmin     = user?.email === 'admin@peerlessacademy.com' || user?.email === 'shubranilsaha7@gmail.com' || user?.email === 'xprasenjit1992@gmail.com';
+  const { isAdmin } = useAdmin();
 
   return (
     <div className="fixed inset-x-0 top-0 z-[60]">
