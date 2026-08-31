@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowRight, CalendarDays, Check, Clock3, Repeat, Users, Sparkles, AlertCircle } from 'lucide-react';
+import { ArrowRight, CalendarDays, Check, Clock3, Repeat, Users, Sparkles, AlertCircle, Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import BatchTimingsModal from './BatchTimingsModal';
 
 export interface BatchItem {
   id?: string;
@@ -57,6 +58,7 @@ const DEFAULT_BATCHES: BatchItem[] = [
 
 export default function UpcomingBatches() {
   const [batches, setBatches] = useState<BatchItem[]>(DEFAULT_BATCHES);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     const fetchBatches = async () => {
@@ -127,9 +129,17 @@ export default function UpcomingBatches() {
               <span className="text-slate-400">batches.</span>
             </h2>
           </div>
-          <p className="max-w-[360px] text-sm leading-6 text-slate-500 dark:text-slate-400">
-            Pick a batch. Lock your seat. Batch sizes are strictly capped so every student gets dedicated mentorship.
-          </p>
+          <div className="flex flex-col gap-4">
+            <p className="max-w-[360px] text-sm leading-6 text-slate-500 dark:text-slate-400">
+              Pick a batch. Lock your seat. Batch sizes are strictly capped so every student gets dedicated mentorship.
+            </p>
+            <button
+              onClick={() => setShowModal(true)}
+              className="flex items-center w-max gap-2 px-4 py-2 text-sm font-black tracking-wider uppercase bg-orange-500 text-white rounded-xl shadow-lg hover:bg-orange-400 transition hover:-translate-y-1"
+            >
+              <Calendar size={16} /> View Detailed Timings
+            </button>
+          </div>
         </div>
 
         <div className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -224,6 +234,7 @@ export default function UpcomingBatches() {
         </div>
 
       </div>
+      <BatchTimingsModal open={showModal} onClose={() => setShowModal(false)} />
     </section>
   );
 }
