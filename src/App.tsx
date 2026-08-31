@@ -818,7 +818,7 @@ function AppInner() {
         <div className="mx-auto mt-10 max-w-[1240px] border-t border-white/10 pt-5 text-[10px] uppercase tracking-wider text-slate-600 flex justify-between items-center">
           <div className="flex flex-col gap-1 text-center md:text-left">
             <span>© 2026 Peerless Academy. Made for the next breakthrough.</span>
-            <span className="text-[9px] text-emerald-500/70 font-bold tracking-widest uppercase mt-0.5">Lead Architect: Shubranil Saha</span>
+            <a href="https://www.linkedin.com/in/shubranil-saha-b463613b3?utm_source=share_via&utm_content=profile&utm_medium=member_android" target="_blank" rel="noreferrer" className="text-[9px] text-emerald-500/70 hover:text-emerald-400 font-bold tracking-widest uppercase mt-0.5 transition-colors block">Lead Architect: Shubranil Saha</a>
           </div>
           <div className="flex items-center gap-4">
             <button onClick={() => {
