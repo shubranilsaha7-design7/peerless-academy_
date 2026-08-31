@@ -737,7 +737,7 @@
       </a>
 
       <!-- PAYMENT - Robust implementation with drawer -->
-      <button onclick="open('paymentDrawer')" class="list-link">
+      <button onclick="openDrawer('paymentDrawer')" class="list-link">
         <span class="li-icon icon-spin" style="color:#10b981;">₹</span>
         <span>
           <span class="li-text" style="color:#10b981;">Fee Payment (UPI)</span>
@@ -855,7 +855,7 @@
     );
 
     // ── Drawer Controls ──
-    function open(id) {
+    function openDrawer(id) {
       closeAll();
       document.getElementById(id).classList.add('open');
       document.getElementById('overlay').classList.add('open');
