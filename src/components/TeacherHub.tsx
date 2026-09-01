@@ -64,7 +64,17 @@ export default function TeacherHub() {
           </p>
         </div>
 
-        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        
+        {/* Mentor Banner Image */}
+        <div className="mt-12 overflow-hidden rounded-3xl border border-slate-700/50 shadow-2xl">
+          <img 
+            src="/images/gallery/mentors-banner-new.jpg" 
+            alt="Our Expert Guidance" 
+            className="w-full object-cover transition-transform duration-700 hover:scale-[1.02]"
+          />
+        </div>
+
+        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {mentors.map((m, i) => {
             const Icon = m.icon;
             // Extract the base subject for dynamic routing (e.g., 'Physics', 'Biology')

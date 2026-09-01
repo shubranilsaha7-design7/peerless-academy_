@@ -941,12 +941,22 @@
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
       Pay via UPI App
     </a>
+    
+    <!-- HELPER TEXT FOR SECURITY BLOCKS -->
+    <div style="font-size: 11px; color: #94a3b8; font-style: italic; max-width: 280px; margin: 12px auto 0; line-height: 1.4;">
+      *If the payment app blocks the direct link for security reasons, please use the QR code or copy the UPI ID below.*
+    </div>
 
-    <!-- Divider -->
-    <div style="display: flex; align-items: center; margin: 25px auto; max-width: 280px; color: #475569; font-size: 12px; font-weight: bold; text-transform: uppercase;">
-      <div style="flex: 1; height: 1px; background: #334155;"></div>
-      <div style="padding: 0 10px;">OR SCAN QR</div>
-      <div style="flex: 1; height: 1px; background: #334155;"></div>
+    <!-- Divider & QR Instructions -->
+    <div style="display: flex; flex-direction: column; align-items: center; margin: 20px auto; max-width: 280px; color: #475569; font-size: 11px; font-weight: bold; text-transform: uppercase; text-align: center;">
+      <div style="display: flex; align-items: center; width: 100%; margin-bottom: 6px;">
+        <div style="flex: 1; height: 1px; background: #334155;"></div>
+        <div style="padding: 0 10px;">OR SCAN QR</div>
+        <div style="flex: 1; height: 1px; background: #334155;"></div>
+      </div>
+      <div style="color: #64748b; font-size: 10px; font-weight: normal; line-height: 1.3;">
+        (Take a screenshot and use 'Scan from Gallery' in your UPI app)
+      </div>
     </div>
     
     <!-- Scan QR Code -->
@@ -957,9 +967,9 @@
     <!-- UPI ID Text and Copy -->
     <div class="upi-box" style="margin-top:25px; max-width: 320px; margin-left: auto; margin-right: auto; display: flex; flex-direction: column; gap: 10px;">
       <div style="font-size: 13px; color: #94a3b8;">UPI ID: <span id="upiIdText" style="color: #f8fafc; font-weight: bold;">xprasenjit1992-1@okhdfcbank</span></div>
-      <button class="copy-btn" onclick="copyUPI()" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; color: #f8fafc; font-weight: 600; cursor: pointer; transition: all 0.2s;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-        Copy to clipboard
+      <button class="copy-btn" id="copyUpiBtn" onclick="copyUPI()" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; color: #f8fafc; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+        <svg id="copyUpiIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        <span id="copyUpiText">Copy to clipboard</span>
       </button>
     </div>
   </div>
@@ -1105,14 +1115,31 @@ N:Chakraborty;Prasenjit;;;\nORG:Peerless Academy\nTITLE:Founder & Director\nTEL;
 
     // ── Copy UPI ──
     function copyUPI() {
-      navigator.clipboard.writeText('xprasenjit1992-1@okhdfcbank').then(() => {
-        const btn = document.querySelector('.copy-btn');
-        const orig = btn.innerHTML;
-        btn.innerHTML = '✅ Copied!';
-        btn.style.color = '#fff';
-        setTimeout(() => { btn.innerHTML = orig; btn.style.color = '#10b981'; }, 2200);
-      });
-    }
+        navigator.clipboard.writeText('xprasenjit1992-1@okhdfcbank').then(() => {
+          const btn = document.getElementById('copyUpiBtn');
+          const text = document.getElementById('copyUpiText');
+          const icon = document.getElementById('copyUpiIcon');
+          
+          const origText = text.innerText;
+          const origBg = btn.style.background;
+          const origColor = btn.style.color;
+          const origBorder = btn.style.border;
+          
+          text.innerText = '✓ Copied!';
+          icon.style.display = 'none';
+          btn.style.background = 'rgba(16, 185, 129, 0.2)';
+          btn.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+          btn.style.color = '#10b981';
+          
+          setTimeout(() => { 
+            text.innerText = origText; 
+            icon.style.display = 'block';
+            btn.style.background = origBg;
+            btn.style.borderColor = origBorder;
+            btn.style.color = origColor;
+          }, 2000);
+        });
+      }
 
     // ── Inquiry Submission ──
     async function submitInquiry(e) {

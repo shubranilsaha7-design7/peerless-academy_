@@ -22,7 +22,7 @@ const categories = [
 ] as const;
 
 const items: MediaItem[] = [
-  { id: 'mentors-banner', type: 'photo', src: '/images/gallery/mentors-banner.jpeg', title: 'Our Expert Guidance', caption: 'Rahul Sir, Tanima Mam, Prasenjit Sir & Dipjoy Sir', category: 'mentors' },
+  { id: 'mentors-banner', type: 'photo', src: '/images/gallery/mentors-banner-new.jpg', title: 'Our Expert Guidance', caption: 'Rahul Sir, Tanima Mam, Prasenjit Sir & Dipjoy Sir', category: 'mentors' },
   { id: 'admission', type: 'photo', src: '/images/gallery/admission-poster.jpeg', title: 'Batch 2026–27', caption: 'Courses for Class V–XII, NEET, JEE Main & TBJEE', category: 'mentors' },
   { id: 'exam-session', type: 'photo', src: '/images/gallery/exam-session.jpeg', title: 'Written Test Drill', caption: 'Focused, invigilated practice tests every week', category: 'exams' },
   { id: 'mega-test', type: 'photo', src: '/images/gallery/mega-test.png', title: 'Mega Test — Madhyamik', caption: 'Full-length exam-hall simulation for board candidates', category: 'exams' },
