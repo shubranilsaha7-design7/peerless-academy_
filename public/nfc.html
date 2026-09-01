@@ -788,93 +788,90 @@
     </div>
 
     
-      <!-- 🚀 ANTI-GRAVITY HALL OF FAME -->
-      <div class="card fade-up d4" style="text-align: center; overflow: hidden; padding: 30px 15px; margin-bottom: 20px;">
-        <div class="card-label" style="text-align: center; margin-bottom: 25px; font-size: 14px;">🌟 Our Toppers & Achievers</div>
+      <!-- 🚀 HALL OF FAME CAROUSEL -->
+      <div class="card fade-up d4" style="text-align: center; overflow: hidden; padding: 25px 0; margin-bottom: 20px;">
+        <div class="card-label" style="text-align: center; margin-bottom: 20px; font-size: 14px;">🌟 Our Achievers</div>
         
         <style>
-          @keyframes antiGravity {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-12px) rotate(2deg); }
+          .hof-slider {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            padding: 0 15px 15px 15px;
+            gap: 15px;
+            scrollbar-width: none; /* Firefox */
           }
-          .hof-container {
+          .hof-slider::-webkit-scrollbar {
+            display: none; /* Chrome, Safari */
+          }
+          .hof-slide {
+            scroll-snap-align: center;
+            flex: 0 0 100%;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.05);
+          }
+          .hof-slide img {
+            width: 100%;
+            height: auto;
+            display: block;
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+          }
+          .swipe-indicator {
             display: flex;
             justify-content: center;
-            gap: 15px;
-            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 5px;
           }
-          .hof-card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 16px;
-            padding: 15px;
-            width: 140px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            animation: antiGravity 6s ease-in-out infinite;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-            backdrop-filter: blur(10px);
-            transition: transform 0.3s, border-color 0.3s;
-          }
-          .hof-card:hover {
-            border-color: rgba(249,115,22,0.4);
-            transform: scale(1.05) !important;
-            animation-play-state: paused;
-          }
-          .hof-card img {
-            width: 60px;
-            height: 60px;
+          .swipe-dot {
+            width: 6px;
+            height: 6px;
+            background: rgba(255,255,255,0.2);
             border-radius: 50%;
-            border: 2px solid #f97316;
-            margin-bottom: 12px;
-            object-fit: cover;
-            box-shadow: 0 0 15px rgba(249,115,22,0.4);
           }
-          .hof-name {
-            font-size: 13px;
-            font-weight: 700;
-            color: #fff;
-            margin-bottom: 6px;
-            text-align: center;
-            letter-spacing: 0.5px;
+          .swipe-dot.active {
+            background: #f97316;
+            width: 12px;
+            border-radius: 4px;
           }
-          .hof-score {
-            font-size: 11px;
-            color: #10b981;
-            font-weight: 800;
-            background: rgba(16,185,129,0.15);
-            padding: 4px 10px;
-            border-radius: 20px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-          }
-          /* Staggered floating delays */
-          .hof-card:nth-child(1) { animation-delay: 0s; }
-          .hof-card:nth-child(2) { animation-delay: -2s; }
-          .hof-card:nth-child(3) { animation-delay: -4s; }
-          .hof-card:nth-child(4) { animation-delay: -1s; }
         </style>
 
-        <div class="hof-container">
-          <div class="hof-card">
-            <img src="/images/gallery/titas-saha-2.png" onerror="this.src='https://ui-avatars.com/api/?name=Titas+Saha&background=f97316&color=fff&bold=true'" alt="Titas Saha">
-            <div class="hof-name">Titas Saha</div>
-            <div class="hof-score">98/100 Maths</div>
+        <div class="hof-slider" id="hofSlider">
+          <div class="hof-slide">
+            <img src="/images/toppers_2023.jpg" alt="10th Boards Toppers 2023">
           </div>
-          <div class="hof-card">
-            <img src="/images/gallery/mentors-banner.jpeg" onerror="this.src='https://ui-avatars.com/api/?name=Karnajit+Saha&background=3b82f6&color=fff&bold=true'" alt="Karnajit">
-            <div class="hof-name">Karnajit S.</div>
-            <div class="hof-score">99% Board</div>
-          </div>
-          <div class="hof-card">
-            <img src="https://ui-avatars.com/api/?name=Dhrubajit&background=10b981&color=fff&bold=true" alt="Dhrubajit">
-            <div class="hof-name">Dhrubajit</div>
-            <div class="hof-score">97% Top Rank</div>
+          <div class="hof-slide">
+            <img src="/images/toppers_2025.jpg" alt="Achievers of Peerless Academy 2025">
           </div>
         </div>
+        
+        <div class="swipe-indicator">
+          <div class="swipe-dot active" id="dot1"></div>
+          <div class="swipe-dot" id="dot2"></div>
+        </div>
+        
+        <script>
+          const slider = document.getElementById('hofSlider');
+          const dot1 = document.getElementById('dot1');
+          const dot2 = document.getElementById('dot2');
+          
+          slider.addEventListener('scroll', () => {
+            const scrollLeft = slider.scrollLeft;
+            const width = slider.clientWidth;
+            if (scrollLeft > width / 2) {
+              dot1.classList.remove('active');
+              dot2.classList.add('active');
+            } else {
+              dot2.classList.remove('active');
+              dot1.classList.add('active');
+            }
+          });
+        </script>
       </div>
-
       <!-- ══ DEVELOPER CREDIT ══ -->
     <a href="https://www.linkedin.com/in/shubranil-saha-b463613b3?utm_source=share_via&utm_content=profile&utm_medium=member_android" target="_blank" style="display:block; text-align:center; font-size:11px; color:#64748b; margin-top:40px; margin-bottom: 20px; text-decoration:none;">Lead Architect: Shubranil Saha</a>
 
