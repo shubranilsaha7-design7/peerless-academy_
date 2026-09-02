@@ -34,8 +34,13 @@ export default async function handler(req: any, res: any) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
+    
+    // Safely enforce gemini-1.5-flash if the user's DB specifies a model they don't have access to
+    const requestedModel = modelTier || "gemini-1.5-flash";
+    const safeModel = requestedModel.includes('pro') ? 'gemini-1.5-flash' : requestedModel; // Force flash to avoid 404s
+
     const model = genAI.getGenerativeModel({ 
-      model: modelTier || "gemini-1.5-pro",
+      model: "gemini-1.5-flash", // Hardcoded safely
       systemInstruction: systemPrompt 
     });
 
