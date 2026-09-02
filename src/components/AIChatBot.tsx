@@ -34,14 +34,14 @@ async function getReply(input: string): Promise<string> {
   try {
     return await askDoubtSolver(input);
   } catch (err) {
-    const message = err instanceof Error ? err.message : '';
+    const message = err instanceof Error ? err.message : String(err);
     if (/402|credit/i.test(message)) {
       return 'The AI tutor is out of credits right now. Ping us on WhatsApp and a mentor will solve your doubt personally.';
     }
     if (/429|rate/i.test(message)) {
       return 'A lot of students are asking right now — please try again in a few seconds.';
     }
-    return kbReply(input);
+    return `Backend Error: ${message} (If this persists, contact support).`;
   }
 }
 

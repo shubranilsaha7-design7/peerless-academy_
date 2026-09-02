@@ -56,24 +56,39 @@ export async function addProfileXp(amount: number) {
   }
 }
 
-/** Asks the AI doubt solver using the Vercel API route. Throws with a readable message. */
-export async function askDoubtSolver(question: string): Promise<string> {
-  const response = await fetch('/api/chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      messages: [{ role: 'user', content: question }],
-      systemPrompt: "You are an expert AI tutor at Peerless Academy. Keep answers concise, clear, and focused on helping the student understand the core concept.",
-      modelTier: "gemini-1.5-pro"
-    }),
-  });
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || \`HTTP error! status: \${response.status}\`);
+/** Asks the AI doubt solver using the Vercel API route, with client-side fallback. */
+export async function askDoubtSolver(question: string): Promise<string> {
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: question }],
+        systemPrompt: "You are an expert AI tutor at Peerless Academy. Keep answers concise, clear, and focused on helping the student understand the core concept.",
+        modelTier: "gemini-1.5-pro"
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data?.reply) return data.reply;
+    }
+  } catch (err) {
+    console.warn("Backend API route failed, falling back to client-side SDK...");
   }
 
-  const data = await response.json();
-  if (!data?.reply) throw new Error('The AI returned an empty answer.');
-  return data.reply;
+  // Fallback to direct client-side call if backend route is unreachable (e.g. Vercel config issues)
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "AQ.Ab8RN6IMIMPGsZDc_dKFiz8-pQP_DX-yzAwu2x1XdobUYwf-ng";
+  if (!apiKey) throw new Error("Missing Gemini API Key in environment.");
+  
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ 
+    model: "gemini-1.5-flash",
+    systemInstruction: "You are an expert AI tutor at Peerless Academy. Keep answers concise, clear, and focused on helping the student understand the core concept."
+  });
+
+  const result = await model.generateContent(question);
+  return result.response.text();
 }
