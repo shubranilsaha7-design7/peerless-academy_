@@ -30,8 +30,11 @@
       color: var(--text);
       min-height: 100vh;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
+      align-items: center;
       overflow-x: hidden;
+      width: 100%;
+      max-width: 100vw;
       position: relative;
     }
 
@@ -619,7 +622,7 @@
 <body>
 
   <!-- 🚀 DYNAMIC NOTICE BOARD -->
-  <div id="notice-board" style="background: linear-gradient(90deg, #f97316, #c2410c); color: white; padding: 10px 15px; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; display: flex; align-items: center; position: relative; z-index: 100; box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);">
+  <div id="notice-board" style="width: 100%; max-width: 100vw; box-sizing: border-box; background: linear-gradient(90deg, #f97316, #c2410c); color: white; padding: 10px 15px; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; display: flex; align-items: center; position: relative; z-index: 100; box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);">
     <span style="background: #000; color: #f97316; padding: 3px 10px; border-radius: 4px; font-size: 11px; text-transform: uppercase; margin-right: 12px; font-weight: 800; z-index: 2; box-shadow: 2px 0 10px rgba(0,0,0,0.5);">Latest</span>
     <marquee id="notice-marquee" style="flex: 1;" behavior="scroll" direction="left" scrollamount="5">
       Fetching latest announcements...
