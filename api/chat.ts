@@ -20,7 +20,7 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || "AQ.Ab8RN6IMIMPGsZDc_dKFiz8-pQP_DX-yzAwu2x1XdobUYwf-ng";
     
     if (!apiKey) {
       console.error("Missing Gemini API Key in backend environment.");

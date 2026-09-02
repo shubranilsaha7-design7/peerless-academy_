@@ -56,14 +56,24 @@ export async function addProfileXp(amount: number) {
   }
 }
 
-/** Asks the AI doubt solver edge function. Throws with a readable message. */
+/** Asks the AI doubt solver using the Vercel API route. Throws with a readable message. */
 export async function askDoubtSolver(question: string): Promise<string> {
-  const { data, error } = await supabase.functions.invoke<{ answer?: string; error?: string }>(
-    'ai-doubt-solver',
-    { body: { question } },
-  );
-  if (error) throw new Error(error.message);
-  if (data?.error) throw new Error(data.error);
-  if (!data?.answer) throw new Error('The AI returned an empty answer.');
-  return data.answer;
+  const response = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      messages: [{ role: 'user', content: question }],
+      systemPrompt: "You are an expert AI tutor at Peerless Academy. Keep answers concise, clear, and focused on helping the student understand the core concept.",
+      modelTier: "gemini-1.5-pro"
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || \`HTTP error! status: \${response.status}\`);
+  }
+
+  const data = await response.json();
+  if (!data?.reply) throw new Error('The AI returned an empty answer.');
+  return data.reply;
 }
