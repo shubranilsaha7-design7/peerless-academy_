@@ -38,7 +38,8 @@ import HallOfFame from '@/components/HallOfFame';
 import NoticeBoard from '@/components/NoticeBoard';
 import LocationMap from '@/components/LocationMap';
 import StudyHub from '@/components/StudyHub';
-import AIChatBot from '@/components/AIChatBot';
+import AIChatBot from './components/AIChatBot';
+import AiRoadmapArchitect from './components/dashboard/AiRoadmapArchitect';
 import SafeBoundary from '@/components/SafeBoundary';
 import PrivacyPolicy from '@/components/PrivacyPolicy';
 import TermsOfService from '@/components/TermsOfService';
@@ -407,6 +408,10 @@ function AppInner() {
     if (activeRoute === 'kurukshetra_hub') return <KurukshetraHub onBack={() => setActiveRoute('home')} onDuel={() => setIsKurukshetraOpen(true)} onCbt={() => setActiveRoute('cbt')} onMiniTest={() => setActiveRoute('minitest')} />;
     if (activeRoute === 'minitest') return <CustomTestBuilder onBack={() => setActiveRoute('kurukshetra_hub')} onStart={() => setActiveRoute('cbt')} />;
     if (activeRoute === 'profile') return <ProfileDashboard onBack={() => setActiveRoute('home')} onNavigate={(r: string) => setActiveRoute(r)} onSignOut={handleSignOut} />;
+    if (activeRoute === 'admin_upload') return <AdminDashboard user={user as any} onBack={() => setActiveRoute('home')} />;
+    if (activeRoute === 'privacy') return <PrivacyPolicy onBack={() => setActiveRoute('home')} />;
+    if (activeRoute === 'terms') return <TermsOfService onBack={() => setActiveRoute('home')} />;
+    if (activeRoute === 'roadmap') return <div className="mt-20"><AiRoadmapArchitect /></div>;
     if (activeRoute === 'video') return <AdvancedVideoPlayer />;
     if (activeRoute === 'error_notebook') return <ErrorNotebook onBack={() => setActiveRoute('profile')} />;
 
@@ -821,6 +826,7 @@ function AppInner() {
             <a href="https://www.linkedin.com/in/shubranil-saha-b463613b3?utm_source=share_via&utm_content=profile&utm_medium=member_android" target="_blank" rel="noreferrer" className="text-[9px] text-emerald-500/70 hover:text-emerald-400 font-bold tracking-widest uppercase mt-0.5 transition-colors block">Lead Architect: Shubranil Saha</a>
           </div>
           <div className="flex items-center gap-4">
+            <button onClick={() => setActiveRoute('roadmap')} className="text-indigo-400 font-bold hover:text-white transition">AI Roadmap</button>
             <button onClick={() => {
               window.history.pushState({}, '', '/privacy');
               setActiveRoute('privacy');
@@ -839,7 +845,7 @@ function AppInner() {
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] w-full overflow-hidden dark:bg-black dark:text-white bg-slate-50 text-slate-900 transition-colors duration-300">
+    <div className="flex flex-col h-[100dvh] w-full overflow-x-hidden overflow-y-hidden dark:bg-obsidian dark:text-white bg-slate-50 text-slate-900 transition-colors duration-300">
       <AnimatePresence mode="wait">
         <motion.div
           key={activeRoute}

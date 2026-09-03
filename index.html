@@ -69,6 +69,18 @@
     <meta property="og:description" content="Classes 5-12, CBSE & ICSE, NEET & JEE prep with DPPs, mock tests and live analytics." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
+    <script>
+    (function() {
+      try {
+        var theme = localStorage.getItem('peerless-theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      } catch (e) {}
+    })();
+  </script>
   </head>
   <body>
     <div id="root"></div>
