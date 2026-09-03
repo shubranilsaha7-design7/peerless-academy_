@@ -13,6 +13,13 @@ import SmartMediaEmbed from '@/components/SmartMediaEmbed';
 import BatchQuestionGenerator from './BatchQuestionGenerator';
 import RBACPanel from './RBACPanel';
 import IpProtectionPanel from './IpProtectionPanel';
+
+import DynamicMediaManager from './DynamicMediaManager';
+import LiveTelemetry from './LiveTelemetry';
+import AiQuotaMonitor from './AiQuotaMonitor';
+import GlobalBroadcaster from './GlobalBroadcaster';
+import FinancialAuditVault from './FinancialAuditVault';
+
 import QuestionIngestionEngine from './QuestionIngestionEngine';
 
 interface AdminDashboardProps {
@@ -21,7 +28,7 @@ interface AdminDashboardProps {
 }
 
 export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'enquiries' | 'lectures' | 'batches' | 'codes' | 'media' | 'students' | 'banner' | 'stats' | 'sql' | 'ai_ingest' | 'cms_video' | 'ai_settings' | 'rbac' | 'ip_master'>('enquiries');
+  const [activeTab, setActiveTab] = useState<'enquiries' | 'lectures' | 'batches' | 'codes' | 'media' | 'students' | 'banner' | 'stats' | 'sql' | 'ai_ingest' | 'cms_video' | 'ai_settings' | 'rbac' | 'ip_master' | 'finance'>('enquiries');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);

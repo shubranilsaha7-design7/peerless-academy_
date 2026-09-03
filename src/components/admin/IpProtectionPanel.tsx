@@ -87,16 +87,16 @@ export default function IpProtectionPanel() {
 
           <button
             onClick={toggleAccess}
-            className={\`relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors duration-300 focus:outline-none \${access ? 'bg-emerald-500' : 'bg-slate-700'}\`}
+            className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors duration-300 focus:outline-none ${access ? 'bg-emerald-500' : 'bg-slate-700'}`}
           >
-            <span className={\`inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-300 ease-in-out \${access ? 'translate-x-3' : '-translate-x-3'}\`} />
+            <span className={`inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-300 ease-in-out ${access ? 'translate-x-3' : '-translate-x-3'}`} />
           </button>
         </div>
 
-        <div className={\`mt-8 p-4 rounded-xl flex items-center gap-4 \${access ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-amber-500/10 border border-amber-500/30'}\`}>
+        <div className={`mt-8 p-4 rounded-xl flex items-center gap-4 ${access ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-amber-500/10 border border-amber-500/30'}`}>
           {access ? <ShieldCheck size={24} className="text-emerald-400 shrink-0" /> : <ShieldAlert size={24} className="text-amber-400 shrink-0" />}
           <div>
-            <div className={\`font-bold \${access ? 'text-emerald-400' : 'text-amber-400'}\`}>
+            <div className={`font-bold ${access ? 'text-emerald-400' : 'text-amber-400'}`}>
               {access ? 'DATABASE UNLOCKED GLOBALLY' : 'DATABASE SECURED (SAMPLE MODE)'}
             </div>
             <div className="text-xs text-slate-400 mt-1">
