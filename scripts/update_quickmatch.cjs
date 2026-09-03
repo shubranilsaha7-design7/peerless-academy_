@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+const fs = require('fs');
+
+const code = `import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { Users, Crosshair, Radar, Loader2, X, Trophy, Swords, Zap, Timer, Bot } from 'lucide-react';
@@ -359,3 +361,6 @@ export default function QuickMatchArena({ onBack }: { onBack?: () => void }) {
     </div>
   );
 }
+`;
+
+fs.writeFileSync('src/components/arena/QuickMatchArena.tsx', code);

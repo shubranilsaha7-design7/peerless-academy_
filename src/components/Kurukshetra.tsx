@@ -50,7 +50,8 @@ export default function Kurukshetra({ onBack }: { onBack: () => void }) {
         if (error) throw error;
         if (data && data.length > 0) setQuestions(data.sort(() => 0.5 - Math.random()));
       } catch (err) {
-        setQuestions([{ question_latex: 'Database connection offline. Prepare for mock combat.', options: ['A','B','C','D'], correct_index: 0 }]);
+        console.error("Supabase Sync Error:", err);
+        setQuestions([]);
       }
     };
     fetchQuestions();

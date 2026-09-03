@@ -64,7 +64,8 @@ import Arena            from '@/components/Arena';
 import AIDoubtSolver    from '@/components/AIDoubtSolver';
 // @ts-ignore
 import AdminVideoUpload from '@/components/admin/AdminVideoUpload';
-import AdminDashboard   from '@/components/admin/AdminDashboard';
+import AdminDashboard from '@/components/admin/AdminDashboard';
+import AdminSeedTrigger from './components/admin/AdminSeedTrigger';
 // @ts-ignore
 import VideoLectures    from '@/components/VideoLectures';
 import MonkMode         from '@/components/MonkMode';
@@ -140,6 +141,7 @@ function AppInner() {
       const path = window.location.pathname;
       if (path.includes('/privacy')) return 'privacy';
       if (path.includes('/terms')) return 'terms';
+      if (path.includes('/admin/seed-trigger')) return 'seed-trigger';
     }
     return 'home';
   });
