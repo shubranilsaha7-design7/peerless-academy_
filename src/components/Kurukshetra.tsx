@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Swords, X, Crosshair, Users, Trophy, Play, Loader2, Zap, ShieldAlert, Skull, Flame, ArrowRight, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import Latex from 'react-latex-next';
+import MythicBattlefield from './battle/MythicBattlefield';
 import 'katex/dist/katex.min.css';
 
 const MAX_HP = 1000;
@@ -276,21 +277,8 @@ export default function Kurukshetra({ onBack }: { onBack: () => void }) {
         {view === 'battle' && (
           <div className="w-full max-w-5xl h-full flex flex-col gap-6 relative">
             
-            {/* Mythic Visual Layer (Animations) */}
-            <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 flex items-center justify-between px-10">
-              <AnimatePresence>
-                {attackAnimation === 'player' && (
-                  <motion.div initial={{ x: 0, opacity: 1, scale: 1 }} animate={{ x: '100vw', scale: 2 }} exit={{ opacity: 0 }} transition={{ duration: 0.6, ease: "easeIn" }} className="absolute left-32 z-50">
-                    <ArrowRight size={64} className="text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,1)] filter blur-[1px]" />
-                  </motion.div>
-                )}
-                {attackAnimation === 'enemy' && (
-                  <motion.div initial={{ x: '100vw', opacity: 1, scale: 1 }} animate={{ x: 0, scale: 2 }} exit={{ opacity: 0 }} transition={{ duration: 0.6, ease: "easeIn" }} className="absolute right-32 z-50">
-                    <ArrowRight size={64} className="text-rose-600 rotate-180 drop-shadow-[0_0_15px_rgba(225,29,72,1)] filter blur-[1px]" />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            {/* Advanced Mythic Battlefield */}
+            <MythicBattlefield playerHp={myHp} oppHp={oppHp} maxHp={MAX_HP} attackAnimation={attackAnimation} />
 
             {/* RPG Health Bars */}
             <div className="flex justify-between items-center gap-4 bg-black/60 border border-slate-800 p-4 rounded-2xl backdrop-blur-md z-10">
