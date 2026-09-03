@@ -237,7 +237,7 @@ export default function QuickMatchArena({ onBack }: { onBack?: () => void }) {
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {currentQ.options_json.map((opt: string, i: number) => (
+                {(Array.isArray(currentQ.options_json) ? currentQ.options_json : (typeof currentQ.options_json === 'string' ? JSON.parse(currentQ.options_json) : [])).map((opt: string, i: number) => (
                   <button key={i} onClick={() => handleAnswer(i)} className="bg-[#0B0F19] border-2 border-slate-800 hover:border-indigo-500 hover:bg-indigo-500/10 p-5 rounded-2xl text-left transition-all group shadow-sm">
                     <div className="flex gap-4 items-center">
                       <span className="font-black text-xl text-slate-600 group-hover:text-indigo-400">{['A','B','C','D'][i]}</span>
@@ -247,6 +247,14 @@ export default function QuickMatchArena({ onBack }: { onBack?: () => void }) {
                 ))}
               </div>
             </div>
+          </div>
+        )}
+
+        {view === 'battle' && !currentQ && (
+          <div className="w-full max-w-lg text-center bg-[#13192B] border border-slate-800 rounded-3xl p-8 shadow-2xl">
+            <Loader2 size={48} className="animate-spin text-indigo-500 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-white mb-2">Loading Battle Data...</h3>
+            <p className="text-slate-400">If this takes too long, no questions were found. Check back soon!</p>
           </div>
         )}
 

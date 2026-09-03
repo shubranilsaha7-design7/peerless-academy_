@@ -158,7 +158,7 @@ export default function Kurukshetra({ onBack }: { onBack: () => void }) {
 
   const handleAnswer = (selectedIndex: number) => {
     if (!currentQ) return;
-    if (selectedIndex === currentQ.correct_index) {
+    if (selectedIndex === (currentQ.correct_option !== undefined ? currentQ.correct_option : currentQ.correct_index)) {
       const isCrit = combo >= 1.5;
       const dmg = Math.floor(BASE_DMG * combo);
       setAttackAnimation('player');
@@ -341,7 +341,7 @@ export default function Kurukshetra({ onBack }: { onBack: () => void }) {
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {currentQ.options.map((opt: string, i: number) => (
+                  {(Array.isArray(currentQ?.options_json) ? currentQ.options_json : (typeof currentQ?.options_json === 'string' ? JSON.parse(currentQ.options_json) : (currentQ?.options || []))).map((opt: string, i: number) => (
                     <button key={i} onClick={() => handleAnswer(i)} className="bg-slate-900/50 border-2 border-slate-800 hover:border-amber-500 hover:bg-amber-500/10 hover:shadow-[0_0_15px_rgba(245,158,11,0.2)] p-5 rounded-2xl text-left transition-all group">
                       <div className="flex gap-4 items-center">
                         <span className="font-black text-xl text-slate-600 group-hover:text-amber-400 drop-shadow-md">{['A','B','C','D'][i]}</span>
@@ -350,6 +350,12 @@ export default function Kurukshetra({ onBack }: { onBack: () => void }) {
                     </button>
                   ))}
                 </div>
+              </div>
+            ) : questions.length === 0 ? (
+              <div className="flex-1 bg-black/70 border border-slate-800 rounded-3xl flex flex-col items-center justify-center z-10 p-8 text-center">
+                <Loader2 size={48} className="animate-spin text-amber-500 mb-4" />
+                <h3 className="text-xl font-bold text-white mb-2">Summoning Questions...</h3>
+                <p className="text-slate-400">If this takes too long, no questions were found for this class/subject. Check back soon or switch filters!</p>
               </div>
             ) : (
               <div className="flex-1 bg-black/70 border border-slate-800 rounded-3xl flex items-center justify-center z-10">
