@@ -67,7 +67,7 @@ export async function askDoubtSolver(question: string): Promise<string> {
       body: JSON.stringify({
         messages: [{ role: 'user', content: question }],
         systemPrompt: "You are an expert AI tutor at Peerless Academy. Keep answers concise, clear, and focused on helping the student understand the core concept.",
-        modelTier: "gemini-1.5-pro"
+        modelTier: "gemini-2.5-flash"
       }),
     });
 
@@ -85,7 +85,7 @@ export async function askDoubtSolver(question: string): Promise<string> {
   
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ 
-    model: "gemini-1.5-flash",
+    model: "gemini-2.5-flash",
     systemInstruction: "You are an expert AI tutor at Peerless Academy. Keep answers concise, clear, and focused on helping the student understand the core concept."
   });
 

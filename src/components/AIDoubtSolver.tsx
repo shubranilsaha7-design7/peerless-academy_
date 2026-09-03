@@ -27,7 +27,7 @@ export default function AIDoubtSolver({ isOpen, onClose, q }: AIDoubtSolverProps
   // Dynamic AI Settings
   const [aiName, setAiName] = useState('Elite AI Mentor');
   const [systemPrompt, setSystemPrompt] = useState('You are a helpful AI tutor.');
-  const [modelTier, setModelTier] = useState('gemini-1.5-pro');
+  const [modelTier, setModelTier] = useState('gemini-2.5-flash');
 
   useEffect(() => {
     fetchAiConfig();
@@ -118,7 +118,7 @@ export default function AIDoubtSolver({ isOpen, onClose, q }: AIDoubtSolverProps
               </div>
               <div>
                 <h3 className="font-black text-white flex items-center gap-2">{aiName} <Zap size={14} className="text-amber-400 fill-current" /></h3>
-                <p className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider">Dynamic GEMINI-1.5-FLASH Engine</p>
+                <p className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider">Dynamic GEMINI-2.5-FLASH Engine</p>
               </div>
             </div>
             <button onClick={onClose} className="w-8 h-8 flex items-center justify-center bg-slate-800 text-slate-400 rounded-full hover:bg-slate-700 hover:text-white transition">

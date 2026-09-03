@@ -52,7 +52,7 @@ const newAiChat = `      // 💡 AI Chat 💡
             body: JSON.stringify({
               messages: [{ role: 'user', content: text }],
               systemPrompt: "You are an AI assistant for Peerless Academy. Be helpful, concise, and friendly.",
-              modelTier: "gemini-1.5-flash"
+              modelTier: "gemini-2.5-flash"
             })
           });
           const data = await res.json();
