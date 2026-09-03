@@ -27,6 +27,7 @@ export type Database = {
           correct_answer: string;
           explanation: string;
           exam_year_tag: string;
+          is_sample: boolean;
         }
         Insert: any; Update: any; Relationships: any;
       },
@@ -34,6 +35,7 @@ export type Database = {
         Row: {
           id: string;
           system_prompt: string;
+          full_pyq_access: boolean;
           model_tier: string;
           ai_name: string;
           ai_greeting: string;

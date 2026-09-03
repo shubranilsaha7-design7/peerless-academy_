@@ -20,13 +20,18 @@ export function useTestHydration(examType: string, isAdaptive: boolean = false, 
         const maxOffset = 10; 
         const randomOffset = Math.floor(Math.random() * maxOffset);
         
-        const { data, error } = await (supabase as any)
-          .from('cbt_questions')
-          .select('*')
-          .eq('exam_target', examType)
-          .range(randomOffset, randomOffset + 89);
+        // Check Master Switch
+        const { data: settings } = await (supabase as any).from('platform_settings').select('full_pyq_access').eq('id', 'GLOBAL').single();
+        const hasAccess = settings?.full_pyq_access || false;
+        
+        let query = (supabase as any).from('cbt_questions').select('*');
+        if (!hasAccess) {
+          query = query.eq('is_sample', true).limit(90);
+        } else {
+          query = query.eq('exam_target', examType).range(randomOffset, randomOffset + 89);
+        }
 
-        if (error) throw error;
+        const { data, error } = await query;
 
         if (data && data.length > 0) {
           // Cache payload in IndexedDB for offline resilience

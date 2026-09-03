@@ -23,10 +23,17 @@ export default function CustomTestBuilder({ onBack, onStart }: { onBack: () => v
       // Fetch a random chunk based on questionCount
       const maxOffset = 2000;
       const randomOffset = Math.floor(Math.random() * maxOffset);
-      const { data, error } = await (supabase as any).from('cbt_questions')
-        .select('*')
-        .in('subject', subjects)
-        .range(randomOffset, randomOffset + questionCount - 1);
+      const { data: settings } = await (supabase as any).from('platform_settings').select('full_pyq_access').eq('id', 'GLOBAL').single();
+      const hasAccess = settings?.full_pyq_access || false;
+
+      let query = (supabase as any).from('cbt_questions').select('*');
+      if (!hasAccess) {
+        query = query.eq('is_sample', true).limit(questionCount);
+      } else {
+        query = query.in('subject', subjects).range(randomOffset, randomOffset + questionCount - 1);
+      }
+
+      const { data, error } = await query;
         
       if (data && data.length > 0) {
         // Map to format
