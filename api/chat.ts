@@ -35,16 +35,16 @@ export default async function handler(req: any, res: any) {
 
     const genAI = new GoogleGenerativeAI(apiKey);
     
-    // Safely enforce gemini-2.5-flash if the user's DB specifies a model they don't have access to
-    const requestedModel = modelTier || "gemini-2.5-flash";
-    const safeModel = requestedModel.includes('pro') ? 'gemini-2.5-flash' : requestedModel; // Force flash to avoid 404s
+    // Safely enforce gemini-3.6-flash if the user's DB specifies a model they don't have access to
+    const requestedModel = modelTier || "gemini-3.6-flash";
+    const safeModel = requestedModel.includes('pro') ? 'gemini-3.6-flash' : requestedModel; // Force flash to avoid 404s
 
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.5-flash", // Hardcoded safely
+      model: "gemini-3.6-flash", // Hardcoded safely
       systemInstruction: systemPrompt 
     });
 
-    // Format for Gemini SDK (gemini-2.5-flash)
+    // Format for Gemini SDK (gemini-3.6-flash)
     const contents = messages.map((msg: any) => ({
       role: msg.role === 'ai' || msg.role === 'model' ? 'model' : 'user',
       parts: [{ text: msg.content }]

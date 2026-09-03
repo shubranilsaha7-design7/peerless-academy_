@@ -27,7 +27,7 @@ export default function AIDoubtSolver({ isOpen, onClose, q }: AIDoubtSolverProps
   // Dynamic AI Settings
   const [aiName, setAiName] = useState('Elite AI Mentor');
   const [systemPrompt, setSystemPrompt] = useState('You are a helpful AI tutor.');
-  const [modelTier, setModelTier] = useState('gemini-2.5-flash');
+  const [modelTier, setModelTier] = useState('gemini-3.6-flash');
 
   useEffect(() => {
     fetchAiConfig();
@@ -78,7 +78,7 @@ export default function AIDoubtSolver({ isOpen, onClose, q }: AIDoubtSolverProps
 
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash",
+        model: "gemini-3.6-flash",
         systemInstruction: systemPrompt
       });
 

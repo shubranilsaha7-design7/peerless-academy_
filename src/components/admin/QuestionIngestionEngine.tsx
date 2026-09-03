@@ -86,7 +86,7 @@ export default function QuestionIngestionEngine() {
       if (!apiKey) throw new Error("Gemini API key is not configured.");
 
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
 
       // Convert file to base64
       const reader = new FileReader();
