@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Award, GraduationCap, Swords, Trophy, Users } from 'lucide-react';
 
 const stats = [
-  { icon: Users, value: 500, suffix: '+', label: 'Students Mentored' },
+  { icon: Users, value: 1500, suffix: '+', label: 'Students Mentored' },
   { icon: GraduationCap, value: 10000, suffix: '+', label: 'Doubts Solved' },
   { icon: Swords, value: 50, suffix: '+', label: 'Mock Arenas Conducted' },
   { icon: Trophy, value: 100, suffix: '%', label: 'Board Pass Rate' },

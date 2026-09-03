@@ -133,7 +133,11 @@ export default function AIDoubtSolver({ isOpen, onClose, q }: AIDoubtSolverProps
       setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'ai', text: reply }]);
     } catch (err: any) {
       console.error("AI API Error:", err);
-      setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'ai', text: `Error: ${err.message || 'Network error connecting to the AI core.'}` }]);
+      let errorMsg = err.message || 'Network error connecting to the AI core.';
+      if (errorMsg.includes('429') || errorMsg.includes('Quota exceeded')) {
+        errorMsg = 'The AI Neural Core is currently cooling down to prevent overheating. Please wait 30 seconds before asking another question.';
+      }
+      setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'ai', text: errorMsg }]);
     } finally {
       setLoading(false);
     }

@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from 'react';
+const fs = require('fs');
+
+const kurukshetraCode = `import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Swords, X, Crosshair, Users, Trophy, Play, Loader2, Zap, ShieldAlert, Skull, Flame } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -52,11 +54,11 @@ export default function Kurukshetra({ onBack }: { onBack: () => void }) {
   useEffect(() => {
     if (!roomData?.id) return;
     
-    const channel = supabase.channel(`room_${roomData.id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'arena_participants', filter: `room_id=eq.${roomData.id}` }, () => {
+    const channel = supabase.channel(\`room_\${roomData.id}\`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'arena_participants', filter: \`room_id=eq.\${roomData.id}\` }, () => {
         fetchParticipants(roomData.id);
       })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'arena_rooms', filter: `id=eq.${roomData.id}` }, (payload) => {
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'arena_rooms', filter: \`id=eq.\${roomData.id}\` }, (payload) => {
         if (payload.new.status === 'in_progress') setView('battle');
         if (payload.new.status === 'completed') setView('podium');
       })
@@ -165,7 +167,7 @@ export default function Kurukshetra({ onBack }: { onBack: () => void }) {
         setStreak(0);
         setCombo(1.0);
         triggerShake();
-        addLog(`Rival struck! -${dmg} HP`, false);
+        addLog(\`Rival struck! -\${dmg} HP\`, false);
       }, 7000 + (Math.random() * 5000));
     }
     return () => clearInterval(aiTimer);
@@ -208,7 +210,7 @@ export default function Kurukshetra({ onBack }: { onBack: () => void }) {
       });
       setStreak(s => s + 1);
       setCombo(c => Math.min(2.5, c + 0.2));
-      addLog(`Direct Hit! -${dmg} HP`, isCrit);
+      addLog(\`Direct Hit! -\${dmg} HP\`, isCrit);
     } else {
       const selfDmg = Math.floor(BASE_DMG * 0.5);
       setMyHp(h => {
@@ -219,14 +221,14 @@ export default function Kurukshetra({ onBack }: { onBack: () => void }) {
       setStreak(0);
       setCombo(1.0);
       triggerShake();
-      addLog(`Missed! Backfired -${selfDmg} HP`, false);
+      addLog(\`Missed! Backfired -\${selfDmg} HP\`, false);
     }
     
     setTimeout(() => setQIndex(i => i + 1), 600);
   };
 
   return (
-    <div className={`fixed inset-0 z-50 bg-[#090D16] text-white flex flex-col ${shake ? 'animate-[shake_0.4s_ease-in-out]' : ''}`}>
+    <div className={\`fixed inset-0 z-50 bg-[#090D16] text-white flex flex-col \${shake ? 'animate-[shake_0.4s_ease-in-out]' : ''}\`}>
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay pointer-events-none" />
       
       <div className="relative p-6 flex justify-between items-center border-b border-white/10 bg-slate-900/50 backdrop-blur-md">
@@ -302,12 +304,12 @@ export default function Kurukshetra({ onBack }: { onBack: () => void }) {
 
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-10">
                 {participants.map((p, i) => (
-                  <div key={i} className={`p-4 rounded-2xl text-center border transition-all ${p.is_ready ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-slate-950 border-slate-800'}`}>
+                  <div key={i} className={\`p-4 rounded-2xl text-center border transition-all \${p.is_ready ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-slate-950 border-slate-800'}\`}>
                     <div className="w-16 h-16 mx-auto rounded-full bg-slate-800 mb-3 flex items-center justify-center">
                       <Users size={24} className="text-slate-500" />
                     </div>
                     <div className="text-xs font-bold text-white truncate">{p.user_name}</div>
-                    <div className={`text-[10px] font-black uppercase tracking-widest mt-1 ${p.is_ready ? 'text-emerald-400' : 'text-slate-500'}`}>
+                    <div className={\`text-[10px] font-black uppercase tracking-widest mt-1 \${p.is_ready ? 'text-emerald-400' : 'text-slate-500'}\`}>
                       {p.is_ready ? 'READY' : 'WAITING'}
                     </div>
                   </div>
@@ -315,7 +317,7 @@ export default function Kurukshetra({ onBack }: { onBack: () => void }) {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4">
-                <button onClick={toggleReady} className={`flex-1 py-4 rounded-xl font-black uppercase tracking-widest transition ${participants.find(p => p.user_id === userId)?.is_ready ? 'bg-amber-600 hover:bg-amber-500 text-white' : 'bg-emerald-600 hover:bg-emerald-500 text-white'}`}>
+                <button onClick={toggleReady} className={\`flex-1 py-4 rounded-xl font-black uppercase tracking-widest transition \${participants.find(p => p.user_id === userId)?.is_ready ? 'bg-amber-600 hover:bg-amber-500 text-white' : 'bg-emerald-600 hover:bg-emerald-500 text-white'}\`}>
                   {participants.find(p => p.user_id === userId)?.is_ready ? 'Cancel Ready' : 'Ready Up'}
                 </button>
                 {(roomData.host_user_id === userId || roomData.id === 'mock-room') && (
@@ -339,7 +341,7 @@ export default function Kurukshetra({ onBack }: { onBack: () => void }) {
                   <span className="font-bold text-slate-400">{myHp} HP</span>
                 </div>
                 <div className="h-4 bg-slate-800 rounded-full overflow-hidden shadow-inner flex justify-end">
-                  <motion.div initial={false} animate={{ width: `${(myHp/MAX_HP)*100}%` }} className={`h-full transition-all duration-300 ${myHp < 300 ? 'bg-rose-500' : 'bg-emerald-500'}`} />
+                  <motion.div initial={false} animate={{ width: \`\${(myHp/MAX_HP)*100}%\` }} className={\`h-full transition-all duration-300 \${myHp < 300 ? 'bg-rose-500' : 'bg-emerald-500'}\`} />
                 </div>
               </div>
               
@@ -353,7 +355,7 @@ export default function Kurukshetra({ onBack }: { onBack: () => void }) {
                   <span className="font-black text-rose-500">Rival</span>
                 </div>
                 <div className="h-4 bg-slate-800 rounded-full overflow-hidden shadow-inner">
-                  <motion.div initial={false} animate={{ width: `${(oppHp/MAX_HP)*100}%` }} className={`h-full transition-all duration-300 ${oppHp < 300 ? 'bg-rose-500' : 'bg-rose-600'}`} />
+                  <motion.div initial={false} animate={{ width: \`\${(oppHp/MAX_HP)*100}%\` }} className={\`h-full transition-all duration-300 \${oppHp < 300 ? 'bg-rose-500' : 'bg-rose-600'}\`} />
                 </div>
               </div>
             </div>
@@ -374,7 +376,7 @@ export default function Kurukshetra({ onBack }: { onBack: () => void }) {
               <div className="flex flex-col gap-1 items-end pointer-events-none absolute right-8 top-40 z-50">
                 <AnimatePresence>
                   {combatLog.map((log, i) => (
-                    <motion.div key={i} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className={`px-3 py-1 rounded-lg font-black text-sm ${log.isCrit ? 'bg-amber-500 text-slate-900 scale-110' : 'bg-slate-800 text-white'}`}>
+                    <motion.div key={i} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className={\`px-3 py-1 rounded-lg font-black text-sm \${log.isCrit ? 'bg-amber-500 text-slate-900 scale-110' : 'bg-slate-800 text-white'}\`}>
                       {log.msg}
                     </motion.div>
                   ))}
@@ -440,3 +442,7 @@ export default function Kurukshetra({ onBack }: { onBack: () => void }) {
     </div>
   );
 }
+`;
+
+fs.writeFileSync('src/components/Kurukshetra.tsx', kurukshetraCode);
+console.log('Kurukshetra upgraded with combat engine and mock fallback');
