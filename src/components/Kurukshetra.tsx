@@ -2,8 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Swords, X, Crosshair, Users, Trophy, Play, Loader2, Zap, ShieldAlert, Skull, Flame } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useCbtStore } from '@/store/cbtStore';
-import { useTestHydration } from '@/hooks/useTestHydration';
 import Latex from 'react-latex-next';
 import 'katex/dist/katex.min.css';
 
@@ -29,10 +27,33 @@ export default function Kurukshetra({ onBack }: { onBack: () => void }) {
   const [combatLog, setCombatLog] = useState<{msg: string, isCrit?: boolean}[]>([]);
   const [shake, setShake] = useState(false);
   
-  // Hydrate with Real Questions (Default to JEE_MAIN for now)
-  const storeQs = useCbtStore(s => s.questions);
-  useTestHydration('JEE_MAIN', false, storeQs.length > 0);
-  const currentQ = storeQs.length > qIndex ? storeQs[qIndex] : (storeQs.length > 0 ? storeQs[0] : null);
+  // Direct DB Fetch for PYQs
+  const [questions, setQuestions] = useState<any[]>([]);
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      // Direct query to the pyqs table using PostgREST random() order
+      try {
+        const { data, error } = await (supabase as any).from('pyqs')
+          .select('*')
+          // Assuming there's a random() function or relying on limit
+          // Using a simple query for now.
+          .limit(20);
+        
+        if (error) {
+          console.error('Failed to fetch from pyqs:', error);
+          setQuestions([{ question_latex: 'Error connecting to pyqs table.', options: ['A','B','C','D'], correct_index: 0 }]);
+        } else if (data && data.length > 0) {
+          // Shuffle data client side just in case 'random()' isn't exposed
+          const shuffled = data.sort(() => 0.5 - Math.random());
+          setQuestions(shuffled);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchQuestions();
+  }, []);
+  const currentQ = questions.length > qIndex ? questions[qIndex] : (questions.length > 0 ? questions[0] : null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {

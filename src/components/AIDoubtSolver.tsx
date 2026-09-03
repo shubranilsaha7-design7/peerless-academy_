@@ -87,7 +87,7 @@ export default function AIDoubtSolver({ isOpen, onClose, q }: AIDoubtSolverProps
     setLoading(true);
 
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "AQ.Ab8RN6IMIMPGsZDc_dKFiz8-pQP_DX-yzAwu2x1XdobUYwf-ng";
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
       if (!apiKey) throw new Error("Missing Gemini API Key");
 
       const genAI = new GoogleGenerativeAI(apiKey);
@@ -133,11 +133,7 @@ export default function AIDoubtSolver({ isOpen, onClose, q }: AIDoubtSolverProps
       setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'ai', text: reply }]);
     } catch (err: any) {
       console.error("AI API Error:", err);
-      let errorMsg = err.message || 'Network error connecting to the AI core.';
-      if (errorMsg.includes('429') || errorMsg.includes('Quota exceeded')) {
-        errorMsg = 'The AI Neural Core is currently cooling down to prevent overheating. Please wait 30 seconds before asking another question.';
-      }
-      setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'ai', text: errorMsg }]);
+      setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'ai', text: `Error: ${err.message || 'Network error'}` }]);
     } finally {
       setLoading(false);
     }
