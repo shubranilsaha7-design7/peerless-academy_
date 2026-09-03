@@ -31,7 +31,9 @@ export default function AiRoadmapArchitect() {
       const prompt = `Generate a highly structured study roadmap for a student aiming for ${classTarget}. They have ${duration} available. Their self-reported weak areas are: ${weakAreas}. Break it down into clear chronological phases.`;
       
       const result = await model.generateContent(prompt);
-      setRoadmap(JSON.parse(result.response.text()));
+      let text = result.response.text();
+      text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      setRoadmap(JSON.parse(text));
     } catch (e) {
       console.error(e);
       alert('Failed to generate roadmap. Check API key or quotas.');
