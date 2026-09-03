@@ -32,16 +32,16 @@ function generateQuestions(count) {
     const val2 = Math.floor(Math.random() * 100) + "y";
     const prop = topic.toLowerCase();
     
-    const question_latex = template.replace('{prop}', prop).replace('{val1}', val1).replace('{val2}', val2) + \` (Question ID: \${i})\`;
+    const question_latex = template.replace('{prop}', prop).replace('{val1}', val1).replace('{val2}', val2) + " (Question ID: " + i + ")";
     const correct_option = Math.floor(Math.random() * 4);
     
     const options_json = [
-      \`Option A: \${Math.random().toFixed(2)}\`,
-      \`Option B: \${Math.random().toFixed(2)}\`,
-      \`Option C: \${Math.random().toFixed(2)}\`,
-      \`Option D: \${Math.random().toFixed(2)}\`
+      "Option A: " + Math.random().toFixed(2),
+      "Option B: " + Math.random().toFixed(2),
+      "Option C: " + Math.random().toFixed(2),
+      "Option D: " + Math.random().toFixed(2)
     ];
-    options_json[correct_option] = \`Correct: \${Math.random().toFixed(2)}\`;
+    options_json[correct_option] = "Correct: " + Math.random().toFixed(2);
 
     qs.push({
       class_level: 'JEE Main',
@@ -52,7 +52,7 @@ function generateQuestions(count) {
       question_latex: question_latex,
       options_json: options_json,
       correct_option: correct_option,
-      solution_latex: \`The solution requires applying the principles of \${topic}.\`,
+      solution_latex: "The solution requires applying the principles of " + topic + ".",
       difficulty: ['Easy', 'Medium', 'Hard'][Math.floor(Math.random() * 3)],
       is_sample: Math.random() > 0.8
     });
@@ -74,7 +74,7 @@ async function seed() {
       console.error("Batch error:", error.message);
     } else {
       successCount += batch.length;
-      process.stdout.write(\`\rSeeded: \${successCount} / 1000\`);
+      process.stdout.write("\\rSeeded: " + successCount + " / 1000");
     }
   }
   console.log("\\nSeeding complete!");
