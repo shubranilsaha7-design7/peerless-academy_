@@ -854,7 +854,7 @@ function AppInner() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen w-full overflow-x-hidden overflow-y-auto dark:bg-obsidian dark:text-white bg-slate-50 text-slate-900 transition-colors duration-300">
+    <div className="flex flex-col min-h-screen w-full overflow-x-hidden dark:bg-obsidian dark:text-white bg-slate-50 text-slate-900 transition-colors duration-300">
       <AnimatePresence mode="wait">
         <motion.div
           key={activeRoute}
@@ -862,20 +862,7 @@ function AppInner() {
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.2 }}
-          drag="x"
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.2}
-          onDragEnd={(e: any, { offset }: any) => {
-            const swipe = offset.x;
-            const routes = ['home', 'kurukshetra_hub', 'video', 'profile'];
-            const i = routes.indexOf(activeRoute);
-            if (swipe < -50 && i !== -1 && i < routes.length - 1) {
-              setActiveRoute(routes[i + 1]);
-            } else if (swipe > 50 && i > 0) {
-              setActiveRoute(routes[i - 1]);
-            }
-          }}
-          className="flex-1 overflow-y-auto overscroll-y-contain pb-[env(safe-area-inset-bottom)] scroll-smooth relative"
+          className="flex-1 pb-[env(safe-area-inset-bottom)] relative"
         >
           {renderRoute()}
         </motion.div>
