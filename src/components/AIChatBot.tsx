@@ -35,9 +35,7 @@ async function getReply(input: string): Promise<string> {
     return await askDoubtSolver(input);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    if (/402|credit/i.test(message)) {
-      return 'The AI tutor is out of credits right now. Ping us on WhatsApp and a mentor will solve your doubt personally.';
-    }
+    console.error('Raw AI API Error:', err);
 
     return `Backend Error: ${message} (If this persists, contact support).`;
   }

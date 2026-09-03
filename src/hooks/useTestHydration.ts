@@ -15,71 +15,66 @@ export function useTestHydration(examType: string, isAdaptive: boolean = false, 
     async function loadTest() {
       setLoading(true);
       try {
-        // Try fetching from Supabase first
-        // Generate a random offset to fetch different chunks from the massive question bank
-        const maxOffset = 10; 
-        const randomOffset = Math.floor(Math.random() * maxOffset);
-        
-        // Check Master Switch
         const { data: settings } = await (supabase as any).from('platform_settings').select('full_pyq_access').eq('id', 'GLOBAL').single();
         const hasAccess = settings?.full_pyq_access || false;
         
-        let query = (supabase as any).from('cbt_questions').select('*');
+        let query = (supabase as any).from('pyqs').select('*');
         if (!hasAccess) {
           query = query.eq('is_sample', true).limit(90);
         } else {
-          query = query.eq('exam_target', examType).range(randomOffset, randomOffset + 89);
+          // If we want to fetch NEET vs JEE, the pyqs table has exam_type
+          query = query.eq('exam_type', examType).limit(90);
         }
 
         const { data, error } = await query;
 
+        if (error) {
+          console.error("Supabase Sync Error:", error);
+          setLoading(false);
+          return;
+        }
+
         if (data && data.length > 0) {
-          // Cache payload in IndexedDB for offline resilience
           await set(`cbt_cache_${examType}`, data);
-          hydrateQuestions(data.map((d: any) => ({
-            ...d,
-            question_latex: d.question_text,
-            correct_index: d.options.findIndex((o: string) => o === d.correct_answer) === -1 ? 0 : d.options.findIndex((o: string) => o === d.correct_answer),
-            explanation_latex: d.explanation
-          })));
-        } else {
-          // If no data, perhaps we mock it (useful for local dev)
-          loadMockFallback();
+          hydrateQuestions(data.map((d: any) => {
+            const opts = Array.isArray(d.options_json) ? d.options_json : (typeof d.options_json === 'string' ? JSON.parse(d.options_json || '[]') : []);
+            return {
+              id: d.id,
+              question_latex: d.question_latex,
+              options: opts,
+              correct_index: d.correct_option,
+              explanation_latex: d.solution_latex || 'No explanation available.',
+              subject: d.subject,
+              chapter: d.topic,
+              difficulty: d.difficulty || 'medium',
+            };
+          }));
         }
       } catch (err) {
         console.error('Supabase fetch failed, trying IndexedDB offline cache...', err);
         const cached = await get(`cbt_cache_${examType}`);
         if (cached) {
-          hydrateQuestions((cached as any[]).map((d: any) => ({
-            ...d,
-            question_latex: d.question_text,
-            correct_index: d.options.findIndex((o: string) => o === d.correct_answer) === -1 ? 0 : d.options.findIndex((o: string) => o === d.correct_answer),
-            explanation_latex: d.explanation
-          })));
-        } else {
-          loadMockFallback();
+          hydrateQuestions((cached as any[]).map((d: any) => {
+            const opts = Array.isArray(d.options_json) ? d.options_json : (typeof d.options_json === 'string' ? JSON.parse(d.options_json || '[]') : []);
+            return {
+              id: d.id,
+              question_latex: d.question_latex,
+              options: opts,
+              correct_index: d.correct_option,
+              explanation_latex: d.solution_latex || 'No explanation available.',
+              subject: d.subject,
+              chapter: d.topic,
+              difficulty: d.difficulty || 'medium',
+            };
+          }));
         }
       } finally {
         setLoading(false);
       }
     }
 
-    function loadMockFallback() {
-      const mockQs: CbtQuestion[] = Array.from({ length: 15 }).map((_, i) => ({
-        id: `mock-q-${i}`,
-        question_latex: `This is mock question ${i + 1}. Find the derivative of $f(x) = x^2$.`,
-        options: ['$2x$', '$x^2/2$', '$x$', '$2$'],
-        correct_index: 0,
-        explanation_latex: 'The power rule states that $\\frac{d}{dx} x^n = nx^{n-1}$.',
-        subject: 'Mathematics',
-        chapter: 'Calculus',
-        difficulty: 'medium',
-      }));
-      hydrateQuestions(mockQs);
-    }
-
     loadTest();
-  }, [examType, isAdaptive, hydrateQuestions]);
+  }, [examType, isAdaptive, hydrateQuestions, skip]);
 
   return { loading };
 }

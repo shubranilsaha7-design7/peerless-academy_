@@ -854,7 +854,7 @@ function AppInner() {
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] w-full overflow-x-hidden overflow-y-hidden dark:bg-obsidian dark:text-white bg-slate-50 text-slate-900 transition-colors duration-300">
+    <div className="flex flex-col min-h-screen w-full overflow-x-hidden overflow-y-auto dark:bg-obsidian dark:text-white bg-slate-50 text-slate-900 transition-colors duration-300">
       <AnimatePresence mode="wait">
         <motion.div
           key={activeRoute}

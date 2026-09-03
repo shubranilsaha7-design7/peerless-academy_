@@ -80,7 +80,7 @@ export async function askDoubtSolver(question: string): Promise<string> {
   }
 
   // Fallback to direct client-side call if backend route is unreachable (e.g. Vercel config issues)
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "AQ.Ab8RN6IMIMPGsZDc_dKFiz8-pQP_DX-yzAwu2x1XdobUYwf-ng";
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   if (!apiKey) throw new Error("Missing Gemini API Key in environment.");
   
   const genAI = new GoogleGenerativeAI(apiKey);
