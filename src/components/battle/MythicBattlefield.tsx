@@ -121,12 +121,9 @@ export default function MythicBattlefield({ playerHp, oppHp, maxHp, attackAnimat
         {/* ARJUNA (Left) */}
         <div className="relative flex flex-col items-center justify-end w-32 sm:w-48">
           <motion.div animate={attackAnimation === 'player' ? { x: [0, 20, 0] } : {}} transition={{ duration: 0.3 }} className="w-full">
-            {arjunaImageSrc ? (
-              <img src={arjunaImageSrc} alt="Arjuna" className="w-full object-contain drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]" />
-            ) : (
-              // Procedural SVG Silhouette - Chariot & Warrior
-              <img src="/assets/arjuna-anime.png" alt="Arjuna" className="w-full object-contain drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]" />
-            )}
+            <div className="w-full aspect-[3/4] overflow-hidden rounded-xl relative shadow-[0_0_30px_rgba(34,211,238,0.5)] border-2 border-cyan-500/50">
+              <img src="/assets/mythic-battle.jpg" alt="Arjuna" className="absolute top-0 left-0 w-[200%] h-full max-w-none object-cover object-left" />
+            </div>
           </motion.div>
           <div className="absolute -bottom-6 font-black text-cyan-400 tracking-widest text-sm drop-shadow-md">ARJUNA</div>
         </div>
@@ -134,12 +131,9 @@ export default function MythicBattlefield({ playerHp, oppHp, maxHp, attackAnimat
         {/* KARNA (Right) */}
         <div className="relative flex flex-col items-center justify-end w-32 sm:w-48">
           <motion.div animate={attackAnimation === 'enemy' ? { x: [0, -20, 0] } : {}} transition={{ duration: 0.3 }} className="w-full">
-            {karnaImageSrc ? (
-              <img src={karnaImageSrc} alt="Karna" className="w-full object-contain drop-shadow-[0_0_15px_rgba(225,29,72,0.5)] transform -scale-x-100" />
-            ) : (
-              // Procedural SVG Silhouette - Chariot & Warrior
-              <img src="/assets/karna-anime.png" alt="Karna" className="w-full object-contain drop-shadow-[0_0_15px_rgba(225,29,72,0.5)] transform -scale-x-100" />
-            )}
+            <div className="w-full aspect-[3/4] overflow-hidden rounded-xl relative shadow-[0_0_30px_rgba(225,29,72,0.5)] border-2 border-rose-500/50">
+              <img src="/assets/mythic-battle.jpg" alt="Karna" className="absolute top-0 right-0 w-[200%] h-full max-w-none object-cover object-right" />
+            </div>
           </motion.div>
           <div className="absolute -bottom-6 font-black text-rose-500 tracking-widest text-sm drop-shadow-md">KARNA</div>
         </div>
