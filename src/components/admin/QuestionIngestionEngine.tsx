@@ -54,7 +54,7 @@ export default function QuestionIngestionEngine() {
         exam_year_tag: 'Admin UI Ingestion'
       };
 
-      const { error } = await supabase.from('cbt_questions').insert([payload]);
+      const { error } = await (supabase as any).from('cbt_questions').insert([payload]);
       if (error) throw error;
       
       setManualMessage({ type: 'success', text: 'Question successfully ingested into CBT Engine.' });
@@ -145,7 +145,7 @@ Parse up to 10 questions. Ensure exact math rendering formats.`;
         exam_year_tag: 'AI Document Parsing'
       }));
 
-      const { error } = await supabase.from('cbt_questions').insert(payload);
+      const { error } = await (supabase as any).from('cbt_questions').insert(payload);
       if (error) throw error;
       
       setAiMessage({ type: 'success', text: 'All extracted questions have been committed to the database!' });

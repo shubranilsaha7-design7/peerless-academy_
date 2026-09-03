@@ -39,7 +39,7 @@ export function useAdmin() {
         }
 
         try {
-          const emails: string[] = JSON.parse(data.system_prompt || '[]');
+          const emails: string[] = JSON.parse((data as any).system_prompt || '[]');
           if (mounted) setIsAdmin(emails.includes(user.email));
         } catch (e) {
           if (mounted) setIsAdmin(false);

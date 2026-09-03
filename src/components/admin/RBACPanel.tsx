@@ -25,7 +25,7 @@ export default function RBACPanel() {
       
     if (!error && data) {
       try {
-        setEmails(JSON.parse(data.system_prompt || '[]'));
+        setEmails(JSON.parse((data as any).system_prompt || '[]'));
       } catch (e) {
         setEmails([]);
       }

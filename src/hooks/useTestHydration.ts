@@ -17,7 +17,7 @@ export function useTestHydration(examType: string, isAdaptive: boolean = false, 
       try {
         // Try fetching from Supabase first
         // Generate a random offset to fetch different chunks from the massive question bank
-        const maxOffset = 5000; 
+        const maxOffset = 10; 
         const randomOffset = Math.floor(Math.random() * maxOffset);
         
         const { data, error } = await (supabase as any)

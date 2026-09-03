@@ -123,32 +123,39 @@ export default function CbtSimulator() {
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: swipeDirection > 0 ? -50 : 50, scale: 0.98 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="flex-1 flex flex-col"
-            
-            
-            
-            
+            className="flex-1 flex flex-col cursor-grab active:cursor-grabbing"
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.2}
+            onDragEnd={(e, { offset, velocity }) => {
+              const swipe = offset.x;
+              if (swipe < -50) {
+                if (currentIndex < questions.length - 1) handleNext();
+              } else if (swipe > 50) {
+                if (currentIndex > 0) handlePrev();
+              }
+            }}
           >
             {/* Question Text */}
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 mb-4 shadow-lg text-[15px] leading-relaxed">
+            <div className="bg-slate-900/50 backdrop-blur-md border border-white/10 rounded-2xl p-6 sm:p-8 mb-6 shadow-xl text-base sm:text-lg leading-relaxed select-none">
               <Latex>{currentQ.question_latex}</Latex>
             </div>
             
             {/* Options */}
-            <div className="flex-1 overflow-y-auto overscroll-y-contain pb-20 space-y-3">
+            <div className="flex-1 overflow-y-auto overscroll-y-contain pb-24 space-y-4">
               {currentQ.options.map((opt, i) => {
                 const isSelected = currentAnswer === i;
                 return (
                   <motion.button
-                    whileTap={{ scale: 0.97 }}
+                    whileTap={{ scale: 0.98 }}
                     key={i}
                     onClick={() => selectOption(currentQ.id, i)}
-                    className={`w-full text-left p-4 rounded-xl border transition-all duration-200 flex gap-4 items-center ${isSelected ? 'bg-cyan-500/10 border-cyan-500/50 shadow-[inset_0_0_20px_rgba(6,182,212,0.15)] text-cyan-300' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-800'}`}
+                    className={`w-full text-left p-5 sm:p-6 rounded-2xl border transition-all duration-200 flex gap-5 items-center ${isSelected ? 'bg-cyan-500/10 border-cyan-500/50 shadow-[0_0_25px_rgba(6,182,212,0.15)] text-cyan-300' : 'bg-slate-900/80 backdrop-blur-sm border-white/5 text-slate-300 hover:border-slate-600 hover:bg-slate-800'}`}
                   >
-                    <div className={`flex-shrink-0 w-8 h-8 rounded-full border flex items-center justify-center font-bold text-sm ${isSelected ? 'bg-cyan-500 border-cyan-500 text-slate-950 shadow-[0_0_10px_rgba(6,182,212,0.5)]' : 'border-slate-700 bg-slate-800'}`}>
+                    <div className={`flex-shrink-0 w-10 h-10 rounded-full border-2 flex items-center justify-center font-black text-sm sm:text-base transition-colors ${isSelected ? 'bg-cyan-500 border-cyan-500 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.5)]' : 'border-slate-700 bg-slate-800 text-slate-400'}`}>
                       {String.fromCharCode(65 + i)}
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 text-base select-none">
                       <Latex>{opt}</Latex>
                     </div>
                   </motion.button>

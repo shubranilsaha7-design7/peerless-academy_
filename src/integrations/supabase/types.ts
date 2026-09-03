@@ -14,6 +14,32 @@ export type Database = {
   }
   public: {
     Tables: {
+      cbt_questions: {
+        Row: {
+          id: string;
+          exam_target: string;
+          class_level: number;
+          subject: string;
+          chapter: string;
+          difficulty: string;
+          question_text: string;
+          options: string[];
+          correct_answer: string;
+          explanation: string;
+          exam_year_tag: string;
+        }
+        Insert: any; Update: any; Relationships: any;
+      },
+      platform_settings: {
+        Row: {
+          id: string;
+          system_prompt: string;
+          model_tier: string;
+          ai_name: string;
+          ai_greeting: string;
+        }
+        Insert: any; Update: any; Relationships: any;
+      },
       arena_matches: {
         Row: {
           completed_at: string | null
