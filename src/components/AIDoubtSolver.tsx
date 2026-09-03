@@ -70,26 +70,22 @@ export default function AIDoubtSolver({ isOpen, onClose, q }: AIDoubtSolverProps
 
       const apiMessages = newMessages.map(m => ({
         role: m.sender === 'ai' ? 'model' : 'user',
-        content: m.id === newMessages[newMessages.length - 1].id ? prompt : m.text
+        parts: [{ text: m.id === newMessages[newMessages.length - 1].id ? prompt : m.text }]
       }));
 
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: apiMessages,
-          systemPrompt,
-          modelTier
-        })
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "AQ.Ab8RN6IMIMPGsZDc_dKFiz8-pQP_DX-yzAwu2x1XdobUYwf-ng";
+      if (!apiKey) throw new Error("Missing Gemini API Key");
+
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash",
+        systemInstruction: systemPrompt
       });
 
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch AI response');
-      }
+      const result = await model.generateContent({ contents: apiMessages });
+      const reply = result.response.text();
 
-      setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'ai', text: data.reply }]);
+      setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'ai', text: reply }]);
     } catch (err: any) {
       console.error("AI API Error:", err);
       setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'ai', text: `Error: ${err.message || 'Network error connecting to the AI core.'}` }]);
