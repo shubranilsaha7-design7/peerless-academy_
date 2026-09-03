@@ -267,7 +267,7 @@ export default function Kurukshetra({ onBack }: { onBack: () => void }) {
                 </button>
                 {(roomData.host_user_id === userId || roomData.id === 'mock-room') && (
                   <button onClick={startBattle} className="flex-1 bg-red-700 hover:bg-red-600 text-white font-black py-4 rounded-xl transition flex items-center justify-center gap-2 uppercase tracking-widest border border-red-500 shadow-[0_0_20px_-5px_rgba(220,38,38,0.5)]">
-                    <Play size={18} /> Sound the Conch
+                    <Play size={18} /> START BATTLE
                   </button>
                 )}
               </div>

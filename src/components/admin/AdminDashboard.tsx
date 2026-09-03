@@ -57,6 +57,8 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
   const [lectureSubjectFilter, setLectureSubjectFilter] = useState('all');
   const [searchCode, setSearchCode] = useState('');
   const [searchStudent, setSearchStudent] = useState('');
+  const [studentFilterExam, setStudentFilterExam] = useState('all');
+  const [studentFilterClass, setStudentFilterClass] = useState('all');
 
   // Forms
   const [lectureForm, setLectureForm] = useState({ 
@@ -219,10 +221,7 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
       }
 
       // 6. Students (Profiles)
-      const { data: profs, error: profsErr } = await (supabase as any)
-        .from('profiles')
-        .select('*')
-        .order('xp', { ascending: false });
+      const { data: profs, error: profsErr } = await (supabase as any).from('user_profiles').select('*').order('created_at', { ascending: false });
       
       if (!profsErr) {
         setStudents(profs || []);
@@ -686,11 +685,12 @@ export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
     (c.description?.toLowerCase() || '').includes(searchCode.toLowerCase())
   );
 
-  const filteredStudents = students.filter(s =>
-    (s.full_name?.toLowerCase() || '').includes(searchStudent.toLowerCase()) ||
-    (s.username?.toLowerCase() || '').includes(searchStudent.toLowerCase()) ||
-    (s.id || '').includes(searchStudent)
-  );
+  const filteredStudents = students.filter(s => {
+    const matchesSearch = (s.full_name?.toLowerCase() || '').includes(searchStudent.toLowerCase()) || (s.id || '').includes(searchStudent);
+    const matchesExam = studentFilterExam === 'all' || s.target_exam === studentFilterExam;
+    const matchesClass = studentFilterClass === 'all' || s.class_level === studentFilterClass;
+    return matchesSearch && matchesExam && matchesClass;
+  });
 
   const totalPlatformXp = students.reduce((sum, s) => sum + (s.xp || 0), 0);
 
@@ -1689,77 +1689,47 @@ CREATE POLICY "Allow public all profiles" ON public.profiles FOR ALL TO public, 
             </div>
 
             {/* Students Table */}
+            <div className="flex gap-2 mb-4">
+              <select value={studentFilterExam} onChange={e => setStudentFilterExam(e.target.value)} className="rounded-xl border border-white/10 bg-slate-900 px-3 py-1.5 text-xs text-white focus:outline-none">
+                <option value="all">All Exams</option>
+                <option value="NEET">NEET</option>
+                <option value="JEE">JEE</option>
+                <option value="Foundation">Foundation</option>
+              </select>
+              <select value={studentFilterClass} onChange={e => setStudentFilterClass(e.target.value)} className="rounded-xl border border-white/10 bg-slate-900 px-3 py-1.5 text-xs text-white focus:outline-none">
+                <option value="all">All Classes</option>
+                <option value="Class 9">Class 9</option>
+                <option value="Class 10">Class 10</option>
+                <option value="Class 11">Class 11</option>
+                <option value="Class 12">Class 12</option>
+                <option value="Dropper">Dropper</option>
+              </select>
+            </div>
+            
             <div className="overflow-x-auto rounded-2xl border border-white/10 bg-slate-900/80 shadow-2xl">
-              <table className="w-full text-left text-xs">
-                <thead className="border-b border-white/10 bg-slate-950/60 text-[10px] font-black uppercase tracking-wider text-slate-400">
+              <table className="w-full text-left text-sm text-slate-300">
+                <thead className="border-b border-white/10 bg-slate-800/50 text-xs uppercase text-slate-400">
                   <tr>
-                    <th className="px-5 py-3.5">Student</th>
-                    <th className="px-5 py-3.5">Current XP</th>
-                    <th className="px-5 py-3.5">Rank Level</th>
-                    <th className="px-5 py-3.5">Streak</th>
-                    <th className="px-5 py-3.5 text-right">Quick XP Granter</th>
+                    <th className="px-6 py-4 font-black">Name</th>
+                    <th className="px-6 py-4 font-black">Target Exam</th>
+                    <th className="px-6 py-4 font-black">Class</th>
+                    <th className="px-6 py-4 font-black">State</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {filteredStudents.map(student => (
-                    <tr key={student.id} className="transition hover:bg-white/[0.02]">
-                      <td className="px-5 py-4">
-                        <div className="font-bold text-white text-sm">
-                          {student.full_name || student.username || 'Peerless Scholar'}
-                        </div>
-                        <div className="text-slate-500 font-mono text-[10px] mt-0.5">{student.id}</div>
-                      </td>
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-1.5 font-black text-amber-400 text-sm">
-                          <Zap size={14} /> {student.xp || 0} XP
-                        </div>
-                      </td>
-                      <td className="px-5 py-4">
-                        <span className="rounded-lg bg-cyan-500/15 border border-cyan-500/30 px-2.5 py-1 font-bold text-cyan-300">
-                          Lv.{student.level || 1}
-                        </span>
-                      </td>
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-1 text-orange-400 font-bold">
-                          <Flame size={14} /> {student.streak || 0} days
-                        </div>
-                      </td>
-                      <td className="px-5 py-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            onClick={() => handleAdjustStudentXp(student.id, 100)}
-                            disabled={actionLoading}
-                            className="rounded-lg bg-amber-500/10 border border-amber-500/30 px-2 py-1 text-[11px] font-bold text-amber-300 transition hover:bg-amber-500 hover:text-black disabled:opacity-50"
-                            title="Award +100 XP"
-                          >
-                            +100
-                          </button>
-                          <button
-                            onClick={() => handleAdjustStudentXp(student.id, 500)}
-                            disabled={actionLoading}
-                            className="rounded-lg bg-amber-500/20 border border-amber-500/40 px-2.5 py-1 text-[11px] font-black text-amber-300 transition hover:bg-amber-500 hover:text-black disabled:opacity-50"
-                            title="Award +500 XP"
-                          >
-                            +500
-                          </button>
-                          <button
-                            onClick={() => handleAdjustStudentXp(student.id, -100)}
-                            disabled={actionLoading}
-                            className="rounded-lg bg-rose-500/10 border border-rose-500/30 px-2 py-1 text-[11px] font-bold text-rose-300 transition hover:bg-rose-500 hover:text-white disabled:opacity-50"
-                            title="Deduct 100 XP"
-                          >
-                            -100
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {filteredStudents.length === 0 && (
+                  {filteredStudents.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-5 py-12 text-center text-slate-500">
-                        No registered student profiles found yet.
-                      </td>
+                      <td colSpan={4} className="px-6 py-8 text-center text-slate-500">No students found.</td>
                     </tr>
+                  ) : (
+                    filteredStudents.map(s => (
+                      <tr key={s.id} className="transition hover:bg-white/5">
+                        <td className="whitespace-nowrap px-6 py-4 font-bold text-white">{s.full_name || 'Unknown'}</td>
+                        <td className="whitespace-nowrap px-6 py-4 font-bold text-indigo-400">{s.target_exam || '-'}</td>
+                        <td className="whitespace-nowrap px-6 py-4 font-bold text-emerald-400">{s.class_level || '-'}</td>
+                        <td className="whitespace-nowrap px-6 py-4 text-slate-400">{s.state || '-'}</td>
+                      </tr>
+                    ))
                   )}
                 </tbody>
               </table>

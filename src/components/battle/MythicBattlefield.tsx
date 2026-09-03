@@ -125,25 +125,7 @@ export default function MythicBattlefield({ playerHp, oppHp, maxHp, attackAnimat
               <img src={arjunaImageSrc} alt="Arjuna" className="w-full object-contain drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]" />
             ) : (
               // Procedural SVG Silhouette - Chariot & Warrior
-              <svg viewBox="0 0 100 100" className="w-full drop-shadow-[0_0_15px_rgba(34,211,238,0.6)]">
-                {/* Chariot Base */}
-                <path d="M 20 80 L 80 80 L 90 60 L 10 60 Z" fill="#111" stroke="#22d3ee" strokeWidth="2" />
-                {/* Spinning Wheel */}
-                <g className="origin-[50px_80px] animate-[spin_1.5s_linear_infinite]">
-                  <circle cx="50" cy="80" r="16" fill="none" stroke="#22d3ee" strokeWidth="3" />
-                  <line x1="50" y1="64" x2="50" y2="96" stroke="#22d3ee" strokeWidth="2" />
-                  <line x1="34" y1="80" x2="66" y2="80" stroke="#22d3ee" strokeWidth="2" />
-                  <circle cx="50" cy="80" r="4" fill="#22d3ee" />
-                </g>
-                {/* Arjuna Silhouette */}
-                <path d="M 30 60 L 40 20 L 50 10 L 60 20 L 50 60 Z" fill="#000" stroke="#22d3ee" strokeWidth="2" />
-                {/* Gandiva Bow */}
-                <path d="M 60 10 Q 85 35 60 60" fill="none" stroke="#22d3ee" strokeWidth="3" />
-                <path d="M 60 10 L 60 60" fill="none" stroke="#22d3ee" strokeWidth="1" strokeDasharray="2,2" />
-                {/* Divine Driver (Krishna) */}
-                <path d="M 70 60 L 75 40 L 80 35 L 85 40 L 80 60 Z" fill="#000" stroke="#fff" strokeWidth="1.5" />
-                <circle cx="80" cy="30" r="8" fill="none" stroke="#fbbf24" strokeWidth="2" className="animate-pulse" />
-              </svg>
+              <img src="/assets/arjuna-anime.png" alt="Arjuna" className="w-full object-contain drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]" />
             )}
           </motion.div>
           <div className="absolute -bottom-6 font-black text-cyan-400 tracking-widest text-sm drop-shadow-md">ARJUNA</div>
@@ -156,24 +138,7 @@ export default function MythicBattlefield({ playerHp, oppHp, maxHp, attackAnimat
               <img src={karnaImageSrc} alt="Karna" className="w-full object-contain drop-shadow-[0_0_15px_rgba(225,29,72,0.5)] transform -scale-x-100" />
             ) : (
               // Procedural SVG Silhouette - Chariot & Warrior
-              <svg viewBox="0 0 100 100" className="w-full drop-shadow-[0_0_15px_rgba(225,29,72,0.6)] transform -scale-x-100">
-                {/* Chariot Base */}
-                <path d="M 20 80 L 80 80 L 90 60 L 10 60 Z" fill="#111" stroke="#f43f5e" strokeWidth="2" />
-                {/* Spinning Wheel */}
-                <g className="origin-[50px_80px] animate-[spin_1.5s_linear_infinite]">
-                  <circle cx="50" cy="80" r="16" fill="none" stroke="#f43f5e" strokeWidth="3" />
-                  <line x1="50" y1="64" x2="50" y2="96" stroke="#f43f5e" strokeWidth="2" />
-                  <line x1="34" y1="80" x2="66" y2="80" stroke="#f43f5e" strokeWidth="2" />
-                  <circle cx="50" cy="80" r="4" fill="#f43f5e" />
-                </g>
-                {/* Karna Silhouette */}
-                <path d="M 30 60 L 40 20 L 50 10 L 60 20 L 50 60 Z" fill="#000" stroke="#f43f5e" strokeWidth="2" />
-                {/* Vijaya Bow */}
-                <path d="M 60 10 Q 85 35 60 60" fill="none" stroke="#f43f5e" strokeWidth="3" />
-                <path d="M 60 10 L 60 60" fill="none" stroke="#f43f5e" strokeWidth="1" strokeDasharray="2,2" />
-                {/* Sun Crown/Aura */}
-                <circle cx="50" cy="5" r="15" fill="none" stroke="#fbbf24" strokeWidth="1" strokeDasharray="4,4" className="animate-[spin_4s_linear_infinite] origin-[50px_5px]" />
-              </svg>
+              <img src="/assets/karna-anime.png" alt="Karna" className="w-full object-contain drop-shadow-[0_0_15px_rgba(225,29,72,0.5)] transform -scale-x-100" />
             )}
           </motion.div>
           <div className="absolute -bottom-6 font-black text-rose-500 tracking-widest text-sm drop-shadow-md">KARNA</div>

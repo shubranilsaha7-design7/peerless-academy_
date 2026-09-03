@@ -127,7 +127,8 @@ function AppInner() {
   const [user,    setUser]    = useState<User | null>(null);
   const [xp,      setXp]      = useState(0);
   const [streak,  setStreak]  = useState(0);
-  const [level,   setLevel]   = useState(1);
+  const [level, setLevel] = useState(1);
+  const [targetExam, setTargetExam] = useState<string>('');
 
   // ── Modal/panel state ────────────────────────────────────────
   const [isAuthOpen,   setIsAuthOpen]   = useState(false);
@@ -136,6 +137,7 @@ function AppInner() {
   const [aiQuestion, setAiQuestion] = useState<any>(null);
   const [isCmdOpen,    setIsCmdOpen]    = useState(false);
   const [submitted,    setSubmitted]    = useState(false);
+  const [isOnboarded, setIsOnboarded] = useState(true);
   const [activeRoute,  setActiveRoute]  = useState(() => {
     if (typeof window !== 'undefined') {
       const path = window.location.pathname;
@@ -202,10 +204,10 @@ function AppInner() {
     try {
       const { data } = await (supabase as any)
         .from('profiles')
-        .select('xp, streak, level')
+        .select('xp, streak, level, target_exam')
         .eq('id', userId)
         .single();
-      if (data) { setXp(data.xp || 0); setStreak(data.streak || 0); setLevel(data.level || 1); }
+      if (data) { setXp(data.xp || 0); setStreak(data.streak || 0); setLevel(data.level || 1); setTargetExam(data.target_exam || ''); }
     } catch { /* profile may not exist yet */ }
   }
 
@@ -506,6 +508,11 @@ function AppInner() {
           </div>
         </section>
 
+        {targetExam && (
+          <div className="bg-indigo-600 text-white font-black text-center py-3 uppercase tracking-widest text-sm shadow-md">
+            Target: {targetExam} 2026
+          </div>
+        )}
         <LifeAtPeerless />
 
         {/* ── TICKER STRIP ── */}
@@ -747,7 +754,7 @@ function AppInner() {
             <SimulationLab />
           </React.Suspense>
         </SafeBoundary>
-        <StudyHub />
+        <StudyHub targetExam={targetExam} />
         <NoticeBoard />
         <LocationMap />
         <MediaGallery />

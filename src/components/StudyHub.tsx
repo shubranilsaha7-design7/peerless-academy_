@@ -330,7 +330,7 @@ const TABS = [
 
 const SUBJECT_TARGET = 65; // hours per subject
 
-export default function StudyHub() {
+export default function StudyHub({ targetExam }: { targetExam?: string }) {
   const [tab, setTab] = useState<string>('dpp');
   const [examOpen, setExamOpen] = useState(false);
   const [xp, setXp] = useLocal<number>('pa-xp', 120);
@@ -458,7 +458,7 @@ export default function StudyHub() {
               <div className="mt-8">
                 <div className="text-[10px] font-black uppercase tracking-wider text-slate-500">65-hour deep-study matrix</div>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                  {subjects.map((s) => {
+                  {subjects.filter(s => { if (targetExam === 'NEET' && s === 'Mathematics') return false; if (targetExam === 'JEE' && s === 'Biology') return false; return true; }).map((s) => {
                     const done = hours[s] ?? 0;
                     const pct = Math.min(100, Math.round((done / SUBJECT_TARGET) * 100));
                     return (
