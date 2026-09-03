@@ -13,7 +13,8 @@ export default function IpProtectionPanel() {
 
   const checkAuthAndLoad = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (user?.email === 'shubranil@peerlessacademy.in') {
+    const masterEmails = ['shubranil@peerlessacademy.in', 'shubranilsaha7@gmail.com', 'shubranilsaha42@gmail.com'];
+    if (user?.email && masterEmails.includes(user.email)) {
       setIsSuperAdmin(true);
       fetchAccess();
     } else {
@@ -55,7 +56,7 @@ export default function IpProtectionPanel() {
       <div className="flex flex-col items-center justify-center p-20 text-center border border-red-500/30 bg-red-500/10 rounded-3xl">
         <Lock size={64} className="text-red-500 mb-6" />
         <h2 className="text-3xl font-black text-white mb-2">ACCESS DENIED</h2>
-        <p className="text-slate-400 max-w-md">This module is protected under Intellectual Property laws. Only the Lead Architect (shubranil@peerlessacademy.in) possesses clearance to modify the Global IP Master Switch.</p>
+        <p className="text-slate-400 max-w-md">This module is protected under Intellectual Property laws. Only authorized Lead Architects possess clearance to modify the Global IP Master Switch.</p>
       </div>
     );
   }
