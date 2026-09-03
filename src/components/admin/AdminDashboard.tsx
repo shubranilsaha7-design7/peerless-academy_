@@ -21,6 +21,8 @@ import GlobalBroadcaster from './GlobalBroadcaster';
 import FinancialAuditVault from './FinancialAuditVault';
 
 import QuestionIngestionEngine from './QuestionIngestionEngine';
+import AdminQuestionBank from './AdminQuestionBank';
+import AdminMediaManager from './AdminMediaManager';
 
 interface AdminDashboardProps {
   user: User;
@@ -28,7 +30,7 @@ interface AdminDashboardProps {
 }
 
 export default function AdminDashboard({ user, onBack }: AdminDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'enquiries' | 'lectures' | 'batches' | 'codes' | 'media' | 'students' | 'banner' | 'stats' | 'sql' | 'ai_ingest' | 'cms_video' | 'ai_settings' | 'rbac' | 'ip_master' | 'finance'>('enquiries');
+  const [activeTab, setActiveTab] = useState<'enquiries' | 'lectures' | 'batches' | 'codes' | 'media' | 'students' | 'banner' | 'stats' | 'sql' | 'ai_ingest' | 'cms_video' | 'ai_settings' | 'rbac' | 'ip_master' | 'finance' | 'qbank' | 'cms_media'>('enquiries');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
