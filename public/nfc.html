@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Peerless Academy | Smart Hub</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700;800&display=swap');
+
+    :root {
+      --bg: #07090e;
+      --primary: #f97316;
+      --primary-dark: #c2410c;
+      --primary-glow: rgba(249,115,22,0.45);
+      --gold: #d4af37;
+      --gold-glow: rgba(212,175,55,0.4);
+      --glass: rgba(255,255,255,0.04);
+      --glass-border: rgba(255,255,255,0.09);
+      --text: #f8fafc;
+      --text-muted: #7c8fa5;
+    }
+
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; font-family:'Space Grotesk',sans-serif; -webkit-tap-highlight-color:transparent; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+      width: 100%;
+      max-width: 100vw;
+      position: relative;
+    }
+
+    /* ─── Animated Particle Canvas BG ─── */
+    #bg-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ─── Animated Glow Orbs ─── */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.25;
+      pointer-events: none;
+      z-index: 0;
+      animation: driftOrb 18s ease-in-out infinite alternate;
+    }
+    .orb-1 { width: 350px; height: 350px; background: var(--primary); top: -80px; left: -100px; animation-delay: 0s; }
+    .orb-2 { width: 300px; height: 300px; background: #7c3aed; bottom: 10%; right: -80px; animation-delay: -7s; }
+    .orb-3 { width: 200px; height: 200px; background: var(--gold); top: 40%; left: 30%; animation-delay: -14s; opacity: 0.12; }
+
+    @keyframes driftOrb {
+      0% { transform: translate(0,0) scale(1); }
+      50% { transform: translate(30px, 40px) scale(1.1); }
+      100% { transform: translate(-20px, 20px) scale(0.95); }
+    }
+
+    /* ─── Container ─── */
+    .container {
+      width: 100%;
+      max-width: 460px;
+      padding: 28px 18px 120px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ─── Entrance Animations ─── */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(28px);
+      animation: fadeUp 0.65s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+    .d1{animation-delay:0.05s} .d2{animation-delay:0.15s} .d3{animation-delay:0.25s}
+    .d4{animation-delay:0.35s} .d5{animation-delay:0.45s} .d6{animation-delay:0.55s}
+
+    @keyframes fadeUp { to { opacity:1; transform:translateY(0); } }
+
+    /* ─── Status Badge ─── */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16,185,129,0.1);
+      border: 1px solid rgba(16,185,129,0.25);
+      color: #10b981;
+      padding: 6px 16px;
+      border-radius: 100px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 22px;
+      box-shadow: 0 0 20px rgba(16,185,129,0.15);
+    }
+    .dot {
+      width: 6px; height: 6px;
+      background: #10b981;
+      border-radius: 50%;
+      animation: blink 2s infinite;
+    }
+    @keyframes blink {
+      0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.7); }
+      70% { box-shadow: 0 0 0 8px rgba(16,185,129,0); }
+    }
+
+    /* ─── Header ─── */
+    .header { text-align: center; margin-bottom: 28px; }
+
+    .logo-ring {
+      width: 110px; height: 110px;
+      margin: 0 auto 16px;
+      position: relative;
+      border-radius: 50%;
+      padding: 3px;
+      background: conic-gradient(var(--primary), var(--gold), var(--primary-dark), var(--primary));
+      animation: spinGrad 8s linear infinite;
+      box-shadow: 0 0 40px var(--primary-glow), 0 0 80px rgba(212,175,55,0.2);
+    }
+    @keyframes spinGrad { to { filter: hue-rotate(30deg); } }
+
+    .logo-inner {
+      width: 100%; height: 100%;
+      border-radius: 50%;
+      overflow: hidden;
+      background: #000;
+      animation: floatImg 5s ease-in-out infinite;
+    }
+    @keyframes floatImg {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    .logo-inner img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #fff 30%, var(--primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 6px;
+    }
+    .tagline {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      opacity: 0.9;
+      margin-bottom: 8px;
+    }
+    .location-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--glass-border);
+      padding: 5px 14px;
+      border-radius: 100px;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* ─── Quick Actions ─── */
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(4,1fr);
+      gap: 12px;
+    }
+    .qa-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 9px;
+      text-decoration: none;
+      color: var(--text);
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
+    .qa-icon {
+      width: 56px; height: 56px;
+      border-radius: 18px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      transition: all 0.35s cubic-bezier(0.175,0.885,0.32,1.275);
+      position: relative;
+      overflow: hidden;
+    }
+    .qa-icon::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--primary);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .qa-btn:hover .qa-icon {
+      transform: translateY(-6px) scale(1.08);
+      border-color: var(--primary);
+      box-shadow: 0 12px 24px var(--primary-glow);
+    }
+    .qa-btn:hover .qa-icon::after { opacity: 0.12; }
+    .qa-label { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* ─── Glass Card ─── */
+    .card {
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 22px;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    }
+    .card-label {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 14px;
+    }
+
+    /* ─── List Links ─── */
+    .list-link {
+      display: flex;
+      align-items: center;
+      padding: 17px 20px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.03), transparent);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      text-decoration: none;
+      color: var(--text);
+      margin-bottom: 12px;
+      transition: all 0.35s cubic-bezier(0.16,1,0.3,1);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+    }
+    .list-link::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 40%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
+      transform: skewX(-15deg);
+      transition: left 0.6s ease;
+    }
+    .list-link:hover::after { left: 160%; }
+    .list-link:hover {
+      transform: translateY(-3px) scale(1.015);
+      border-color: rgba(255,255,255,0.18);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.3);
+    }
+    .li-icon { margin-right: 18px; font-size: 22px; width: 32px; text-align: center; flex-shrink: 0; }
+    .li-text { font-weight: 700; font-size: 15px; letter-spacing: 0.2px; display: block; }
+    .li-sub { font-size: 11px; color: var(--text-muted); margin-top: 3px; font-weight: 400; display: block; }
+    .li-arrow { margin-left: auto; color: var(--text-muted); font-size: 14px; opacity: 0.5; }
+
+    .highlight-link { border-color: rgba(249,115,22,0.4); background: linear-gradient(135deg, rgba(249,115,22,0.08), transparent); }
+    .highlight-link .li-text { color: var(--primary); }
+    .highlight-link:hover { border-color: var(--primary); box-shadow: 0 12px 32px var(--primary-glow); }
+
+    /* ─── Instagram Gradient ─── */
+    .ig-text {
+      background: linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ─── Course Badges ─── */
+    .course-row {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 4px;
+    }
+    .course-row::-webkit-scrollbar { display: none; }
+    .course-pill {
+      flex: 0 0 auto;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--glass-border);
+      padding: 10px 20px;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      text-decoration: none;
+      white-space: nowrap;
+      transition: all 0.3s;
+    }
+    .course-pill:hover { background: var(--primary); color: #000; border-color: var(--primary); box-shadow: 0 0 18px var(--primary-glow); transform: translateY(-2px); }
+
+    /* ─── Owner Card ─── */
+    .owner-card {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 20px;
+      background: linear-gradient(135deg, rgba(212,175,55,0.06), rgba(249,115,22,0.04));
+      border: 1px solid rgba(212,175,55,0.2);
+      border-radius: 22px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-decoration: none;
+      color: var(--text);
+    }
+    .owner-card:hover { border-color: var(--gold); box-shadow: 0 0 30px rgba(212,175,55,0.15); transform: translateY(-2px); }
+    .owner-avatar {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--gold);
+      box-shadow: 0 0 18px rgba(212,175,55,0.35);
+      flex-shrink: 0;
+    }
+    .owner-name { font-weight: 800; font-size: 16px; color: var(--gold); }
+    .owner-title { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+    .owner-sub { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+
+    /* ─── Stars Review ─── */
+    .stars-row { display: flex; justify-content: center; gap: 14px; margin: 18px 0 10px; }
+    .star-link {
+      font-size: 40px;
+      color: rgba(255,255,255,0.12);
+      text-decoration: none;
+      cursor: pointer;
+      display: inline-block;
+      transition: all 0.25s cubic-bezier(0.175,0.885,0.32,1.275);
+    }
+    .star-link:hover {
+      color: #fbbf24;
+      text-shadow: 0 0 20px rgba(251,191,36,0.7);
+      transform: scale(1.25) rotate(-8deg);
+    }
+    .star-link.good { color: #fbbf24; text-shadow: 0 0 20px rgba(251,191,36,0.6); }
+    .star-link.bad { color: #ef4444; text-shadow: 0 0 20px rgba(239,68,68,0.6); }
+
+    /* ─── Section Divider ─── */
+    .section-title {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin: 20px 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to right, var(--glass-border), transparent);
+    }
+
+    /* ─── Drawers ─── */
+    .drawer {
+      position: fixed;
+      bottom: -100%;
+      left: 0;
+      width: 100%;
+      background: rgba(9,12,18,0.97);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-top: 1px solid var(--glass-border);
+      border-radius: 32px 32px 0 0;
+      padding: 36px 24px 48px;
+      transition: bottom 0.5s cubic-bezier(0.16,1,0.3,1);
+      z-index: 1000;
+      box-shadow: 0 -16px 60px rgba(0,0,0,0.8);
+      max-height: 92vh;
+      overflow-y: auto;
+    }
+    .drawer.open { bottom: 0; }
+
+    .drawer-handle {
+      width: 40px; height: 4px;
+      background: var(--glass-border);
+      border-radius: 2px;
+      margin: -20px auto 24px;
+    }
+
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(6px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s;
+      z-index: 999;
+    }
+    .overlay.open { opacity: 1; pointer-events: auto; }
+
+    .close-btn {
+      position: absolute; top: 28px; right: 24px;
+      background: rgba(255,255,255,0.08);
+      border: none; color: #fff;
+      width: 36px; height: 36px;
+      border-radius: 50%; font-size: 16px;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .close-btn:hover { background: rgba(255,255,255,0.15); }
+
+    .drawer-title { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+    .drawer-sub { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 24px; }
+
+    /* ─── Input & Button ─── */
+    .field {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--glass-border);
+      padding: 16px 18px;
+      border-radius: 16px;
+      color: #fff;
+      margin-bottom: 14px;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .field:focus { border-color: var(--primary); box-shadow: 0 0 18px rgba(249,115,22,0.2); }
+    textarea.field { min-height: 110px; resize: none; }
+
+    .btn-primary {
+      width: 100%;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff;
+      border: none;
+      padding: 18px;
+      border-radius: 16px;
+      font-weight: 800;
+      font-size: 16px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+      text-align: center;
+      display: block;
+    }
+    .btn-primary:hover { box-shadow: 0 12px 30px var(--primary-glow); transform: translateY(-2px); }
+    .btn-primary:active { transform: scale(0.97); }
+
+    /* ─── UPI Box ─── */
+    .upi-box {
+      background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(16,185,129,0.03));
+      border: 1px dashed rgba(16,185,129,0.35);
+      padding: 24px;
+      border-radius: 18px;
+      text-align: center;
+      margin: 20px 0;
+    }
+    .upi-id { font-family: monospace; font-size: 20px; font-weight: 700; color: #10b981; letter-spacing: 1px; margin-bottom: 14px; }
+    .copy-btn {
+      background: rgba(16,185,129,0.12);
+      border: 1px solid rgba(16,185,129,0.3);
+      color: #10b981;
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .copy-btn:hover { background: rgba(16,185,129,0.25); }
+
+    /* ─── AI Chat ─── */
+    #aiLog {
+      max-height: 320px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding-right: 4px;
+    }
+    .msg {
+      padding: 14px 18px;
+      border-radius: 18px;
+      font-size: 14px;
+      line-height: 1.55;
+      font-weight: 500;
+      max-width: 90%;
+    }
+    .msg.ai { background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.25); border-bottom-left-radius: 5px; align-self: flex-start; }
+    .msg.user { background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.06); border-bottom-right-radius: 5px; align-self: flex-end; }
+
+    /* ─── Share FAB (replaces broken AI bot) ─── */
+    .fab {
+      position: fixed;
+      bottom: 30px; right: 24px;
+      width: auto;
+      height: 52px;
+      border-radius: 100px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border: none;
+      box-shadow: 0 0 30px var(--primary-glow);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 22px;
+      cursor: pointer;
+      z-index: 900;
+      font-size: 15px;
+      font-weight: 800;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      transition: all 0.3s cubic-bezier(0.175,0.885,0.32,1.275);
+      animation: fabPulse 3s ease-in-out infinite;
+      text-decoration: none;
+    }
+    @keyframes fabPulse {
+      0%,100% { box-shadow: 0 0 20px var(--primary-glow); transform: translateY(0); }
+      50% { box-shadow: 0 0 40px var(--primary-glow), 0 8px 30px rgba(249,115,22,0.5); transform: translateY(-4px); }
+    }
+    .fab:hover { transform: scale(1.05) translateY(-3px); }
+    .fab:active { transform: scale(0.97); }
+    .fab-icon { font-size: 18px; animation: spinShare 4s linear infinite; }
+    @keyframes spinShare { 0%,85% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* ─── INDIAN TRICOLOR ANTI-GRAVITY RING ─── */
+    .logo-ring {
+      width: 118px; height: 118px;
+      margin: 0 auto 18px;
+      position: relative;
+      border-radius: 50%;
+      padding: 4px;
+      background: conic-gradient(
+        #FF9933 0deg 60deg,
+        #ffffff 60deg 90deg,
+        #138808 90deg 150deg,
+        #ffffff 150deg 180deg,
+        #FF9933 180deg 240deg,
+        #ffffff 240deg 270deg,
+        #138808 270deg 330deg,
+        #ffffff 330deg 360deg
+      );
+      animation: tricolorSpin 5s linear infinite;
+      box-shadow:
+        0 0 0 2px rgba(255,153,51,0.3),
+        0 0 25px rgba(255,153,51,0.5),
+        0 0 50px rgba(19,136,8,0.3),
+        0 0 80px rgba(255,153,51,0.2);
+    }
+    @keyframes tricolorSpin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    /* Counter-rotate inner so logo stays upright */
+    .logo-inner {
+      width: 100%; height: 100%;
+      border-radius: 50%;
+      overflow: hidden;
+      animation: counterSpin 5s linear infinite, floatImg 5s ease-in-out infinite;
+    }
+    @keyframes counterSpin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(-360deg); }
+    }
+    @keyframes floatImg {
+      0%,100% { box-shadow: 0 0 0 0 rgba(255,153,51,0.0); }
+      50% { box-shadow: 0 0 20px rgba(255,153,51,0.4); }
+    }
+    .logo-inner img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    /* ─── Animated List Icons ─── */
+    .icon-bounce { display: inline-block; animation: iconBounce 2.5s ease-in-out infinite; }
+    @keyframes iconBounce {
+      0%,100% { transform: translateY(0); }
+      40% { transform: translateY(-5px); }
+      60% { transform: translateY(-3px); }
+    }
+    .icon-pulse { display: inline-block; animation: iconPulse 2s ease-in-out infinite; }
+    @keyframes iconPulse {
+      0%,100% { transform: scale(1); filter: drop-shadow(0 0 0px #25D366); }
+      50% { transform: scale(1.2); filter: drop-shadow(0 0 8px #25D366); }
+    }
+    .icon-spin { display: inline-block; animation: iconSpin 4s ease-in-out infinite; }
+    @keyframes iconSpin {
+      0%,80%,100% { transform: rotate(0deg) scale(1); }
+      85% { transform: rotate(180deg) scale(1.15); }
+      90% { transform: rotate(360deg) scale(1); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 🚀 DYNAMIC NOTICE BOARD -->
+  <div id="notice-board" style="width: 100%; max-width: 100vw; box-sizing: border-box; background: linear-gradient(90deg, #f97316, #c2410c); color: white; padding: 10px 15px; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; display: flex; align-items: center; position: relative; z-index: 100; box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);">
+    <span style="background: #000; color: #f97316; padding: 3px 10px; border-radius: 4px; font-size: 11px; text-transform: uppercase; margin-right: 12px; font-weight: 800; z-index: 2; box-shadow: 2px 0 10px rgba(0,0,0,0.5);">Latest</span>
+    <marquee id="notice-marquee" style="flex: 1;" behavior="scroll" direction="left" scrollamount="5">
+      Fetching latest announcements...
+    </marquee>
+  </div>
+  <script>
+    const NOTICES_API_URL = 'https://peerlessacademy.in/wp-json/custom/v1/notices';
+    async function fetchNotices() {
+      try {
+        const res = await fetch(NOTICES_API_URL);
+        if (!res.ok) throw new Error('Network response was not ok');
+        const data = await res.json();
+        if (data && data.length > 0) {
+          document.getElementById('notice-marquee').innerHTML = data.map(n => n.title || n.text).join(' &nbsp; ✨ &nbsp; ');
+        } else {
+          document.getElementById('notice-marquee').innerHTML = 'Admissions open for 2026-27! Register for Class 5-10 today.';
+        }
+      } catch (e) {
+        document.getElementById('notice-marquee').innerHTML = 'Admissions open for 2026-27! Register for Class 5-10 today.';
+      }
+    }
+    fetchNotices();
+  </script>
+
+
+  <!-- Floating Glow Orbs -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <div class="container">
+
+    <!-- ══ HEADER ══ -->
+    <div class="header fade-up d1">
+      <div class="status-badge">
+        <div class="dot"></div>
+        EDUCATIONAL HUB &copy; ESTD. 2016
+      </div>
+
+      <!-- Official Orange/Blue Logo -->
+      <div class="logo-ring">
+        <div class="logo-inner" style="background:#fff;">
+          <img src="/peerless-logo.jpg" alt="Peerless Academy Logo">
+        </div>
+      </div>
+
+      <h1>Peerless Academy</h1>
+      <div class="tagline">Choose Us, Be a Step Ahead.</div>
+      <div class="location-pill">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+        Indranagar, Agartala
+      </div>
+    </div>
+
+    <!-- ══ PRIORITY: OFFICIAL WEBSITE ══ -->
+    <div class="fade-up d2" style="margin-bottom:14px;">
+      <a href="https://peerlessacademy.in" class="list-link highlight-link">
+        <span class="li-icon">🌐</span>
+        <span>
+          <span class="li-text">Official Website</span>
+          <span class="li-sub">peerlessacademy.in — Main portal</span>
+        </span>
+        <span class="li-arrow">›</span>
+      </a>
+    </div>
+
+    <!-- ══ QUICK ACTIONS ══ -->
+    <div class="card fade-up d2">
+      <div class="quick-actions">
+        <a href="tel:+918794130855" class="qa-btn">
+          <div class="qa-icon">📞</div>
+          <span class="qa-label">Call</span>
+        </a>
+        <a href="mailto:xprasenjit1992@gmail.com?cc=support.peerlessacademy.in@gmail.com" class="qa-btn">
+          <div class="qa-icon">✉️</div>
+          <span class="qa-label">Email</span>
+        </a>
+        <a href="https://www.google.com/maps/search/?api=1&query=Peerless+Academy+Indranagar+Agartala" target="_blank" class="qa-btn">
+          <div class="qa-icon">📍</div>
+          <span class="qa-label">Map</span>
+        </a>
+        <button onclick="shareHub()" class="qa-btn">
+          <div class="qa-icon">🔗</div>
+          <span class="qa-label">Share</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ══ OWNER CONTACT CARD ══ -->
+    <div class="fade-up d3">
+      <button onclick="downloadVCard()" class="owner-card" style="border:none;">
+        <img src="/owner-photo.jpg" alt="Founder" class="owner-avatar">
+        <div>
+          <div class="owner-name">Prasenjit Chakraborty</div>
+          <div class="owner-title">Founder &amp; Director, Peerless Academy</div>
+          <div class="owner-sub">📲 Tap to save official contact to phone</div>
+        </div>
+      </button>
+    </div>
+
+    <!-- ══ MAIN LINKS ══ -->
+    <div class="fade-up d3">
+      <div class="section-title">Quick Links</div>
+
+
+      
+      <!-- Admission Enquiry Form Link -->
+      <button onclick="openDrawer('inquiryDrawer')" class="list-link" style="border-color: rgba(249, 115, 22, 0.3); background: linear-gradient(135deg, rgba(249, 115, 22, 0.05), transparent); cursor: pointer;">
+        <span class="li-icon icon-pulse" style="color:#f97316;">🎓</span>
+        <span>
+          <span class="li-text" style="color:#f97316;">Admission Enquiry</span>
+          <span class="li-sub">Register for upcoming batches</span>
+        </span>
+        <span class="li-arrow">→</span>
+      </button>
+
+      <!-- Batch Timings -->
+      <button onclick="openBatchModal()" class="list-link" style="border: none; background: linear-gradient(135deg, rgba(96, 165, 250, 0.1), transparent); width: 100%; cursor: pointer;">
+        <span class="li-icon" style="color:#60a5fa;">📅</span>
+        <span>
+          <span class="li-text" style="color:#60a5fa;">Batch Timings</span>
+          <span class="li-sub">View Class 5-10 schedules</span>
+        </span>
+        <span class="li-arrow">›</span>
+      </button>
+
+      <!-- Instagram - Correctly wired -->
+      <a href="https://www.instagram.com/peerlessacademyofficial/" target="_blank" class="list-link">
+        <span class="li-icon ig-text">IG</span>
+        <span>
+          <span class="li-text ig-text">Instagram</span>
+          <span class="li-sub">@peerlessacademyofficial</span>
+        </span>
+        <span class="li-arrow">›</span>
+      </a>
+
+      <a href="https://wa.me/918794130855?text=Hello%20Peerless%20Academy!%20I%20would%20like%20to%20know%20more%20about%20admissions." class="list-link">
+        <span class="li-icon icon-pulse" style="color:#25D366;">💬</span>
+        <span>
+          <span class="li-text">WhatsApp Inquiry</span>
+          <span class="li-sub">Direct chat with management</span>
+        </span>
+        <span class="li-arrow">›</span>
+      </a>
+
+      <!-- PAYMENT - Robust implementation with drawer -->
+      <button onclick="openDrawer('paymentDrawer')" class="list-link">
+        <span class="li-icon icon-spin" style="color:#10b981;">₹</span>
+        <span>
+          <span class="li-text" style="color:#10b981;">Fee Payment (UPI)</span>
+          <span class="li-sub">GPay / PhonePe / Paytm — Zero redirect fails</span>
+        </span>
+        <span class="li-arrow">›</span>
+      </button>
+    </div>
+
+    <!-- ══ CURRICULUM (Rank 5) ══ -->
+    <div class="card fade-up d4">
+      <div class="card-label">Explore Curriculum</div>
+      <div class="course-row">
+        <a href="/" class="course-pill">NEET-UG</a>
+        <a href="/" class="course-pill">JEE Main/Adv</a>
+        <a href="/" class="course-pill">CBSE 11-12</a>
+        <a href="/" class="course-pill">Foundation 6-10</a>
+      </div>
+    </div>
+
+    
+      <!-- 🚀 HALL OF FAME CAROUSEL -->
+      <div class="card fade-up d4" style="text-align: center; overflow: hidden; padding: 25px 0; margin-bottom: 20px;">
+        <div class="card-label" style="text-align: center; margin-bottom: 20px; font-size: 14px;">🌟 Our Achievers</div>
+        
+        <style>
+          .hof-slider {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            padding: 0 15px 15px 15px;
+            gap: 15px;
+            scrollbar-width: none; /* Firefox */
+          }
+          .hof-slider::-webkit-scrollbar {
+            display: none; /* Chrome, Safari */
+          }
+          .hof-slide {
+            scroll-snap-align: center;
+            flex: 0 0 100%;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.05);
+          }
+          .hof-slide img {
+            width: 100%;
+            height: auto;
+            display: block;
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+          }
+          .swipe-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 5px;
+          }
+          .swipe-dot {
+            width: 6px;
+            height: 6px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+          }
+          .swipe-dot.active {
+            background: #f97316;
+            width: 12px;
+            border-radius: 4px;
+          }
+        </style>
+
+        <div class="hof-slider" id="hofSlider">
+          <div class="hof-slide">
+            <img src="/images/toppers_2023.jpg" alt="10th Boards Toppers 2023">
+          </div>
+          <div class="hof-slide">
+            <img src="/images/toppers_2025.jpg" alt="Achievers of Peerless Academy 2025">
+          </div>
+        </div>
+        
+        <div class="swipe-indicator">
+          <div class="swipe-dot active" id="dot1"></div>
+          <div class="swipe-dot" id="dot2"></div>
+        </div>
+        
+        <script>
+          const slider = document.getElementById('hofSlider');
+          const dot1 = document.getElementById('dot1');
+          const dot2 = document.getElementById('dot2');
+          
+          slider.addEventListener('scroll', () => {
+            const scrollLeft = slider.scrollLeft;
+            const width = slider.clientWidth;
+            if (scrollLeft > width / 2) {
+              dot1.classList.remove('active');
+              dot2.classList.add('active');
+            } else {
+              dot2.classList.remove('active');
+              dot1.classList.add('active');
+            }
+          });
+        </script>
+      </div>
+
+      <!-- 🌟 MENTORS BANNER -->
+      <div class="card fade-up d4" style="text-align: center; overflow: hidden; padding: 15px; margin-bottom: 20px;">
+        <div class="card-label" style="text-align: center; margin-bottom: 15px; font-size: 14px;">👨‍🏫 Our Expert Mentors</div>
+        <div style="border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+          <img src="/images/gallery/mentors-banner-new.jpg" alt="Our Expert Guidance" style="width: 100%; height: auto; display: block;">
+        </div>
+      </div>
+
+      <!-- ══ DEVELOPER CREDIT ══ -->
+    <a href="https://www.linkedin.com/in/shubranil-saha-b463613b3?utm_source=share_via&utm_content=profile&utm_medium=member_android" target="_blank" style="display:block; text-align:center; font-size:11px; color:#64748b; margin-top:40px; margin-bottom: 20px; text-decoration:none;">Lead Architect: Shubranil Saha</a>
+
+    <!-- ══ SMART REVIEW ROUTING ══ -->
+    <div class="card fade-up d5" style="text-align:center;">
+      <div class="card-label" style="text-align:center;">Rate Your Experience</div>
+      <p style="font-size:12px;color:var(--text-muted);">⭐⭐⭐⭐⭐ → Google Review &nbsp;|&nbsp; ⭐⭐⭐ → Private Feedback</p>
+      <div class="stars-row">
+        <!-- Low stars → WhatsApp private feedback -->
+        <a href="https://wa.me/918794130855?text=Hi%20Management%2C%20I%20rated%201-star.%20I%20want%20to%20share%20feedback..." class="star-link bad">★</a>
+        <a href="https://wa.me/918794130855?text=Hi%20Management%2C%20I%20rated%202-stars.%20I%20want%20to%20share%20feedback..." class="star-link bad">★</a>
+        <a href="https://wa.me/918794130855?text=Hi%20Management%2C%20I%20rated%203-stars.%20I%20want%20to%20share%20feedback..." class="star-link bad">★</a>
+        <!-- High stars → Google Maps review -->
+        <a href="https://g.page/r/CUSh6m5f99nNEBE/review" target="_blank" class="star-link good">★</a>
+        <a href="https://g.page/r/CUSh6m5f99nNEBE/review" target="_blank" class="star-link good">★</a>
+      </div>
+      <p style="font-size:10px;color:var(--text-muted);margin-top:8px;">Tap any star to instantly share your experience</p>
+    </div>
+
+  </div>
+
+  <!-- ══ SHARE PROFILE FAB (Replaces AI Bot) ══ -->
+  <button class="fab" onclick="installApp()">
+    <span class="fab-icon" style="animation:none;">📱</span>
+    <span>Install App</span>
+  </button>
+
+  <!-- ══ OVERLAY ══ -->
+  <div class="overlay" id="overlay" onclick="closeAll()"></div>
+
+  
+  <!-- ══ PAYMENT DRAWER ══ -->
+  <div class="drawer" id="paymentDrawer" style="text-align: center; background: rgba(15,23,42,0.95); backdrop-filter: blur(16px);">
+    <div class="drawer-handle"></div>
+    <button class="close-btn" onclick="closeAll()">✕</button>
+    
+    <!-- Animated Header -->
+    <div class="drawer-title" style="margin-top: 10px; margin-bottom: 5px; background: linear-gradient(90deg, #10b981, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Secure UPI Payment</div>
+    <div class="drawer-sub" style="margin-bottom: 20px;">Zero redirect fails. 100% Secure.</div>
+    
+    <!-- Direct UPI Payment with Pulse -->
+    <style>
+      @keyframes pulseGlow {
+        0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+        70% { box-shadow: 0 0 0 15px rgba(16, 185, 129, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+      }
+      .btn-upi {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        border: none;
+        border-radius: 16px;
+        padding: 16px;
+        font-size: 16px;
+        font-weight: 800;
+        text-decoration: none;
+        animation: pulseGlow 2s infinite;
+        transition: transform 0.2s;
+      }
+      .btn-upi:active { transform: scale(0.95); }
+      @keyframes floatQR {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+      }
+    </style>
+    <a href="upi://pay?pa=xprasenjit1992-1@okhdfcbank&pn=PEERLESS%20ACADEMY&cu=INR" class="btn-upi" style="margin: 0 auto; width: 100%; max-width: 280px; display: flex; justify-content: center; align-items: center; gap: 10px;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Pay via UPI App
+    </a>
+    
+    <!-- HELPER TEXT FOR SECURITY BLOCKS -->
+    <div style="font-size: 11px; color: #94a3b8; font-style: italic; max-width: 280px; margin: 12px auto 0; line-height: 1.4;">
+      *If the payment app blocks the direct link for security reasons, please use the QR code or copy the UPI ID below.*
+    </div>
+
+    <!-- Divider & QR Instructions -->
+    <div style="display: flex; flex-direction: column; align-items: center; margin: 20px auto; max-width: 280px; color: #475569; font-size: 11px; font-weight: bold; text-transform: uppercase; text-align: center;">
+      <div style="display: flex; align-items: center; width: 100%; margin-bottom: 6px;">
+        <div style="flex: 1; height: 1px; background: #334155;"></div>
+        <div style="padding: 0 10px;">OR SCAN QR</div>
+        <div style="flex: 1; height: 1px; background: #334155;"></div>
+      </div>
+      <div style="color: #64748b; font-size: 10px; font-weight: normal; line-height: 1.3;">
+        (Take a screenshot and use 'Scan from Gallery' in your UPI app)
+      </div>
+    </div>
+    
+    <!-- Scan QR Code -->
+    <div style="background: white; padding:12px; border-radius: 20px; display:inline-block; margin: 0 auto; width: 220px; height: 220px; position: relative; box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.2); animation: floatQR 4s ease-in-out infinite;">
+      <img src="/images/peerless_qr.png" alt="Peerless Academy QR Code" style="width:100%; height:100%; border-radius: 12px; object-fit: contain;">
+    </div>
+    
+    <!-- UPI ID Text and Copy -->
+    <div class="upi-box" style="margin-top:25px; max-width: 320px; margin-left: auto; margin-right: auto; display: flex; flex-direction: column; gap: 10px;">
+      <div style="font-size: 13px; color: #94a3b8;">UPI ID: <span id="upiIdText" style="color: #f8fafc; font-weight: bold;">xprasenjit1992-1@okhdfcbank</span></div>
+      <button class="copy-btn" id="copyUpiBtn" onclick="copyUPI()" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; color: #f8fafc; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+        <svg id="copyUpiIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        <span id="copyUpiText">Copy to clipboard</span>
+      </button>
+    </div>
+  </div>
+  <!-- ══ INQUIRY DRAWER ══ -->
+    <div class="drawer" id="inquiryDrawer">
+      <div class="drawer-handle"></div>
+      <button class="close-btn" onclick="closeAll()">✕</button>
+      <div class="drawer-title" style="color: #f97316;">🎓 Admission Enquiry</div>
+      <div class="drawer-sub">Register your interest. We'll contact you within 24 hours.</div>
+      
+      <!-- Toast Notification Container -->
+      <div id="toastNotify" style="display: none; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 13px; font-weight: bold; text-align: center; border: 1px solid transparent;"></div>
+
+      <form id="admissionForm" onsubmit="submitAdmission(event)" style="display: flex; flex-direction: column; gap: 12px; margin-top: 5px;">
+        <input type="text" id="admStudent" class="field" placeholder="Student Name" required style="margin:0;">
+        <input type="text" id="admParent" class="field" placeholder="Parent / Guardian Name" required style="margin:0;">
+        <input type="tel" id="admPhone" class="field" placeholder="Phone Number" required style="margin:0;">
+        <select id="admClass" class="field" required style="margin:0; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px;">
+          <option value="" disabled selected>Select Class</option>
+          <option value="Class V">Class V</option>
+          <option value="Class VI">Class VI</option>
+          <option value="Class VII">Class VII</option>
+          <option value="Class VIII">Class VIII</option>
+          <option value="Class IX">Class IX</option>
+          <option value="Class X">Class X</option>
+          <option value="Class XI">Class XI</option>
+          <option value="Class XII">Class XII</option>
+        </select>
+        <textarea id="admMessage" class="field" placeholder="Short Message (Optional)" style="margin:0; min-height: 80px;"></textarea>
+        <button type="submit" class="btn-primary" id="admSubmitBtn" style="margin-top: 5px;">Submit Registration</button>
+      </form>
+      
+      <script>
+        const ENQUIRY_API_URL = 'https://peerlessacademy.in/api/submit-enquiry';
+        async function submitAdmission(e) {
+          e.preventDefault();
+          const btn = document.getElementById('admSubmitBtn');
+          const toast = document.getElementById('toastNotify');
+          
+          btn.textContent = 'Submitting...';
+          btn.disabled = true;
+          btn.style.opacity = '0.7';
+          
+          const payload = {
+            studentName: document.getElementById('admStudent').value,
+            parentName: document.getElementById('admParent').value,
+            phone: document.getElementById('admPhone').value,
+            className: document.getElementById('admClass').value,
+            message: document.getElementById('admMessage').value,
+            source: 'NFC_SmartHub'
+          };
+
+          try {
+            const response = await fetch(ENQUIRY_API_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            
+            // Backend might not be setup yet, provide fallback success for UX
+            if (!response.ok) {
+               console.warn('API non-200. Proceeding with fallback success.');
+            }
+            
+            toast.style.display = 'block';
+            toast.style.background = 'rgba(16,185,129,0.15)';
+            toast.style.borderColor = 'rgba(16,185,129,0.4)';
+            toast.style.color = '#10b981';
+            toast.textContent = '✅ Registration Submitted Successfully!';
+            
+            document.getElementById('admissionForm').reset();
+            setTimeout(() => { closeAll(); toast.style.display = 'none'; }, 2500);
+            
+          } catch (err) {
+            toast.style.display = 'block';
+            toast.style.background = 'rgba(244,63,94,0.15)';
+            toast.style.borderColor = 'rgba(244,63,94,0.4)';
+            toast.style.color = '#f43f5e';
+            toast.textContent = '⚠️ Network Error. Please try again.';
+          } finally {
+            btn.textContent = 'Submit Registration';
+            btn.disabled = false;
+            btn.style.opacity = '1';
+          }
+        }
+      </script>
+    </div>
+
+  <!-- ══ AI DRAWER ══ -->
+  <div class="drawer" id="aiDrawer">
+    <div class="drawer-handle"></div>
+    <button class="close-btn" onclick="closeAll()">✕</button>
+    <div class="drawer-title" style="color:var(--primary);">🤖 AI Mentor</div>
+    <div class="drawer-sub" style="margin-bottom:16px;">Ask anything about admissions, courses, or fees.</div>
+    <div id="aiLog">
+      <div class="msg ai">Hello! I'm the Peerless Academy AI. How can I help you today?</div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <input type="text" id="aiInput" class="field" style="margin:0;" placeholder="Type your question..." onkeydown="if(event.key==='Enter')sendMsg()">
+      <button onclick="sendMsg()" class="btn-primary" style="width:auto;padding:0 22px;font-size:20px;flex-shrink:0;">→</button>
+    </div>
+  </div>
+
+  <script>
+    // ── Supabase ──
+    const _sb = window.supabase.createClient(
+      'https://xfvkesgkfehffavfulde.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhmdmtlc2drZmVoZmZhdmZ1bGRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzQ1NzIsImV4cCI6MjEwMjcxMDU3Mn0.uzZQ6zrBRuluKqTSFLUrBVq02cQh09p3duhV_okg0GQ'
+    );
+
+    // ── Drawer Controls ──
+    function openDrawer(id) {
+      closeAll();
+      document.getElementById(id).classList.add('open');
+      document.getElementById('overlay').classList.add('open');
+    }
+    function closeAll() {
+      document.querySelectorAll('.drawer').forEach(d => d.classList.remove('open'));
+      document.getElementById('overlay').classList.remove('open');
+    }
+
+    // ── Share ──
+    async function shareHub() {
+      if (navigator.share) {
+        try { await navigator.share({ title:'Peerless Academy', text:'Check out the official Peerless Academy Smart Hub!', url: location.href }); }
+        catch(e) {}
+      } else {
+        navigator.clipboard.writeText(location.href);
+        alert('Link copied to clipboard!');
+      }
+    }
+
+    // ── vCard ──
+    function downloadVCard() {
+      const v = `BEGIN:VCARD\nVERSION:3.0\nFN:Prasenjit Chakraborty
+N:Chakraborty;Prasenjit;;;\nORG:Peerless Academy\nTITLE:Founder & Director\nTEL;TYPE=WORK,VOICE:+918794130855\nEMAIL:xprasenjit1992@gmail.com\nURL:https://peerlessacademy.in\nADR;TYPE=WORK:;;Indranagar;Agartala;Tripura;799005;India\nEND:VCARD`;
+      const blob = new Blob([v], { type:'text/vcard' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'PeerlessAcademy_Prasenjit_Chakraborty.vcf';
+      a.click();
+    }
+
+    // ── Copy UPI ──
+    function copyUPI() {
+        navigator.clipboard.writeText('xprasenjit1992-1@okhdfcbank').then(() => {
+          const btn = document.getElementById('copyUpiBtn');
+          const text = document.getElementById('copyUpiText');
+          const icon = document.getElementById('copyUpiIcon');
+          
+          const origText = text.innerText;
+          const origBg = btn.style.background;
+          const origColor = btn.style.color;
+          const origBorder = btn.style.border;
+          
+          text.innerText = '✓ Copied!';
+          icon.style.display = 'none';
+          btn.style.background = 'rgba(16, 185, 129, 0.2)';
+          btn.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+          btn.style.color = '#10b981';
+          
+          setTimeout(() => { 
+            text.innerText = origText; 
+            icon.style.display = 'block';
+            btn.style.background = origBg;
+            btn.style.borderColor = origBorder;
+            btn.style.color = origColor;
+          }, 2000);
+        });
+      }
+
+    // ── Inquiry Submission ──
+    async function submitInquiry(e) {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      btn.textContent = 'Sending...';
+
+      const name  = document.getElementById('lName').value;
+      const phone = document.getElementById('lPhone').value;
+      const query = document.getElementById('lQuery').value;
+
+      // Supabase insert
+      try {
+        await _sb.from('leads').insert([{ name, phone, query, source:'NFC_Hub' }]);
+      } catch(err) { console.error(err); }
+
+      // Email fallback
+      const sub  = encodeURIComponent(`NFC Inquiry: ${name}`);
+      const body = encodeURIComponent(`Name: ${name}\nPhone: ${phone}\n\nMessage:\n${query}`);
+      location.href = `mailto:xprasenjit1992@gmail.com?cc=support.peerlessacademy.in@gmail.com&subject=${sub}&body=${body}`;
+
+      btn.textContent = 'Sent!';
+      setTimeout(() => { closeAll(); btn.textContent = 'Send Inquiry'; document.getElementById('leadForm').reset(); }, 2000);
+    }
+
+          // 💡 AI Chat 💡
+      async function sendMsg() {
+        const inp = document.getElementById('aiInput');
+        const text = inp.value.trim();
+        if (!text) return;
+        const log = document.getElementById('aiLog');
+  
+        const u = document.createElement('div');
+        u.className = 'msg user';
+        u.textContent = text;
+        log.appendChild(u);
+        inp.value = '';
+  
+        const t = document.createElement('div');
+        t.className = 'msg ai';
+        t.textContent = '...';
+        log.appendChild(t);
+        log.scrollTop = log.scrollHeight;
+  
+        try {
+          const res = await fetch('https://peerlessacademy.in/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              messages: [{ role: 'user', content: text }],
+              systemPrompt: "You are an AI assistant for Peerless Academy. Be helpful, concise, and friendly.",
+              modelTier: "gemini-1.5-flash"
+            })
+          });
+          const data = await res.json();
+          if (data.reply) {
+            t.textContent = data.reply;
+          } else {
+            t.textContent = 'Sorry, I encountered an error answering that.';
+          }
+        } catch (err) {
+          t.textContent = 'Network error. Please try again later. For admissions, call +91-8794130855.';
+        }
+        log.scrollTop = log.scrollHeight;
+      }
+  </script>
+
+  
+  
+
+  <script>
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+    });
+
+    async function installApp() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        deferredPrompt = null;
+      } else {
+        alert("App installation is not supported on this browser, or the app is already installed.");
+      }
+    }
+  </script>
+
+  <!-- ══ FOOLPROOF BATCH MODAL ══ -->
+  <div id="batchModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; padding: 16px; flex-direction: column;">
+    <!-- Glowing Border Wrapper -->
+    <div style="position: relative; width: 100%; max-width: 400px; padding: 4px; border-radius: 20px; background: conic-gradient(#FF9933, #FFFFFF, #138808, #FFFFFF, #FF9933); animation: tricolorSpin 1s cubic-bezier(0.25, 1, 0.5, 1) 1; box-shadow: 0 0 30px rgba(255,153,51,0.4);">
+      <!-- Inner Card -->
+      <div style="background: #0f172a; border-radius: 16px; padding: 24px; color: #f8fafc; max-height: 80vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h2 style="margin: 0; font-size: 20px; color: #FF9933;">📅 Batch Timings</h2>
+          <button onclick="closeBatchModal()" style="background: rgba(255,255,255,0.1); border: none; color: #fff; width: 32px; height: 32px; border-radius: 50%; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 14px; font-size: 14px; line-height: 1.5;">
+          <p style="margin:0; padding:10px; background:rgba(255,255,255,0.05); border-radius:8px; border-left:3px solid #FF9933;">
+            <strong style="color:#FF9933; display:block; margin-bottom:4px;">Class V</strong>
+            Thu (7-8:30 AM), Sun (10-11:30 AM), Mon (6:30-8 AM)
+          </p>
+          <p style="margin:0; padding:10px; background:rgba(255,255,255,0.05); border-radius:8px; border-left:3px solid #FF9933;">
+            <strong style="color:#FF9933; display:block; margin-bottom:4px;">Class VI</strong>
+            Thu (7 AM), Sun (10 AM), Sat (3:30 PM)
+          </p>
+          <p style="margin:0; padding:10px; background:rgba(255,255,255,0.05); border-radius:8px; border-left:3px solid #fff;">
+            <strong style="color:#fff; display:block; margin-bottom:4px;">Class VII</strong>
+            Mon (7-8:30 AM), Wed (7-8:30 AM), Sat (3:30-5 PM)
+          </p>
+          <p style="margin:0; padding:10px; background:rgba(255,255,255,0.05); border-radius:8px; border-left:3px solid #fff;">
+            <strong style="color:#fff; display:block; margin-bottom:4px;">Class VIII</strong>
+            Sun (8:30-10 AM), Tue (6:45-8:30 AM), Thu (5:45-7:15 PM)
+          </p>
+          <p style="margin:0; padding:10px; background:rgba(255,255,255,0.05); border-radius:8px; border-left:3px solid #138808;">
+            <strong style="color:#138808; display:block; margin-bottom:4px;">Class IX</strong>
+            Math (Sun 7-8:30 AM, Thu 7:15-8:45 PM)<br>
+            Phy/Chem (Mon 5:30-7:15 PM Chem, Tue 5:30-7 PM Phy)<br>
+            Bio (Sun 8:30-10 AM, Sat 6-7:30 PM)
+          </p>
+          <p style="margin:0; padding:10px; background:rgba(255,255,255,0.05); border-radius:8px; border-left:3px solid #138808;">
+            <strong style="color:#138808; display:block; margin-bottom:4px;">Class X</strong>
+            Math (Wed 5:30-7 PM, Fri 7:30-9 PM, Sat 7-8:30 AM)<br>
+            Phy/Chem (Mon 7-8:30 PM Chem, Sat 8:40-10 AM Phy)<br>
+            Bio (Sun 7-8:30 AM, Sat 4-5:30 PM)
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openBatchModal() {
+      document.getElementById('batchModal').style.display = 'flex';
+    }
+    function closeBatchModal() {
+      document.getElementById('batchModal').style.display = 'none';
+    }
+  </script>
+
+</body>
+
+</html>

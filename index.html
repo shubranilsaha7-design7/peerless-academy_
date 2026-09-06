@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!--
+      CSP: permissive enough for Three.js/WebGL (unsafe-eval), Google Maps
+      embeds, Supabase, video playback, and Workbox service workers.
+    -->
+    <meta http-equiv="Content-Security-Policy"
+      content="default-src 'self' https: data: blob: 'unsafe-inline' 'unsafe-eval'; media-src * 'self' blob: data: https:; frame-src * 'self' https://www.google.com https://maps.google.com https://*.supabase.co https://accounts.google.com; worker-src 'self' blob:; img-src * 'self' data: blob: https:; connect-src * 'self' https: wss:; font-src 'self' https://fonts.gstatic.com data:;"
+    />
+    <link rel="icon" type="image/jpeg" href="/images/WhatsApp_Image_2026-08-17_at_21.04.26.jpeg" />
+    <!-- PWA: Apple touch icon & mobile chrome -->
+    <link rel="apple-touch-icon" href="/images/WhatsApp_Image_2026-08-17_at_21.04.26.jpeg" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Peerless" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover" />
+    <meta name="description" content="Agartala's premier science & math coaching for Classes 5 to 12. Master CBSE & ICSE boards and dominate competitive exams with Peerless Academy's gamified learning approach." />
+    
+    <!-- Developer Authorship & SEO -->
+    <meta name="author" content="Shubranil Saha">
+    <meta name="generator" content="React, Vite, Tailwind CSS, Supabase">
+    <meta name="application-name" content="Peerless Academy Portal">
+    <link rel="author" href="/humans.txt" />
+    
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": ["WebSite", "Organization"],
+        "name": "Peerless Academy",
+        "url": "https://peerlessacademy.com",
+        "description": "Agartala's premier science & math coaching.",
+        "creator": {
+          "@type": "Person",
+          "name": "Shubranil Saha",
+          "jobTitle": "Lead Developer & System Architect"
+        }
+      }
+    </script>
+    
+    <title>Peerless Academy | Tripura's Finest EdTech Platform</title>
+    <meta name="author" content="Shubranil Saha" />
+    <meta name="description" content="Peerless Academy - Gamified EdTech Super-App engineered for JEE and NEET aspirants in Agartala." />
+    <link rel="author" href="/humans.txt" />
+    
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Peerless Academy",
+      "description": "Gamified EdTech Super-App with NTA CBT Simulator and Elite AI Mentor.",
+      "author": {
+        "@type": "Person",
+        "name": "Shubranil Saha",
+        "jobTitle": "Lead Developer & System Architect",
+        "alumniOf": "IIT Madras Electronic Systems",
+        "knowsAbout": ["Google Certified Developer", "AI Architecture", "Full-Stack Engineering"]
+      }
+    }
+    </script>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#ff6b00" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta property="og:title" content="Peerless Academy — Science & Math Coaching, Agartala" />
+    <meta property="og:description" content="Classes 5-12, CBSE & ICSE, NEET & JEE prep with DPPs, mock tests and live analytics." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script>
+    (function() {
+      try {
+        var theme = localStorage.getItem('peerless-theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      } catch (e) {}
+    })();
+  </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
