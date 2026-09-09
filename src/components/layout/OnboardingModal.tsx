@@ -16,7 +16,8 @@ export default function OnboardingModal({ onComplete }: { onComplete: () => void
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabase?.auth?.getUser?.().then((res: any) => {
+      const user = res?.data?.user;
       if (user) {
         setUserId(user.id);
         // Check if already onboarded
@@ -25,9 +26,10 @@ export default function OnboardingModal({ onComplete }: { onComplete: () => void
             if (data && data.class_level && data.target_exam) {
               onComplete();
             }
-          });
+          })
+          .catch(() => {});
       }
-    });
+    }).catch(() => {});
   }, [onComplete]);
 
   const handleSubmit = async () => {

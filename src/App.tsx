@@ -179,25 +179,37 @@ function AppInner() {
 
   // ── Supabase auth listener ───────────────────────────────
   useEffect(() => {
-    (supabase as any).auth.getSession().then(({ data }: { data: { session: { user: User } | null } }) => {
-      const u = data.session?.user ?? null;
-      setUser(u);
-      if (u) fetchUserStats(u.id);
-    });
-
-    const { data: { subscription } } = (supabase as any).auth.onAuthStateChange(
-      (_event: string, session: { user: User } | null) => {
-        const u = session?.user ?? null;
-        setUser(u);
-        if (u) {
-          setIsAuthOpen(false);
-          fetchUserStats(u.id);
-        } else {
-          setXp(0); setStreak(0); setLevel(1);
-        }
+    try {
+      const auth = (supabase as any)?.auth;
+      if (typeof auth?.getSession === 'function') {
+        auth.getSession().then((res: any) => {
+          const u = res?.data?.session?.user ?? null;
+          setUser(u);
+          if (u) fetchUserStats(u.id);
+        }).catch((err: any) => {
+          console.warn('Could not get initial session:', err);
+        });
       }
-    );
-    return () => subscription.unsubscribe();
+
+      if (typeof auth?.onAuthStateChange === 'function') {
+        const authRes = auth.onAuthStateChange(
+          (_event: string, session: { user: User } | null) => {
+            const u = session?.user ?? null;
+            setUser(u);
+            if (u) {
+              setIsAuthOpen(false);
+              fetchUserStats(u.id);
+            } else {
+              setXp(0); setStreak(0); setLevel(1);
+            }
+          }
+        );
+        const subscription = authRes?.data?.subscription;
+        return () => subscription?.unsubscribe?.();
+      }
+    } catch (err) {
+      console.warn('Auth listener init error:', err);
+    }
   }, []);
 
   async function fetchUserStats(userId: string) {

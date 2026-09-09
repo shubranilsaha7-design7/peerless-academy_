@@ -34,16 +34,28 @@ export default function Kurukshetra({ onBack }: { onBack: () => void }) {
   const [questions, setQuestions] = useState<any[]>([]);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        setUserId(user.id);
-        supabase.from('profiles').select('full_name').eq('id', user.id).single()
-          .then(({ data }) => setUserName(data?.full_name || 'Warrior'));
-      } else {
-        setUserId('local-user-' + Math.floor(Math.random()*1000));
+    async function initUser() {
+      try {
+        const res = await (supabase as any)?.auth?.getUser?.();
+        const user = res?.data?.user;
+        if (user) {
+          setUserId(user.id);
+          try {
+            const { data } = await (supabase as any).from('profiles').select('full_name').eq('id', user.id).single();
+            setUserName(data?.full_name || 'Warrior');
+          } catch {
+            setUserName('Warrior');
+          }
+        } else {
+          setUserId('local-user-' + Math.floor(Math.random() * 1000));
+          setUserName('Arjuna (Guest)');
+        }
+      } catch {
+        setUserId('local-user-' + Math.floor(Math.random() * 1000));
         setUserName('Arjuna (Guest)');
       }
-    });
+    }
+    initUser();
 
     const fetchQuestions = async () => {
       try {

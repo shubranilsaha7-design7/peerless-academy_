@@ -12,12 +12,18 @@ export default function IpProtectionPanel() {
   }, []);
 
   const checkAuthAndLoad = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    try {
+      const res = await supabase?.auth?.getUser?.();
+      const user = res?.data?.user;
     const masterEmails = ['shubranil@peerlessacademy.in', 'shubranilsaha7@gmail.com', 'shubranilsaha42@gmail.com'];
     if (user?.email && masterEmails.includes(user.email)) {
       setIsSuperAdmin(true);
       fetchAccess();
     } else {
+      setIsSuperAdmin(false);
+      setLoading(false);
+    }
+    } catch (e) {
       setIsSuperAdmin(false);
       setLoading(false);
     }

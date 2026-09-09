@@ -11,7 +11,8 @@ export function useAdmin() {
 
     async function checkAdmin() {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const res = await supabase?.auth?.getUser?.();
+        const user = res?.data?.user;
         
         if (!user || !user.email) {
           if (mounted) {

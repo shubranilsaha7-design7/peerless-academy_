@@ -27,19 +27,24 @@ export default function VideoLectures({ onBack, addToast }) {
   }, []);
 
   const checkUserAndAccess = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      setUser(session.user);
-      // Check if user has redeemed any code in user_access table
-      const { data } = await supabase
-        .from('user_access')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .limit(1);
-      
-      if (data && data.length > 0) {
-        setHasAccess(true);
+    try {
+      const res = await supabase?.auth?.getSession?.();
+      const session = res?.data?.session;
+      if (session?.user) {
+        setUser(session.user);
+        // Check if user has redeemed any code in user_access table
+        const { data } = await supabase
+          .from('user_access')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .limit(1);
+        
+        if (data && data.length > 0) {
+          setHasAccess(true);
+        }
       }
+    } catch (err) {
+      console.warn('Failed to retrieve session in VideoLectures:', err);
     }
   };
 

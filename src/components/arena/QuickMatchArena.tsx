@@ -25,16 +25,28 @@ export default function QuickMatchArena({ onBack }: { onBack?: () => void }) {
   const [timeLeft, setTimeLeft] = useState(30);
   
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      const id = user?.id || 'guest-' + Math.floor(Math.random()*10000);
-      setUserId(id);
-      if (user) {
-        supabase.from('profiles').select('full_name').eq('id', id).single()
-          .then(({ data }) => setUserName(data?.full_name || 'Competitor'));
-      } else {
+    async function initUser() {
+      try {
+        const res = await (supabase as any)?.auth?.getUser?.();
+        const user = res?.data?.user;
+        const id = user?.id || 'guest-' + Math.floor(Math.random() * 10000);
+        setUserId(id);
+        if (user) {
+          try {
+            const { data } = await (supabase as any).from('profiles').select('full_name').eq('id', id).single();
+            setUserName(data?.full_name || 'Competitor');
+          } catch {
+            setUserName('Competitor');
+          }
+        } else {
+          setUserName('Guest Challenger');
+        }
+      } catch {
+        setUserId('guest-' + Math.floor(Math.random() * 10000));
         setUserName('Guest Challenger');
       }
-    });
+    }
+    initUser();
   }, []);
 
   useEffect(() => {
